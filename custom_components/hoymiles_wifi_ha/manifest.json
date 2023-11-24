@@ -1,0 +1,11 @@
+{
+  "codeowners": ["@suaveolent"],
+  "config_flow": false,
+  "dependencies": [],
+  "documentation": "https://github.com/user/my_component/",
+  "domain": "hoymiles_hms-w",
+  "iot_class": "cloud_polling",
+  "name": "Hoymiles HMS-XXXXW-T2",
+  "requirements": [],
+  "version": "1.0.0"
+}

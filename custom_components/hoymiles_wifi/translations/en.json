@@ -1,0 +1,20 @@
+{
+    "config": {
+      "step": {
+        "user": {
+          "title": "Hoymiles HMS-XXXXW-T2 connection",
+          "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
+          "data": {
+            "host": "Hostname/IP",
+            "update_interval": "Update Interval (seconds)"
+          }
+        }
+      },
+      "error": {
+        "connection": "Failed to connect, check hostname and port."
+      },
+      "abort": {
+        "single_instance_allowed": "Only a single instance is allowed!"
+      }
+    }
+}

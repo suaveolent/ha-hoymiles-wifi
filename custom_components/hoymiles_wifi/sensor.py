@@ -52,11 +52,8 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-    
-        #self._state = self.coordinator.data[self.idx]["state"]
-
+        
         self.update_state_value()
-
 
         super()._handle_coordinator_update()
 

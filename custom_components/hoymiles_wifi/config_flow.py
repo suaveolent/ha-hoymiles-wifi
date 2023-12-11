@@ -41,7 +41,7 @@ class HoymilesInverterFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             if not is_valid_host(host):
                 errors[CONF_HOST] = "invalid_host"
 
-            if not validate_update_interval(update_interval):
+            if not await validate_update_interval(update_interval):
                 errors[CONF_UPDATE_INTERVAL] = "invalid_update_interval"
 
             if not errors:

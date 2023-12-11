@@ -1,6 +1,7 @@
 """Platform for retrieving the current power of a PV system."""
 import logging
 from datetime import timedelta
+
 from hoymiles_wifi.inverter import Inverter
 
 import voluptuous as vol
@@ -17,21 +18,11 @@ from .const import (
     DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     PLATFORMS,
+    STARTUP_MESSAGE,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-# DEFAULT_UPDATE_INTERVAL = timedelta(seconds=30)
-
-# PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-#     {
-#         vol.Required(CONF_HOST): str,
-#         vol.Optional(
-#             CONF_UPDATE_INTERVAL,
-#             default=DEFAULT_UPDATE_INTERVAL.seconds,
-#         ): vol.All(vol.Coerce(int), vol.Range(min=MIN_UPDATE_INTERVAL.seconds)),
-#     }
-# )
 
 async def async_setup(hass: HomeAssistant, config: Config):
     """Set up this integration using YAML is not supported."""
@@ -40,16 +31,24 @@ async def async_setup(hass: HomeAssistant, config: Config):
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     """Set up this integration using UI."""
+
+    if hass.data.get(DOMAIN) is None:
+        hass.data.setdefault(DOMAIN, {})
+        _LOGGER.info(STARTUP_MESSAGE)
+
     host = entry.data.get(CONF_HOST)
     update_interval = timedelta(seconds=entry.data.get(CONF_UPDATE_INTERVAL))
 
     inverter = Inverter(host)
 
     coordinator = HoymilesDataUpdatecoordinatorInverter(hass, inverter=inverter, update_interval=update_interval, entry=entry)
+    hass.data[DOMAIN][entry.entry_id] = coordinator
+
     await coordinator.async_config_entry_first_refresh()
-    
+
     return True
-    
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Handle removal of an entry."""
 
@@ -99,9 +98,22 @@ class HoymilesDataUpdatecoordinatorInverter(DataUpdateCoordinator):
         _LOGGER.debug("Hoymiles data coordinator update")
 
         response = self._inverter.update_state()
+
+        if not self._entities_added:
+            for platform in PLATFORMS:
+                self._hass.async_add_job(
+                    self._hass.config_entries.async_forward_entry_setup(
+                        self._entry, platform
+                    )
+                )
+            self._entities_added = True
+
         if response:
             _LOGGER.debug(f"Inverter State: {response}")
         else:
             _LOGGER.debug("Unable to retrieve inverter state. Inverter might be offline.")
+
+        return response
+
 
 

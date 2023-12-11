@@ -1,59 +1,93 @@
-# from homeassistant.helpers.entity import Entity
+import logging
 
-# class PVTrackerSensor(Entity):
-#     """Representation of port_state."""
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+)
+from homeassistant.core import callback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.const import POWER_WATT
 
-#     def __init__(self):
-#         """Initialize the sensor."""
-#         self._state = None
-#         self._pv_port = None
-#         self._pv_voltage = None
-#         self._pv_current = None
-#         self._pv_power = None
-#         self._pv_energy_total = None
-#         self._pv_daily_yield = None
 
-#     @property
-#     def name(self):
-#         """Return the name of the sensor."""
-#         return "PV Tracker Power"
+from .const import DOMAIN
 
-#     @property
-#     def state(self):
-#         """Return the state of the sensor."""
-#         return self._state
+_LOGGER = logging.getLogger(__name__)
 
-#     @property
-#     def unit_of_measurement(self):
-#         """Return the unit of measurement."""
-#         return "W"
+async def async_setup_entry(hass, entry, async_add_devices):
+    """Setup sensor platform."""
+    coordinator = hass.data[DOMAIN][entry.entry_id]
+    sensors = []
 
-#     @property
-#     def device_state_attributes(self):
-#         """Return the state attributes."""
-#         return {
-#             "pv_voltage": self._pv_voltage,
-#             "pv_current": self._pv_current,
-#             "pv_power": self._pv_power,
-#             "pv_energy_total": self._pv_energy_total,
-#             "pv_daily_yield": self._pv_daily_yield,
-#             # Add more attributes as needed
-#         }
+    data = {
+        "attribute_name": "pv_current_power",
+    }
 
-#     def update_from_inverter(self, response):
-#         """Update the tracker sensor using data from the inverter."""
-#         try:
-#             # Assuming response is a dictionary with the current power value
-#             self._state = float(response.get("pv_current_power"))
+    sensors.append(HoymilesDataSensorEntity(coordinator, entry, data))
 
-#             # Extracting tracker-specific information
-#             tracker_info = response.get("port_state", {})
-#             self._pv_voltage = tracker_info.get("pv_vol")
-#             self._pv_current = tracker_info.get("pv_cur")
-#             self._pv_power = tracker_info.get("pv_power")
-#             self._pv_energy_total = tracker_info.get("pv_energy_total")
-#             self._pv_daily_yield = tracker_info.get("pv_daily_yield")
-#             # Add more attribute assignments as needed
-#         except Exception as error:
-#             _LOGGER.error("Error updating PV tracker sensor: %s", error)
-#             self._state = None
+    async_add_devices(sensors)
+
+class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
+    _attr_has_entity_name = True
+    """An entity using CoordinatorEntity.
+
+    The CoordinatorEntity class provides:
+      should_poll
+      async_update
+      async_added_to_hass
+      available
+
+    """
+
+    def __init__(self, coordinator, config_entry, data):
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(coordinator)
+        self._config_entry = config_entry
+        self._attribute_name = data["attribute_name"]
+        self._state = 0.0
+        self._uniqe_id = f"hoymiles_{self._attribute_name}"
+
+        self.update_state_value()
+
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+    
+        #self._state = self.coordinator.data[self.idx]["state"]
+
+        self.update_state_value()
+
+
+        super()._handle_coordinator_update()
+
+    @property
+    def name(self):
+        """Return the name of the sensor."""
+        return "PV Current Power"
+    
+    @property
+    def unique_id(self):
+        """Return a unique ID to use for this entity."""
+        return self._uniqe_id
+    
+    @property
+    def state(self):
+        """Return the state of the sensor."""
+        return self._state
+
+    @property
+    def unit_of_measurement(self):
+        """Return the unit of measurement."""
+        return POWER_WATT
+
+    @property
+    def device_class(self):
+        """Return the device class of the sensor."""
+        return SensorDeviceClass.POWER
+    
+
+    def update_state_value(self):
+        attribute_value = getattr(self.coordinator.data, self._attribute_name, None)
+        self._state = attribute_value / 10.0
+    
+

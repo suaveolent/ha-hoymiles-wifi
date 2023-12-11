@@ -19,7 +19,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
     sensors = []
 
     data = {
-        "attribute_name": "pv_current_power",
+        "attribute_name": "pv_current_power", #"inverter_state.pv_current_power"
     }
 
     sensors.append(HoymilesDataSensorEntity(coordinator, entry, data))
@@ -84,7 +84,11 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     
 
     def update_state_value(self):
-        attribute_value = getattr(self.coordinator.data, self._attribute_name, None)
-        self._state = attribute_value / 10.0
+
+        if self.coordinator.data == None:
+            self._state = 0.0
+        else:
+            attribute_value = getattr(self.coordinator.data, self._attribute_name, None)
+            self._state = attribute_value / 10.0
     
 

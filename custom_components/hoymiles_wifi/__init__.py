@@ -110,10 +110,11 @@ class HoymilesDataUpdatecoordinatorInverter(DataUpdateCoordinator):
 
         if response:
             _LOGGER.debug(f"Inverter State: {response}")
+            return response
         else:
             _LOGGER.debug("Unable to retrieve inverter state. Inverter might be offline.")
+            return None
 
-        return response
 
 
 

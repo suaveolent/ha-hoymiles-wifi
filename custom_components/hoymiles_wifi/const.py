@@ -10,8 +10,8 @@ ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"
 
 CONF_UPDATE_INTERVAL = "update_interval"
 
-DEFAULT_UPDATE_INTERVAL = timedelta(seconds=30)
-MIN_UPDATE_INTERVAL = timedelta(seconds=30)
+DEFAULT_UPDATE_INTERVAL = timedelta(seconds=35)
+MIN_UPDATE_INTERVAL = timedelta(seconds=35)
 
 
 # Platforms

@@ -6,7 +6,7 @@ import socket
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.core import callback
 
 from .const import (
     DOMAIN,
@@ -27,7 +27,7 @@ DATA_SCHEMA = vol.Schema({
         vol.Optional(CONF_SENSOR_PREFIX): str,
 })
 
-class HoymilesInverterFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Hoymiles Inverter config flow."""
 
     VERSION = 1
@@ -40,14 +40,9 @@ class HoymilesInverterFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             host = user_input[CONF_HOST]
             update_interval = user_input[CONF_UPDATE_INTERVAL]
-            sensor_prefix = user_input[CONF_SENSOR_PREFIX]  # Get the new input value
+            sensor_prefix = user_input[CONF_SENSOR_PREFIX]
 
-            # Validate the provided host and update_interval
-            if not is_valid_host(host):
-                errors[CONF_HOST] = "invalid_host"
-
-            if not await validate_update_interval(update_interval):
-                errors[CONF_UPDATE_INTERVAL] = "invalid_update_interval"
+            errors = await validate_configuration(host, update_interval, sensor_prefix)
 
             if not errors:
                 return self.async_create_entry(
@@ -68,6 +63,72 @@ class HoymilesInverterFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_create_entry(
             title=import_config[CONF_HOST], data=import_config
         )
+    
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry):
+        """Get the options flow for this handler."""
+        return HoymilesInverterOptionsFlowHandler(config_entry)
+    
+
+
+class HoymilesInverterOptionsFlowHandler(config_entries.OptionsFlow):
+    """Hoymiles Inverter options flow."""
+
+    def __init__(self, config_entry):
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input=None):
+        """Manage the options."""
+        return await self.async_step_user_options()
+
+    async def async_step_user_options(self, user_input=None):
+        """Handle a flow initiated by the user."""
+
+        errors = {}
+        
+        if user_input is not None:
+            host = user_input.get(CONF_HOST)
+            update_interval = user_input.get(CONF_UPDATE_INTERVAL)
+            sensor_prefix = user_input.get(CONF_SENSOR_PREFIX)
+
+            errors = await validate_configuration(host, update_interval, sensor_prefix)
+
+            if not errors:
+                return self.async_create_entry(
+                    title=host, data={
+                        CONF_HOST: host,
+                        CONF_SENSOR_PREFIX: sensor_prefix,
+                        CONF_UPDATE_INTERVAL: update_interval
+                    }
+                )
+            
+        return self.async_show_form(
+            step_id="user_options",
+            data_schema=vol.Schema({
+                vol.Required(CONF_HOST, default=getattr(self.config_entry.data, CONF_HOST, "")): str,
+                vol.Optional(
+                    CONF_UPDATE_INTERVAL,
+                    default=getattr(self.config_entry.data, CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS)
+                ): vol.All(vol.Coerce(int), vol.Range(min=MIN_UPDATE_INTERVAL_SECONDS)),
+                vol.Optional(CONF_SENSOR_PREFIX, default=getattr(self.config_entry.data, CONF_SENSOR_PREFIX, "")): str,
+            }),
+            errors=errors,
+        )
+            
+async def validate_configuration(host, update_interval, sensor_prefix):
+    """Validate the provided configuration."""
+    errors = {}
+
+    if not is_valid_host(host):
+        errors[CONF_HOST] = "invalid_host"
+
+    if not await validate_update_interval(update_interval):
+        errors[CONF_UPDATE_INTERVAL] = "invalid_update_interval"
+
+    return errors
+    
 
 def is_valid_host(host):
     """Check if the provided value is a valid DNS name or IP address."""
@@ -82,9 +143,10 @@ def is_valid_host(host):
             return True
         except (socket.herror, ValueError):
             return False
+        
 
 async def validate_update_interval(update_interval):
     """Validate the provided update_interval."""
-    # Add your validation logic here
     # Return True if the update_interval is valid, False otherwise
     return True
+

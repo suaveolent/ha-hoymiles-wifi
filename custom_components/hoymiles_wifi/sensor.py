@@ -178,6 +178,8 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
         self._value = None
         self._uniqe_id = f"hoymiles_{self._attribute_name}"
 
+        self._dtu_sn = self.coordinator.data.dtu_sn if self.coordinator.data is not None else ""
+
         self.update_state_value()
 
     @callback
@@ -209,6 +211,17 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     @property
     def state_class(self):
         return self._state_class
+    
+    @property
+    def device_info(self):
+        """Return device information about the sensor."""
+        return {
+            "identifiers": {(DOMAIN, self._config_entry.entry_id)},
+            "name": "Hoymiles HMS-XXXXW-T2",
+            "manufacturer": "Hoymiles",
+            "model": "HMS",
+            "serial_number": self._dtu_sn,
+        }
     
 
     def update_state_value(self):

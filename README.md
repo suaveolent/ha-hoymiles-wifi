@@ -13,7 +13,7 @@ This Home Assistant custom component utilizes the `hoymiles-wifi` Python library
    - **URL:** `https://github.com/suaveolent/ha-hoymiles-wifi`
    - **Category:** Integration
 
-5. Click "Save" and then click "Install" on the `hoymiles-wifi` integration.
+5. Click "Save" and then click "Install" on the `Hoymiles HMS-XXXXW-T2` integration.
 
 
 ### Option 2: Manual Installation

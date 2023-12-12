@@ -6,15 +6,15 @@ This Home Assistant custom component utilizes the `hoymiles-wifi` Python library
 
 ## Installation
 
-### Option 1: HACS (Home Assistant Community Store)
+1. Open the HACS panel in your Home Assistant frontend.
+2. Navigate to the "Integrations" tab.
+3. Click the three dots in the top-right corner and select "Custom Repositories."
+4. Add a new custom repository:
+   - **URL:** `https://github.com/suaveolent/ha-hoymiles-wifi`
+   - **Category:** Integration
 
-1. Make sure you have [HACS](https://hacs.xyz/) installed and configured in your Home Assistant instance.
-2. Open the HACS panel in your Home Assistant frontend.
-3. Navigate to the "Integrations" tab.
-4. Click the "+" button in the bottom right.
-5. Search for "hoymiles-wifi" in the search bar.
-6. Click on the search result, then click "Install."
-7. Restart your Home Assistant instance to apply the changes.
+5. Click "Save" and then click "Install" on the `hoymiles-wifi` integration.
+
 
 ### Option 2: Manual Installation
 

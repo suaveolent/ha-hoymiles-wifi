@@ -39,8 +39,8 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
 
         if user_input is not None:
             host = user_input[CONF_HOST]
-            update_interval = user_input[CONF_UPDATE_INTERVAL]
-            sensor_prefix = user_input[CONF_SENSOR_PREFIX]
+            update_interval = user_input.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS)
+            sensor_prefix = user_input.get(CONF_SENSOR_PREFIX, "")
 
             errors = await validate_configuration(host, update_interval, sensor_prefix)
 
@@ -87,32 +87,39 @@ class HoymilesInverterOptionsFlowHandler(config_entries.OptionsFlow):
         """Handle a flow initiated by the user."""
 
         errors = {}
-        
+
         if user_input is not None:
             host = user_input.get(CONF_HOST)
             update_interval = user_input.get(CONF_UPDATE_INTERVAL)
             sensor_prefix = user_input.get(CONF_SENSOR_PREFIX)
 
+            _LOGGER.error(f"Host {host}, update_interval: {update_interval}, sensor_prefix: {sensor_prefix}")
+
             errors = await validate_configuration(host, update_interval, sensor_prefix)
 
             if not errors:
                 return self.async_create_entry(
-                    title=host, data={
+                    title="", data={
                         CONF_HOST: host,
                         CONF_SENSOR_PREFIX: sensor_prefix,
                         CONF_UPDATE_INTERVAL: update_interval
                     }
                 )
             
+        options = self.config_entry.options
+        host = options.get(CONF_HOST)
+        update_interval = options.get(CONF_UPDATE_INTERVAL)
+        sensor_prefix = options.get(CONF_SENSOR_PREFIX)
+            
         return self.async_show_form(
             step_id="user_options",
             data_schema=vol.Schema({
-                vol.Required(CONF_HOST, default=getattr(self.config_entry.data, CONF_HOST, "")): str,
+                vol.Required(CONF_HOST, default=host): str,
                 vol.Optional(
                     CONF_UPDATE_INTERVAL,
-                    default=getattr(self.config_entry.data, CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS)
-                ): vol.All(vol.Coerce(int), vol.Range(min=MIN_UPDATE_INTERVAL_SECONDS)),
-                vol.Optional(CONF_SENSOR_PREFIX, default=getattr(self.config_entry.data, CONF_SENSOR_PREFIX, "")): str,
+                    default=update_interval
+                ): vol.All(vol.Coerce(int), vol.Range(min=timedelta(seconds=MIN_UPDATE_INTERVAL_SECONDS).seconds)),
+                vol.Optional(CONF_SENSOR_PREFIX, description={"suggested_value": sensor_prefix}): str,
             }),
             errors=errors,
         )
@@ -141,7 +148,7 @@ def is_valid_host(host):
         try:
             ipaddress.ip_address(socket.gethostbyname(host))
             return True
-        except (socket.herror, ValueError):
+        except (socket.herror, ValueError, socket.gaierror):
             return False
         
 

@@ -20,7 +20,8 @@ from homeassistant.const import (
 
 from .const import (
     CONF_SENSOR_PREFIX,
-    DOMAIN
+    DOMAIN,
+    HASS_DATA_COORDINATOR,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -152,7 +153,8 @@ HOYMILES_SENSORS = [
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
-    coordinator = hass.data[DOMAIN][entry.entry_id]
+    hass_data = hass.data[DOMAIN][entry.entry_id]
+    coordinator = hass_data[HASS_DATA_COORDINATOR]
     sensors = []
 
     for sensor_data in HOYMILES_SENSORS:
@@ -160,12 +162,18 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
     async_add_devices(sensors)
 
+
+def get_hoymiles_unique_id(config_entry_id: str, key: str, serial_number: str) -> str:
+    """Create a uniqe id for a SunSpec entity"""
+    return f"hoymiles_{config_entry_id}_{key}-{serial_number}"
+
+
 class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
 
     def __init__(self, coordinator, config_entry, data):
         """Pass coordinator to CoordinatorEntity."""
-        super().__init__(coordinator)
+        super().__init__(coordinator, config_entry)
         self._config_entry = config_entry
 
         self._sensor_prefix = f'{config_entry.data.get(CONF_SENSOR_PREFIX)} ' if config_entry.data.get(CONF_SENSOR_PREFIX) else ""
@@ -178,7 +186,12 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
         self._value = None
         self._uniqe_id = f"hoymiles_{self._attribute_name}"
 
-        self._dtu_sn = self.coordinator.data.dtu_sn if self.coordinator.data is not None else ""
+        self._dtu_sn = ""
+
+        if self.coordinator is not None and hasattr(self.coordinator, "data"):
+            self._dtu_sn = getattr(self.coordinator.data, "dtu_sn", "")
+
+        self._uniqe_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name, self._dtu_sn)
 
         self.update_state_value()
 
@@ -219,13 +232,14 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
             "identifiers": {(DOMAIN, self._config_entry.entry_id)},
             "name": "Hoymiles HMS-XXXXW-T2",
             "manufacturer": "Hoymiles",
-            "model": "HMS",
+            "model": "HMS-XXXXW-T2",
             "serial_number": self._dtu_sn,
+            "via_device": (DOMAIN, "inverter_state"),
         }
     
 
     def update_state_value(self):
-        if self.coordinator.data == None:
+        if self.coordinator is not None and (not hasattr(self.coordinator, "data") or self.coordinator.data == None):
             self._native_value = 0.0
         else:
             if "[" in self._attribute_name and "]" in self._attribute_name:

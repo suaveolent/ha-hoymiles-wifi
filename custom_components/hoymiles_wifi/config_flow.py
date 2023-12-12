@@ -1,6 +1,8 @@
 import logging
 import ipaddress
 import voluptuous as vol
+from datetime import timedelta
+import socket
 
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST
@@ -9,8 +11,9 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from .const import (
     DOMAIN,
     CONF_UPDATE_INTERVAL,
-    DEFAULT_UPDATE_INTERVAL,
-    MIN_UPDATE_INTERVAL
+    CONF_SENSOR_PREFIX,
+    DEFAULT_UPDATE_INTERVAL_SECONDS,
+    MIN_UPDATE_INTERVAL_SECONDS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -19,8 +22,9 @@ DATA_SCHEMA = vol.Schema({
         vol.Required(CONF_HOST): str,
         vol.Optional(
             CONF_UPDATE_INTERVAL,
-            default=DEFAULT_UPDATE_INTERVAL.seconds,
-        ): vol.All(vol.Coerce(int), vol.Range(min=MIN_UPDATE_INTERVAL.seconds)),
+            default=timedelta(seconds=DEFAULT_UPDATE_INTERVAL_SECONDS).seconds,
+        ): vol.All(vol.Coerce(int), vol.Range(min=timedelta(seconds=MIN_UPDATE_INTERVAL_SECONDS).seconds)),
+        vol.Optional(CONF_SENSOR_PREFIX): str,
 })
 
 class HoymilesInverterFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
@@ -36,6 +40,7 @@ class HoymilesInverterFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             host = user_input[CONF_HOST]
             update_interval = user_input[CONF_UPDATE_INTERVAL]
+            sensor_prefix = user_input[CONF_SENSOR_PREFIX]  # Get the new input value
 
             # Validate the provided host and update_interval
             if not is_valid_host(host):
@@ -46,7 +51,11 @@ class HoymilesInverterFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             if not errors:
                 return self.async_create_entry(
-                    title=host, data={CONF_HOST: host, CONF_UPDATE_INTERVAL: update_interval}
+                    title=host, data={
+                        CONF_HOST: host,
+                        CONF_SENSOR_PREFIX: sensor_prefix,
+                        CONF_UPDATE_INTERVAL: update_interval
+                    }
                 )
 
         return self.async_show_form(

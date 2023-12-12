@@ -18,7 +18,10 @@ from homeassistant.const import (
 )
 
 
-from .const import DOMAIN
+from .const import (
+    CONF_SENSOR_PREFIX,
+    DOMAIN
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -164,7 +167,9 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator)
         self._config_entry = config_entry
-        self._name = data["name"]
+
+        self._sensor_prefix = f'{config_entry.data.get(CONF_SENSOR_PREFIX)} ' if config_entry.data.get(CONF_SENSOR_PREFIX) else ""
+        self._name = f'{self._sensor_prefix}{data["name"]}'
         self._attribute_name = data["attribute_name"]
         self._conversion_factor = data["conversion_factor"]
         self._unit_of_measurement = data["unit_of_measurement"]
@@ -174,7 +179,6 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
         self._uniqe_id = f"hoymiles_{self._attribute_name}"
 
         self.update_state_value()
-
 
     @callback
     def _handle_coordinator_update(self) -> None:

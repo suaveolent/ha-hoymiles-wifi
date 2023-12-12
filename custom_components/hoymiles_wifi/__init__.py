@@ -15,7 +15,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from .const import (
     CONF_UPDATE_INTERVAL,
-    DEFAULT_UPDATE_INTERVAL,
     DOMAIN,
     PLATFORMS,
     STARTUP_MESSAGE,

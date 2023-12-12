@@ -6,7 +6,8 @@
           "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
           "data": {
             "host": "Hostname/IP",
-            "update_interval": "Update Interval (seconds)"
+            "update_interval": "Update Interval (seconds)",
+            "sensor_prefix" : "Sensor Prefix"
           }
         }
       },

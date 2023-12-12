@@ -3,47 +3,174 @@ import logging
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    STATE_CLASS_MEASUREMENT,
+    STATE_CLASS_TOTAL_INCREASING,
 )
 from homeassistant.core import callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import POWER_WATT
+from homeassistant.const import (
+    ELECTRIC_CURRENT_AMPERE,
+    ELECTRIC_POTENTIAL_VOLT,
+    ENERGY_WATT_HOUR,
+    FREQUENCY_HERTZ,
+    POWER_WATT,
+    TEMP_CELSIUS,
+)
 
 
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
+
+HOYMILES_SENSORS = [
+    {
+        "name": "PV Current Power",
+        "attribute_name": "pv_current_power",
+        "conversion_factor": 0.1,
+        "unit_of_measurement": POWER_WATT,
+        "device_class": SensorDeviceClass.POWER,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "PV Daily Yield",
+        "attribute_name": "pv_daily_yield",
+        "conversion_factor": None,
+        "unit_of_measurement": ENERGY_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": STATE_CLASS_TOTAL_INCREASING,
+    },
+    {
+        "name": "Inverter Grid Voltage",
+        "attribute_name": "inverter_state[0].grid_voltage",
+        "conversion_factor": 0.1,
+        "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
+        "device_class": SensorDeviceClass.VOLTAGE,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Inverter Grid Frequency",
+        "attribute_name": "inverter_state[0].grid_freq",
+        "conversion_factor": 0.01,
+        "unit_of_measurement": FREQUENCY_HERTZ,
+        "device_class": SensorDeviceClass.FREQUENCY,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Inverter Temperature",
+        "attribute_name": "inverter_state[0].temperature",
+        "conversion_factor": 0.1,
+        "unit_of_measurement": TEMP_CELSIUS,
+        "device_class": SensorDeviceClass.TEMPERATURE,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Port 1 Voltage",
+        "attribute_name": "port_state[0].pv_vol",
+        "conversion_factor": 0.1,
+        "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
+        "device_class": SensorDeviceClass.VOLTAGE,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Port 1 Current",
+        "attribute_name": "port_state[0].pv_cur",
+        "conversion_factor": 0.01,
+        "unit_of_measurement": ELECTRIC_CURRENT_AMPERE,
+        "device_class": SensorDeviceClass.CURRENT,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Port 1 Power",
+        "attribute_name": "port_state[0].pv_power",
+        "conversion_factor": 0.1,
+        "unit_of_measurement": POWER_WATT,
+        "device_class": SensorDeviceClass.POWER,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Port 1 Energy Total",
+        "attribute_name": "port_state[0].pv_energy_total",
+        "conversion_factor": None,
+        "unit_of_measurement": ENERGY_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": STATE_CLASS_TOTAL_INCREASING,
+    },
+    {
+        "name": "Port 1 Daily Yield",
+        "attribute_name": "port_state[0].pv_daily_yield",
+        "conversion_factor": None,
+        "unit_of_measurement": ENERGY_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": STATE_CLASS_TOTAL_INCREASING,
+    },
+        {
+        "name": "Port 2 Voltage",
+        "attribute_name": "port_state[1].pv_vol",
+        "conversion_factor": 0.1,
+        "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
+        "device_class": SensorDeviceClass.VOLTAGE,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Port 2 Current",
+        "attribute_name": "port_state[1].pv_cur",
+        "conversion_factor": 0.01,
+        "unit_of_measurement": ELECTRIC_CURRENT_AMPERE,
+        "device_class": SensorDeviceClass.CURRENT,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Port 2 Power",
+        "attribute_name": "port_state[1].pv_power",
+        "conversion_factor": 0.1,
+        "unit_of_measurement": POWER_WATT,
+        "device_class": SensorDeviceClass.POWER,
+        "state_class": STATE_CLASS_MEASUREMENT,
+    },
+    {
+        "name": "Port 2 Energy Total",
+        "attribute_name": "port_state[1].pv_energy_total",
+        "conversion_factor": None,
+        "unit_of_measurement": ENERGY_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": STATE_CLASS_TOTAL_INCREASING,
+    },
+    {
+        "name": "Port 2 Daily Yield",
+        "attribute_name": "port_state[1].pv_daily_yield",
+        "conversion_factor": None,
+        "unit_of_measurement": ENERGY_WATT_HOUR,
+        "device_class": SensorDeviceClass.ENERGY,
+        "state_class": STATE_CLASS_TOTAL_INCREASING,
+    },
+]
+
+
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
     coordinator = hass.data[DOMAIN][entry.entry_id]
     sensors = []
 
-    data = {
-        "attribute_name": "pv_current_power", #"inverter_state.pv_current_power"
-    }
-
-    sensors.append(HoymilesDataSensorEntity(coordinator, entry, data))
+    for sensor_data in HOYMILES_SENSORS:
+        sensors.append(HoymilesDataSensorEntity(coordinator, entry, sensor_data))
 
     async_add_devices(sensors)
 
 class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
-    """An entity using CoordinatorEntity.
-
-    The CoordinatorEntity class provides:
-      should_poll
-      async_update
-      async_added_to_hass
-      available
-
-    """
 
     def __init__(self, coordinator, config_entry, data):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator)
         self._config_entry = config_entry
+        self._name = data["name"]
         self._attribute_name = data["attribute_name"]
-        self._state = 0.0
+        self._conversion_factor = data["conversion_factor"]
+        self._unit_of_measurement = data["unit_of_measurement"]
+        self._device_class = data["device_class"]
+        self._state_class = data["state_class"]
+        self._value = None
         self._uniqe_id = f"hoymiles_{self._attribute_name}"
 
         self.update_state_value()
@@ -52,43 +179,56 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     @callback
     def _handle_coordinator_update(self) -> None:
         """Handle updated data from the coordinator."""
-        
         self.update_state_value()
-
         super()._handle_coordinator_update()
 
     @property
     def name(self):
-        """Return the name of the sensor."""
-        return "PV Current Power"
+        return self._name
     
     @property
     def unique_id(self):
-        """Return a unique ID to use for this entity."""
         return self._uniqe_id
     
     @property
-    def state(self):
-        """Return the state of the sensor."""
-        return self._state
+    def native_value(self):
+        return self._native_value
 
     @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement."""
-        return POWER_WATT
+    def native_unit_of_measurement(self):
+        return self._unit_of_measurement
 
     @property
     def device_class(self):
-        """Return the device class of the sensor."""
-        return SensorDeviceClass.POWER
+        return self._device_class
+    
+    @property
+    def state_class(self):
+        return self._state_class
     
 
     def update_state_value(self):
-
         if self.coordinator.data == None:
-            self._state = 0.0
+            self._native_value = 0.0
         else:
-            attribute_value = getattr(self.coordinator.data, self._attribute_name, None)
-            self._state = attribute_value / 10.0
-    
+            if "[" in self._attribute_name and "]" in self._attribute_name:
+                # Extracting the list index and attribute dynamically
+                attribute_name, index = self._attribute_name.split("[")
+                index = int(index.split("]")[0])
+                nested_attribute = self._attribute_name.split("].")[1] if "]." in self._attribute_name else None
+
+                attribute = getattr(self.coordinator.data, attribute_name.split("[")[0], [])
+
+                if index < len(attribute):
+                    if nested_attribute is not None:
+                        self._native_value = getattr(attribute[index], nested_attribute, None)
+                    else:
+                        self._native_value = attribute[index]
+                else:
+                    self._native_value = None
+            else:
+                self._native_value = getattr(self.coordinator.data, self._attribute_name, None)
+
+            if self._conversion_factor != None:
+                self._native_value *= self._conversion_factor             
 

@@ -163,9 +163,9 @@ async def async_setup_entry(hass, entry, async_add_devices):
     async_add_devices(sensors)
 
 
-def get_hoymiles_unique_id(config_entry_id: str, key: str, serial_number: str) -> str:
+def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
     """Create a uniqe id for a SunSpec entity"""
-    return f"hoymiles_{config_entry_id}_{key}-{serial_number}"
+    return f"hoymiles_{config_entry_id}_{key}"
 
 
 class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
@@ -191,7 +191,7 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
         if self.coordinator is not None and hasattr(self.coordinator, "data"):
             self._dtu_sn = getattr(self.coordinator.data, "dtu_sn", "")
 
-        self._uniqe_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name, self._dtu_sn)
+        self._uniqe_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name)
 
         self.update_state_value()
 

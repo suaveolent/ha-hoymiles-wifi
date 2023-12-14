@@ -240,7 +240,7 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
 
     def update_state_value(self):
         if self.coordinator is not None and (not hasattr(self.coordinator, "data") or self.coordinator.data == None):
-            self._native_value = 0.0
+            self._native_value = None
         else:
             if "[" in self._attribute_name and "]" in self._attribute_name:
                 # Extracting the list index and attribute dynamically

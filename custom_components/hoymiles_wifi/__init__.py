@@ -119,7 +119,7 @@ class HoymilesDataUpdatecoordinatorInverter(DataUpdateCoordinator):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
-        response = self._inverter.update_state()
+        response = self._inverter.get_real_data_new()
 
         if not self._entities_added:
             for platform in PLATFORMS:
@@ -131,10 +131,10 @@ class HoymilesDataUpdatecoordinatorInverter(DataUpdateCoordinator):
             self._entities_added = True
 
         if response:
-            _LOGGER.debug(f"Inverter State: {response}")
+            _LOGGER.debug(f"Inverter Real data: {response}")
             return response
         else:
-            _LOGGER.debug("Unable to retrieve inverter state. Inverter might be offline.")
+            _LOGGER.debug("Unable to retrieve real data new. Inverter might be offline.")
             return None
 
 

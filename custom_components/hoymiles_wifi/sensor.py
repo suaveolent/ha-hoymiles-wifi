@@ -29,32 +29,32 @@ _LOGGER = logging.getLogger(__name__)
 
 HOYMILES_SENSORS = [
     {
-        "name": "PV Current Power",
-        "attribute_name": "pv_current_power",
+        "name": "Power",
+        "attribute_name": "dtu_power",
         "conversion_factor": 0.1,
         "unit_of_measurement": POWER_WATT,
         "device_class": SensorDeviceClass.POWER,
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "PV Daily Yield",
-        "attribute_name": "pv_daily_yield",
+        "name": "Daily Energy",
+        "attribute_name": "dtu_daily_energy",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,
         "device_class": SensorDeviceClass.ENERGY,
         "state_class": STATE_CLASS_TOTAL_INCREASING,
     },
     {
-        "name": "Inverter Grid Voltage",
-        "attribute_name": "inverter_state[0].grid_voltage",
+        "name": "Grid Voltage",
+        "attribute_name": "sgs_data[0].voltage",
         "conversion_factor": 0.1,
         "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
         "device_class": SensorDeviceClass.VOLTAGE,
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Inverter Grid Frequency",
-        "attribute_name": "inverter_state[0].grid_freq",
+        "name": "Grid Frequency",
+        "attribute_name": "sgs_data[0].frequency",
         "conversion_factor": 0.01,
         "unit_of_measurement": FREQUENCY_HERTZ,
         "device_class": SensorDeviceClass.FREQUENCY,
@@ -62,7 +62,7 @@ HOYMILES_SENSORS = [
     },
     {
         "name": "Inverter Temperature",
-        "attribute_name": "inverter_state[0].temperature",
+        "attribute_name": "sgs_data[0].temperature",
         "conversion_factor": 0.1,
         "unit_of_measurement": TEMP_CELSIUS,
         "device_class": SensorDeviceClass.TEMPERATURE,
@@ -70,7 +70,7 @@ HOYMILES_SENSORS = [
     },
     {
         "name": "Port 1 Voltage",
-        "attribute_name": "port_state[0].pv_vol",
+        "attribute_name": "pv_data[0].voltage",
         "conversion_factor": 0.1,
         "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
         "device_class": SensorDeviceClass.VOLTAGE,
@@ -78,7 +78,7 @@ HOYMILES_SENSORS = [
     },
     {
         "name": "Port 1 Current",
-        "attribute_name": "port_state[0].pv_cur",
+        "attribute_name": "pv_data[0].current",
         "conversion_factor": 0.01,
         "unit_of_measurement": ELECTRIC_CURRENT_AMPERE,
         "device_class": SensorDeviceClass.CURRENT,
@@ -86,23 +86,23 @@ HOYMILES_SENSORS = [
     },
     {
         "name": "Port 1 Power",
-        "attribute_name": "port_state[0].pv_power",
+        "attribute_name": "pv_data[0].power",
         "conversion_factor": 0.1,
         "unit_of_measurement": POWER_WATT,
         "device_class": SensorDeviceClass.POWER,
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 1 Energy Total",
-        "attribute_name": "port_state[0].pv_energy_total",
+        "name": "Port 1 Total Energy",
+        "attribute_name": "pv_data[0].energy_total",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,
         "device_class": SensorDeviceClass.ENERGY,
         "state_class": STATE_CLASS_TOTAL_INCREASING,
     },
     {
-        "name": "Port 1 Daily Yield",
-        "attribute_name": "port_state[0].pv_daily_yield",
+        "name": "Port 1 Daily Energy",
+        "attribute_name": "pv_data[0].energy_daily",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,
         "device_class": SensorDeviceClass.ENERGY,
@@ -110,7 +110,7 @@ HOYMILES_SENSORS = [
     },
         {
         "name": "Port 2 Voltage",
-        "attribute_name": "port_state[1].pv_vol",
+        "attribute_name": "pv_data[1].voltage",
         "conversion_factor": 0.1,
         "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
         "device_class": SensorDeviceClass.VOLTAGE,
@@ -118,7 +118,7 @@ HOYMILES_SENSORS = [
     },
     {
         "name": "Port 2 Current",
-        "attribute_name": "port_state[1].pv_cur",
+        "attribute_name": "pv_data[1].current",
         "conversion_factor": 0.01,
         "unit_of_measurement": ELECTRIC_CURRENT_AMPERE,
         "device_class": SensorDeviceClass.CURRENT,
@@ -126,30 +126,29 @@ HOYMILES_SENSORS = [
     },
     {
         "name": "Port 2 Power",
-        "attribute_name": "port_state[1].pv_power",
+        "attribute_name": "pv_data[1].power",
         "conversion_factor": 0.1,
         "unit_of_measurement": POWER_WATT,
         "device_class": SensorDeviceClass.POWER,
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 2 Energy Total",
-        "attribute_name": "port_state[1].pv_energy_total",
+        "name": "Port 2 Total Energy",
+        "attribute_name": "pv_data[1].energy_total",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,
         "device_class": SensorDeviceClass.ENERGY,
         "state_class": STATE_CLASS_TOTAL_INCREASING,
     },
     {
-        "name": "Port 2 Daily Yield",
-        "attribute_name": "port_state[1].pv_daily_yield",
+        "name": "Port 2 Daily Energy",
+        "attribute_name": "pv_data[1].energy_daily",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,
         "device_class": SensorDeviceClass.ENERGY,
         "state_class": STATE_CLASS_TOTAL_INCREASING,
     },
 ]
-
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
@@ -237,7 +236,6 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
             "via_device": (DOMAIN, "inverter_state"),
         }
     
-
     def update_state_value(self):
         if self.coordinator is not None and (not hasattr(self.coordinator, "data") or self.coordinator.data == None):
             self._native_value = None
@@ -260,6 +258,6 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
             else:
                 self._native_value = getattr(self.coordinator.data, self._attribute_name, None)
 
-            if self._conversion_factor != None:
+            if self._native_value != None and self._conversion_factor != None:
                 self._native_value *= self._conversion_factor             
 

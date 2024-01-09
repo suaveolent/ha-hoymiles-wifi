@@ -102,7 +102,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_TOTAL_INCREASING,
     },
     {
-        "name": "Port 1 Daily Energy",
+        "name": "Port 1 DC Daily Energy",
         "attribute_name": "pv_data[0].energy_daily",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,

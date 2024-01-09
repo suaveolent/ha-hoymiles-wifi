@@ -38,7 +38,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Daily Energy",
+        "name": "AC Daily Energy",
         "attribute_name": "dtu_daily_energy",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,

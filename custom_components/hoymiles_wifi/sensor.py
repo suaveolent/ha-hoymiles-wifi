@@ -358,7 +358,6 @@ class HoymilesDiagnosticSensorEntity(HoymilesSensorEntity):
         return EntityCategory.DIAGNOSTIC
     
     def update_state_value(self):
-        separator = ":"
         
         if "[" in self._attribute_name and "]" in self._attribute_name:
             attribute_parts = self._attribute_name.split("[")
@@ -368,9 +367,9 @@ class HoymilesDiagnosticSensorEntity(HoymilesSensorEntity):
             nested_attribute = attribute_parts[1].split("]")[1] if "]" in attribute_name else None
 
             new_attribute_names = [f"{attribute_name}{i}" for i in range(start, end + 1)]
-            combined_value = separator.join(str(getattr(self.coordinator.data, attr, "")) for attr in new_attribute_names)
+            combined_value = self._separator.join(str(getattr(self.coordinator.data, attr, "")) for attr in new_attribute_names)
             if(self._conversion == CONVERSION_HEX):
-                combined_value = ":".join(hex(int(value))[2:] for value in combined_value.split(":")).upper()
+                combined_value = self._separator.join(hex(int(value))[2:] for value in combined_value.split(self._separator)).upper()
             self._native_value = combined_value
         else:
             self._native_value =  getattr(self.coordinator.data, self._attribute_name, None)

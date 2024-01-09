@@ -3,6 +3,7 @@ import logging
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
+    RestoreSensor,
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
 )
@@ -29,7 +30,7 @@ _LOGGER = logging.getLogger(__name__)
 
 HOYMILES_SENSORS = [
     {
-        "name": "Power",
+        "name": "AC Power",
         "attribute_name": "dtu_power",
         "conversion_factor": 0.1,
         "unit_of_measurement": POWER_WATT,
@@ -85,7 +86,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 1 Power",
+        "name": "Port 1 DC Power",
         "attribute_name": "pv_data[0].power",
         "conversion_factor": 0.1,
         "unit_of_measurement": POWER_WATT,
@@ -93,7 +94,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 1 Total Energy",
+        "name": "Port 1 DC Total Energy",
         "attribute_name": "pv_data[0].energy_total",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,
@@ -125,7 +126,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 2 Power",
+        "name": "Port 2 DC Power",
         "attribute_name": "pv_data[1].power",
         "conversion_factor": 0.1,
         "unit_of_measurement": POWER_WATT,
@@ -133,7 +134,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 2 Total Energy",
+        "name": "Port 2 DC Total Energy",
         "attribute_name": "pv_data[1].energy_total",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,
@@ -141,7 +142,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_TOTAL_INCREASING,
     },
     {
-        "name": "Port 2 Daily Energy",
+        "name": "Port 2 DC Daily Energy",
         "attribute_name": "pv_data[1].energy_daily",
         "conversion_factor": None,
         "unit_of_measurement": ENERGY_WATT_HOUR,
@@ -157,7 +158,12 @@ async def async_setup_entry(hass, entry, async_add_devices):
     sensors = []
 
     for sensor_data in HOYMILES_SENSORS:
-        sensors.append(HoymilesDataSensorEntity(coordinator, entry, sensor_data))
+               
+        device_class = sensor_data["device_class"]
+        if device_class == SensorDeviceClass.ENERGY:
+            sensors.append(HoymilesEnergySensorEntity(coordinator, entry, sensor_data))
+        else:
+            sensors.append(HoymilesDataSensorEntity(coordinator, entry, sensor_data))
 
     async_add_devices(sensors)
 
@@ -238,7 +244,7 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     
     def update_state_value(self):
         if self.coordinator is not None and (not hasattr(self.coordinator, "data") or self.coordinator.data == None):
-            self._native_value = None
+            self._native_value = 0.0
         else:
             if "[" in self._attribute_name and "]" in self._attribute_name:
                 # Extracting the list index and attribute dynamically
@@ -259,5 +265,38 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
                 self._native_value = getattr(self.coordinator.data, self._attribute_name, None)
 
             if self._native_value != None and self._conversion_factor != None:
-                self._native_value *= self._conversion_factor             
+                self._native_value *= self._conversion_factor
+
+class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):    
+
+    def __init__(self, coordinator, config_entry, data):
+        super().__init__(coordinator, config_entry, data)
+        self.last_known_value = None
+
+    @property
+    def native_value(self):
+        val = super().native_value
+        # For an energy sensor a value of 0 woulld mess up long term stats because of how total_increasing works
+        if val == 0:
+            _LOGGER.debug(
+                "Returning last known value instead of 0 for {self.name) to avoid resetting total_increasing counter"
+            )
+            self._assumed_state = True
+            return self.lastKnown
+        self.lastKnown = val
+        self._assumed_state = False
+        return val
+
+    async def async_added_to_hass(self) -> None:
+        """Call when entity about to be added to hass."""
+        await super().async_added_to_hass()
+        _LOGGER.debug(f"{self.name} Fetch last known state")
+        state = await self.async_get_last_sensor_data()
+        if state:
+            _LOGGER.debug(
+                f"{self.name} Got last known value from state: {state.native_value}"
+            )
+            self.last_known_value = state.native_value
+        else:
+            _LOGGER.debug(f"{self.name} No previous state was found")     
 

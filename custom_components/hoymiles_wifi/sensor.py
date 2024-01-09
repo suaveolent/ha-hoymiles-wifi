@@ -190,6 +190,8 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
         self._state_class = data["state_class"]
         self._value = None
         self._uniqe_id = f"hoymiles_{self._attribute_name}"
+        self._native_value = None
+        self._assumed_state = False
 
         self._dtu_sn = ""
 
@@ -229,6 +231,10 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     @property
     def state_class(self):
         return self._state_class
+    
+    @property
+    def assumed_state(self):
+        return self._assumed_state
     
     @property
     def device_info(self):
@@ -271,21 +277,21 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
     def __init__(self, coordinator, config_entry, data):
         super().__init__(coordinator, config_entry, data)
-        self.last_known_value = None
+        self._last_known_value = None
 
     @property
     def native_value(self):
-        val = super().native_value
+        super_native_value = super().native_value
         # For an energy sensor a value of 0 woulld mess up long term stats because of how total_increasing works
-        if val == 0:
+        if super_native_value == 0.0:
             _LOGGER.debug(
-                "Returning last known value instead of 0 for {self.name) to avoid resetting total_increasing counter"
+                "Returning last known value instead of 0.0 for {self.name) to avoid resetting total_increasing counter"
             )
             self._assumed_state = True
-            return self.lastKnown
-        self.lastKnown = val
+            return self._last_known_value
+        self._last_known_value = super_native_value
         self._assumed_state = False
-        return val
+        return super_native_value
 
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""

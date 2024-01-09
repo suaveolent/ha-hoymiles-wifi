@@ -1,8 +1,9 @@
 import logging
+import re
+
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
-    SensorEntity,
     RestoreSensor,
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
@@ -16,14 +17,18 @@ from homeassistant.const import (
     FREQUENCY_HERTZ,
     POWER_WATT,
     TEMP_CELSIUS,
+    EntityCategory,
 )
 
 
 from .const import (
-    CONF_SENSOR_PREFIX,
     DOMAIN,
     HASS_DATA_COORDINATOR,
+    HASS_CONFIG_COORDINATOR,
+    CONVERSION_HEX,
 )
+
+from .entity import HoymilesSensorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -70,7 +75,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 1 Voltage",
+        "name": "Port 1 DC Voltage",
         "attribute_name": "pv_data[0].voltage",
         "conversion_factor": 0.1,
         "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
@@ -78,7 +83,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 1 Current",
+        "name": "Port 1 DC Current",
         "attribute_name": "pv_data[0].current",
         "conversion_factor": 0.01,
         "unit_of_measurement": ELECTRIC_CURRENT_AMPERE,
@@ -110,7 +115,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_TOTAL_INCREASING,
     },
         {
-        "name": "Port 2 Voltage",
+        "name": "Port 2 DC Voltage",
         "attribute_name": "pv_data[1].voltage",
         "conversion_factor": 0.1,
         "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
@@ -118,7 +123,7 @@ HOYMILES_SENSORS = [
         "state_class": STATE_CLASS_MEASUREMENT,
     },
     {
-        "name": "Port 2 Current",
+        "name": "Port 2 DC Current",
         "attribute_name": "pv_data[1].current",
         "conversion_factor": 0.01,
         "unit_of_measurement": ELECTRIC_CURRENT_AMPERE,
@@ -151,37 +156,67 @@ HOYMILES_SENSORS = [
     },
 ]
 
+
+CONFIG_DIAGNOSTIC_SENSORS = [
+    {
+        "name": "Wi-Fi SSID",
+        "attribute_name": "wifi_ssid",
+    },
+    {
+        "name": "Meter Kind",
+        "attribute_name": "meter_kind",
+    },
+    {
+        "name": "MAC Address",
+        "attribute_name": "wifi_mac_[0-5]",
+        "separator": ":",
+        "conversion": CONVERSION_HEX,
+    },
+    {
+        "name": "IP Address",
+        "attribute_name": "wifi_ip_addr_[0-3]",
+        "separator": ".",
+    },
+    {
+        "name": "DTU AP SSID",
+        "attribute_name": "dtu_ap_ssid",
+    },
+]
+
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
-    coordinator = hass_data[HASS_DATA_COORDINATOR]
+    data_coordinator = hass_data[HASS_DATA_COORDINATOR]
     sensors = []
 
-    for sensor_data in HOYMILES_SENSORS:
-               
+    for sensor_data in HOYMILES_SENSORS:      
         device_class = sensor_data["device_class"]
         if device_class == SensorDeviceClass.ENERGY:
-            sensors.append(HoymilesEnergySensorEntity(coordinator, entry, sensor_data))
+            sensors.append(HoymilesEnergySensorEntity(data_coordinator, entry, sensor_data))
         else:
-            sensors.append(HoymilesDataSensorEntity(coordinator, entry, sensor_data))
+            sensors.append(HoymilesDataSensorEntity(data_coordinator, entry, sensor_data))
+
+
+    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR] 
+
+    for sensor_data in CONFIG_DIAGNOSTIC_SENSORS:      
+        sensors.append(HoymilesDiagnosticSensorEntity(config_coordinator, entry, sensor_data))
 
     async_add_devices(sensors)
 
 
 def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
-    """Create a uniqe id for a SunSpec entity"""
+    """Create a _unique_id id for a Hoymiles entity"""
     return f"hoymiles_{config_entry_id}_{key}"
 
 
-class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
+class HoymilesDataSensorEntity(HoymilesSensorEntity):
     _attr_has_entity_name = True
 
     def __init__(self, coordinator, config_entry, data):
         """Pass coordinator to CoordinatorEntity."""
-        super().__init__(coordinator, config_entry)
-        self._config_entry = config_entry
+        super().__init__(coordinator, config_entry, data)
 
-        self._sensor_prefix = f'{config_entry.data.get(CONF_SENSOR_PREFIX)} ' if config_entry.data.get(CONF_SENSOR_PREFIX) else ""
         self._name = f'{self._sensor_prefix}{data["name"]}'
         self._attribute_name = data["attribute_name"]
         self._conversion_factor = data["conversion_factor"]
@@ -189,16 +224,11 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
         self._device_class = data["device_class"]
         self._state_class = data["state_class"]
         self._value = None
-        self._uniqe_id = f"hoymiles_{self._attribute_name}"
+        self._unique_id = f"hoymiles_{self._attribute_name}"
         self._native_value = None
         self._assumed_state = False
 
-        self._dtu_sn = ""
-
-        if self.coordinator is not None and hasattr(self.coordinator, "data"):
-            self._dtu_sn = getattr(self.coordinator.data, "dtu_sn", "")
-
-        self._uniqe_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name)
+        self._unique_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name)
 
         self.update_state_value()
 
@@ -214,7 +244,7 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     
     @property
     def unique_id(self):
-        return self._uniqe_id
+        return self._unique_id
     
     @property
     def native_value(self):
@@ -236,17 +266,6 @@ class HoymilesDataSensorEntity(CoordinatorEntity, SensorEntity):
     def assumed_state(self):
         return self._assumed_state
     
-    @property
-    def device_info(self):
-        """Return device information about the sensor."""
-        return {
-            "identifiers": {(DOMAIN, self._config_entry.entry_id)},
-            "name": "Hoymiles HMS-XXXXW-T2",
-            "manufacturer": "Hoymiles",
-            "model": "HMS-XXXXW-T2",
-            "serial_number": self._dtu_sn,
-            "via_device": (DOMAIN, "inverter_state"),
-        }
     
     def update_state_value(self):
         if self.coordinator is not None and (not hasattr(self.coordinator, "data") or self.coordinator.data == None):
@@ -304,5 +323,58 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
             )
             self.last_known_value = state.native_value
         else:
-            _LOGGER.debug(f"{self.name} No previous state was found")     
+            _LOGGER.debug(f"{self.name} No previous state was found")   
+
+
+
+class HoymilesDiagnosticSensorEntity(HoymilesSensorEntity):
+
+    def __init__(self, coordinator, config_entry, data):
+        super().__init__(coordinator, config_entry, data)
+
+        self._name = data["name"]
+        self._attribute_name = data["attribute_name"]
+        self._unique_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name)
+        self._conversion = data["conversion"] if "conversion" in data else None
+        self._separator = data["separator"] if "separator" in data else None
+        self._native_value = None
+
+        self.update_state_value()
+        
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def native_value(self):
+        return self._native_value
+    
+    @property
+    def unique_id(self):
+        return self._unique_id
+    
+    @property
+    def entity_category(self):
+        return EntityCategory.DIAGNOSTIC
+    
+    def update_state_value(self):
+        separator = ":"
+        
+        if "[" in self._attribute_name and "]" in self._attribute_name:
+            attribute_parts = self._attribute_name.split("[")
+            attribute_name = attribute_parts[0]
+            index_range = attribute_parts[1].split("]")[0]
+            start, end = map(int, index_range.split('-'))
+            nested_attribute = attribute_parts[1].split("]")[1] if "]" in attribute_name else None
+
+            new_attribute_names = [f"{attribute_name}{i}" for i in range(start, end + 1)]
+            combined_value = separator.join(str(getattr(self.coordinator.data, attr, "")) for attr in new_attribute_names)
+            if(self._conversion == CONVERSION_HEX):
+                combined_value = ":".join(hex(int(value))[2:] for value in combined_value.split(":")).upper()
+            self._native_value = combined_value
+        else:
+            self._native_value =  getattr(self.coordinator.data, self._attribute_name, None)
+
+
+
 

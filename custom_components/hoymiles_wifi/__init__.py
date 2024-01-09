@@ -20,7 +20,9 @@ from .const import (
     PLATFORMS,
     STARTUP_MESSAGE,
     HASS_DATA_COORDINATOR,
+    HASS_CONFIG_COORDINATOR,
     HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER,
+    DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,8 +47,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     inverter = Inverter(host)
 
-    coordinator = HoymilesDataUpdatecoordinatorInverter(hass, inverter=inverter, update_interval=update_interval, entry=entry)
-    hass_data[HASS_DATA_COORDINATOR] = coordinator
+    data_coordinator = HoymilesDataUpdateCoordinatorInverter(hass, inverter=inverter, update_interval=update_interval, entry=entry)
+    hass_data[HASS_DATA_COORDINATOR] = data_coordinator
+
+    config_update_interval = timedelta(seconds=DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS)
+    config_coordinator = HoymilesConfigUpdateCoordinatorInverter(hass, inverter=inverter, update_interval=config_update_interval, entry=entry)
+    hass_data[HASS_CONFIG_COORDINATOR] = config_coordinator
+
     
     # Registers update listener to update config entry when options are updated.
     unsub_options_update_listener = entry.add_update_listener(options_update_listener)
@@ -54,7 +61,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     
     hass.data[DOMAIN][entry.entry_id] = hass_data
 
-    await coordinator.async_config_entry_first_refresh()
+    await data_coordinator.async_config_entry_first_refresh()
+    await config_coordinator.async_config_entry_first_refresh()
 
     return True
 
@@ -96,7 +104,7 @@ async def options_update_listener(hass: HomeAssistant, config_entry: ConfigEntry
     await hass.config_entries.async_reload(config_entry.entry_id)
 
     
-class HoymilesDataUpdatecoordinatorInverter(DataUpdateCoordinator):
+class HoymilesDataUpdateCoordinatorInverter(DataUpdateCoordinator):
     """Class to manage fetching data from the API."""
 
     def __init__(self, hass: HomeAssistant, inverter: Inverter, update_interval, entry) -> None:
@@ -136,7 +144,39 @@ class HoymilesDataUpdatecoordinatorInverter(DataUpdateCoordinator):
         else:
             _LOGGER.debug("Unable to retrieve real data new. Inverter might be offline.")
             return None
+        
 
 
+class HoymilesConfigUpdateCoordinatorInverter(DataUpdateCoordinator):
+    """Class to manage fetching data from the API."""
+
+    def __init__(self, hass: HomeAssistant, inverter: Inverter, update_interval, entry) -> None:
+        """Initialize."""
+        self._inverter = inverter
+        self._hass = hass
+        self._entry = entry
+
+        _LOGGER.debug(
+            "Setup entry with update interval %s. IP: %s",
+            update_interval,
+            entry.data.get(CONF_HOST),
+        )
+
+        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
+
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        _LOGGER.debug("Hoymiles data coordinator update")
+
+        response = self._inverter.get_config()
+
+        if response:
+            _LOGGER.debug(f"Inverter Config data: {response}")
+            return response
+        else:
+            _LOGGER.debug("Unable to retrieve real data new. Inverter might be offline.")
+            return None
+        
 
 

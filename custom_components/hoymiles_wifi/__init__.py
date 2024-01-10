@@ -7,17 +7,23 @@ from hoymiles_wifi.inverter import Inverter
 
 import voluptuous as vol
 
+from homeassistant.core import (
+    HomeAssistant,
+    Config
+) 
+
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import Config
-from homeassistant.core import HomeAssistant
 from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import CONF_HOST
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+
+from homeassistant.const import (
+    Platform,
+    CONF_HOST
+)
 
 from .const import (
     CONF_UPDATE_INTERVAL,
     DOMAIN,
-    PLATFORMS,
     STARTUP_MESSAGE,
     HASS_DATA_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
@@ -27,6 +33,7 @@ from .const import (
 
 _LOGGER = logging.getLogger(__name__)
 
+PLATFORMS = [Platform.SENSOR, Platform.NUMBER]
 
 async def async_setup(hass: HomeAssistant, config: Config):
     """Set up this integration using YAML is not supported."""

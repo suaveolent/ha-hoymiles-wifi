@@ -1,6 +1,4 @@
 import logging
-import re
-
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -20,6 +18,10 @@ from homeassistant.const import (
     EntityCategory,
 )
 
+from homeassistant.components.sensor import (
+    SensorEntity,
+)
+
 
 from .const import (
     DOMAIN,
@@ -28,10 +30,9 @@ from .const import (
     CONVERSION_HEX,
 )
 
-from .entity import HoymilesSensorEntity
+from .entity import HoymilesCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
-
 
 HOYMILES_SENSORS = [
     {
@@ -210,7 +211,7 @@ def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
     return f"hoymiles_{config_entry_id}_{key}"
 
 
-class HoymilesDataSensorEntity(HoymilesSensorEntity):
+class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
 
     def __init__(self, coordinator, config_entry, data):
@@ -327,7 +328,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
 
 
-class HoymilesDiagnosticSensorEntity(HoymilesSensorEntity):
+class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
     def __init__(self, coordinator, config_entry, data):
         super().__init__(coordinator, config_entry, data)

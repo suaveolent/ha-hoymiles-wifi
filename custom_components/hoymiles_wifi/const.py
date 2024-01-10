@@ -20,11 +20,6 @@ HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER = "unsub_options_update_listener"
 
 CONVERSION_HEX = "hex"
 
-
-# Platforms
-SENSOR = "sensor"
-PLATFORMS = [SENSOR]
-
 STARTUP_MESSAGE = f"""
 -------------------------------------------------------------------
 {NAME}

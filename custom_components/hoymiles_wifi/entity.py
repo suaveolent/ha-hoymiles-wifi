@@ -8,11 +8,9 @@ from .const import (
 )
 _LOGGER = logging.getLogger(__name__)
 
-from homeassistant.components.sensor import (
-    SensorEntity,
-)
 
-class HoymilesSensorEntity(SensorEntity, CoordinatorEntity):
+class HoymilesCoordinatorEntity(CoordinatorEntity):
+
     _attr_has_entity_name = True
 
     def __init__(self, coordinator, config_entry, data):
@@ -26,7 +24,7 @@ class HoymilesSensorEntity(SensorEntity, CoordinatorEntity):
 
         if self.coordinator is not None and hasattr(self.coordinator, "data"):
             self._dtu_sn = getattr(self.coordinator.data, "dtu_sn", "")
-    
+
     @property
     def device_info(self):
         """Return device information about the sensor."""
@@ -38,3 +36,5 @@ class HoymilesSensorEntity(SensorEntity, CoordinatorEntity):
             "serial_number": self._dtu_sn,
             "via_device": (DOMAIN, "inverter_state"),
         }
+        
+    

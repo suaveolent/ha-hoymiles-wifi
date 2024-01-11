@@ -1,5 +1,5 @@
 # HMS-XXXXW-T2 for Home Assistant
-This Home Assistant custom component utilizes the `hoymiles-wifi` Python library, allowing seamless integration with Hoymiles HMS microinverters, specifically designed for the HMS-XXXXW-T2 series. Special thanks to [DennisOSRM](https://github.com/DennisOSRM) for inspiring and contributing to the codebase through the [hms-mqtt-publisher](https://github.com/DennisOSRM/hms-mqtt-publisher) repository.
+This Home Assistant custom component utilizes the [hoymiles-wifi](https://github.com/suaveolent/hoymiles-wifi) Python library, allowing seamless integration with Hoymiles HMS microinverters, specifically designed for the HMS-XXXXW-T2 series.
 
 **Disclaimer: This custom component is an independent project and is not affiliated with Hoymiles. It has been developed to provide Home Assistant users with tools for interacting with Hoymiles HMS-XXXXW-T2 series micro-inverters featuring integrated WiFi DTU. Any trademarks or product names mentioned are the property of their respective owners.**
 

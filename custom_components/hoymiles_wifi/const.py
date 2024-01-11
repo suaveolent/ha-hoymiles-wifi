@@ -21,6 +21,7 @@ HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER = "unsub_options_update_listener"
 CONVERSION_HEX = "hex"
 
 STARTUP_MESSAGE = f"""
+
 -------------------------------------------------------------------
 {NAME}
 Version: {VERSION}

@@ -1,5 +1,7 @@
 import logging
 
+from enum import Enum
+
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
@@ -21,6 +23,9 @@ from .const import (
     HASS_CONFIG_COORDINATOR,
 )
 
+class SetAction(Enum):
+    POWER_LIMIT = 1
+
 CONFIG_CONTROL_ENTITIES = [
     {
         "name": "Power Limit",
@@ -28,8 +33,11 @@ CONFIG_CONTROL_ENTITIES = [
         "conversion_factor": 0.1,
         "mode": NumberMode.SLIDER,
         "device_class": NumberDeviceClass.POWER_FACTOR,
+        "set_action": SetAction.POWER_LIMIT,
     },
 ]
+
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,9 +67,12 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         self._conversion_factor = data["conversion_factor"]
         self._mode = data["mode"]
         self._device_class = data["device_class"]
+        self._set_action = data["set_action"]
         self._native_value = None
+        self._assumed_state = False
         self._unique_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name)
 
+        self.update_state_value()
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -88,12 +99,31 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     @property
     def device_class(self):
         return self._device_class
+    
+    @property
+    def assumed_state(self):
+        return self._assumed_state
 
     def set_native_value(self, value: float) -> None:
+
+        if self._set_action == SetAction.POWER_LIMIT:
+                inverter = self.coordinator.get_inverter()
+                if(value < 0 and value > 100):
+                    _LOGGER.error("Power limit value out of range")
+                    return
+                inverter.set_power_limit(value)
+        else:
+            _LOGGER.error("Invalid set action!")
+            return 
+        
+        self._assumed_state = True
         self._native_value = value
+
 
     def update_state_value(self):
         self._native_value =  getattr(self.coordinator.data, self._attribute_name, None)
+
+        self._assumed_state = False
 
         if self._native_value != None and self._conversion_factor != None:
             self._native_value *= self._conversion_factor

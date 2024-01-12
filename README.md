@@ -3,10 +3,12 @@ This Home Assistant custom component utilizes the [hoymiles-wifi](https://github
 
 **Disclaimer: This custom component is an independent project and is not affiliated with Hoymiles. It has been developed to provide Home Assistant users with tools for interacting with Hoymiles HMS-XXXXW-T2 series micro-inverters featuring integrated WiFi DTU. Any trademarks or product names mentioned are the property of their respective owners.**
 
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/suaveolent)
+
 
 ## Installation
 
-1. Open the HACS panel in your Home Assistant frontend.
+1. Open the HACS panel in your Home Assista nt frontend.
 2. Navigate to the "Integrations" tab.
 3. Click the three dots in the top-right corner and select "Custom Repositories."
 4. Add a new custom repository:
@@ -39,3 +41,6 @@ Use this custom component responsibly and be aware of potential risks. There are
 **Update Frequency:** The library may experience limitations in fetching updates, potentially around twice per minute. The inverter firmware may enforce a mandatory wait period of approximately 30 seconds between requests.
 
 **Compatibility:** While developed for the HMS-800W-T2 inverter, compatibility with other inverters from the series is untested at the time of writing. Exercise caution and conduct thorough testing if using with different inverter models.
+
+## Attribution
+This project was generated from [@oncleben31](https://github.com/oncleben31)'s [Home Assistant Custom Component Cookiecutter](https://github.com/oncleben31/cookiecutter-homeassistant-custom-component) template.

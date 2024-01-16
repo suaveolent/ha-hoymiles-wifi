@@ -1,11 +1,13 @@
 import logging
 
 from homeassistant.components.sensor import (
+    SensorEntity,
     SensorDeviceClass,
     RestoreSensor,
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
 )
+
 from homeassistant.core import callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import (
@@ -18,10 +20,10 @@ from homeassistant.const import (
     EntityCategory,
 )
 
-from homeassistant.components.sensor import (
-    SensorEntity,
+from homeassistant.components.binary_sensor import (
+    BinarySensorEntity,
+    BinarySensorDeviceClass,
 )
-
 
 from .const import (
     DOMAIN,
@@ -31,6 +33,12 @@ from .const import (
 )
 
 from .entity import HoymilesCoordinatorEntity
+
+from hoymiles_wifi.inverter import (
+    Inverter,
+    NetworkState
+)
+
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -188,8 +196,10 @@ async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
+    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR] 
     sensors = []
 
+    # Sensors
     for sensor_data in HOYMILES_SENSORS:      
         device_class = sensor_data["device_class"]
         if device_class == SensorDeviceClass.ENERGY:
@@ -197,9 +207,10 @@ async def async_setup_entry(hass, entry, async_add_devices):
         else:
             sensors.append(HoymilesDataSensorEntity(data_coordinator, entry, sensor_data))
 
+    # Inverter State
+    sensors.append(HoymilesInverterSensorEntity(data_coordinator, entry, {"name": "Inverter"}))
 
-    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR] 
-
+    # Diagnostic Sensors
     for sensor_data in CONFIG_DIAGNOSTIC_SENSORS:      
         sensors.append(HoymilesDiagnosticSensorEntity(config_coordinator, entry, sensor_data))
 
@@ -298,6 +309,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
     def __init__(self, coordinator, config_entry, data):
         super().__init__(coordinator, config_entry, data)
         self._last_known_value = None
+    
 
     @property
     def native_value(self):
@@ -341,6 +353,12 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         self._native_value = None
 
         self.update_state_value()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self.update_state_value()
+        super()._handle_coordinator_update()
         
     @property
     def name(self):
@@ -379,6 +397,52 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
             self._native_value = combined_value
         else:
             self._native_value =  getattr(self.coordinator.data, self._attribute_name, None)
+
+class HoymilesInverterSensorEntity(HoymilesCoordinatorEntity, BinarySensorEntity):
+
+    def __init__(self, coordinator, config_entry, data):
+        super().__init__(coordinator, config_entry, data)
+
+        self._name = data["name"]
+        self._unique_id = get_hoymiles_unique_id(config_entry.entry_id, "inverter")
+        self._inverter = self.coordinator.get_inverter()
+        self._native_value = False
+        self._device_class = BinarySensorDeviceClass.CONNECTIVITY
+
+        self.update_state_value()
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Handle updated data from the coordinator."""
+        self.update_state_value()
+        super()._handle_coordinator_update()
+        
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def is_on(self):
+        return self._native_value
+    
+    @property
+    def unique_id(self):
+        return self._unique_id
+    
+    @property
+    def entity_category(self):
+        return EntityCategory.DIAGNOSTIC
+    
+    @property
+    def device_class(self):
+        return self._device_class
+
+    def update_state_value(self):
+        inverter_state = self._inverter.get_state()
+        if inverter_state == NetworkState.Online:
+            self._native_value = True
+        else:
+            self._native_value = False
 
 
 

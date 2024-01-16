@@ -130,6 +130,9 @@ class HoymilesDataUpdateCoordinatorInverter(DataUpdateCoordinator):
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
 
 
+    def get_inverter(self):
+        return self._inverter
+
     async def _async_update_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
@@ -173,7 +176,6 @@ class HoymilesConfigUpdateCoordinatorInverter(DataUpdateCoordinator):
 
     def get_inverter(self):
         return self._inverter
-
 
     async def _async_update_data(self):
         """Update data via library."""

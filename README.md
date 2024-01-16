@@ -8,7 +8,7 @@ This Home Assistant custom component utilizes the [hoymiles-wifi](https://github
 
 ## Installation
 
-1. Open the HACS panel in your Home Assista nt frontend.
+1. Open the [HACS](https://hacs.xyz) panel in your Home Assistant frontend.
 2. Navigate to the "Integrations" tab.
 3. Click the three dots in the top-right corner and select "Custom Repositories."
 4. Add a new custom repository:

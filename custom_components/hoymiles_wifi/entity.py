@@ -13,7 +13,7 @@ class HoymilesCoordinatorEntity(CoordinatorEntity):
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, config_entry, data):
+    def __init__(self, coordinator, config_entry):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator, config_entry)
         self._config_entry = config_entry

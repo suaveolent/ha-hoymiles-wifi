@@ -61,7 +61,7 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     """Hoymiles Number entity."""
 
     def __init__(self, coordinator, config_entry: ConfigEntry, data) -> None:
-        super().__init__(coordinator, config_entry, data)
+        super().__init__(coordinator, config_entry)
         self._name = data["name"]
         self._attribute_name = data["attribute_name"]
         self._conversion_factor = data["conversion_factor"]

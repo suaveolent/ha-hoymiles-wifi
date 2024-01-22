@@ -1,8 +1,10 @@
 import logging
 from dataclasses import dataclass
+from enum import Enum
 
 from homeassistant.components.sensor import (
     SensorEntity,
+    SensorEntityDescription,
     SensorDeviceClass,
     RestoreSensor,
     STATE_CLASS_MEASUREMENT,
@@ -19,6 +21,11 @@ from homeassistant.const import (
     POWER_WATT,
     TEMP_CELSIUS,
     EntityCategory,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+    UnitOfEnergy,
+    UnitOfFrequency,
+    UnitOfPower,
 )
 
 
@@ -33,155 +40,178 @@ from .entity import HoymilesCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-HOYMILES_SENSORS = [
-    {
-        "name": "AC Power",
-        "attribute_name": "dtu_power",
-        "conversion_factor": 0.1,
-        "unit_of_measurement": POWER_WATT,
-        "device_class": SensorDeviceClass.POWER,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "AC Daily Energy",
-        "attribute_name": "dtu_daily_energy",
-        "conversion_factor": None,
-        "unit_of_measurement": ENERGY_WATT_HOUR,
-        "device_class": SensorDeviceClass.ENERGY,
-        "state_class": STATE_CLASS_TOTAL_INCREASING,
-    },
-    {
-        "name": "Grid Voltage",
-        "attribute_name": "sgs_data[0].voltage",
-        "conversion_factor": 0.1,
-        "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
-        "device_class": SensorDeviceClass.VOLTAGE,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Grid Frequency",
-        "attribute_name": "sgs_data[0].frequency",
-        "conversion_factor": 0.01,
-        "unit_of_measurement": FREQUENCY_HERTZ,
-        "device_class": SensorDeviceClass.FREQUENCY,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Inverter Temperature",
-        "attribute_name": "sgs_data[0].temperature",
-        "conversion_factor": 0.1,
-        "unit_of_measurement": TEMP_CELSIUS,
-        "device_class": SensorDeviceClass.TEMPERATURE,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Port 1 DC Voltage",
-        "attribute_name": "pv_data[0].voltage",
-        "conversion_factor": 0.1,
-        "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
-        "device_class": SensorDeviceClass.VOLTAGE,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Port 1 DC Current",
-        "attribute_name": "pv_data[0].current",
-        "conversion_factor": 0.01,
-        "unit_of_measurement": ELECTRIC_CURRENT_AMPERE,
-        "device_class": SensorDeviceClass.CURRENT,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Port 1 DC Power",
-        "attribute_name": "pv_data[0].power",
-        "conversion_factor": 0.1,
-        "unit_of_measurement": POWER_WATT,
-        "device_class": SensorDeviceClass.POWER,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Port 1 DC Total Energy",
-        "attribute_name": "pv_data[0].energy_total",
-        "conversion_factor": None,
-        "unit_of_measurement": ENERGY_WATT_HOUR,
-        "device_class": SensorDeviceClass.ENERGY,
-        "state_class": STATE_CLASS_TOTAL_INCREASING,
-    },
-    {
-        "name": "Port 1 DC Daily Energy",
-        "attribute_name": "pv_data[0].energy_daily",
-        "conversion_factor": None,
-        "unit_of_measurement": ENERGY_WATT_HOUR,
-        "device_class": SensorDeviceClass.ENERGY,
-        "state_class": STATE_CLASS_TOTAL_INCREASING,
-    },
-        {
-        "name": "Port 2 DC Voltage",
-        "attribute_name": "pv_data[1].voltage",
-        "conversion_factor": 0.1,
-        "unit_of_measurement": ELECTRIC_POTENTIAL_VOLT,
-        "device_class": SensorDeviceClass.VOLTAGE,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Port 2 DC Current",
-        "attribute_name": "pv_data[1].current",
-        "conversion_factor": 0.01,
-        "unit_of_measurement": ELECTRIC_CURRENT_AMPERE,
-        "device_class": SensorDeviceClass.CURRENT,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Port 2 DC Power",
-        "attribute_name": "pv_data[1].power",
-        "conversion_factor": 0.1,
-        "unit_of_measurement": POWER_WATT,
-        "device_class": SensorDeviceClass.POWER,
-        "state_class": STATE_CLASS_MEASUREMENT,
-    },
-    {
-        "name": "Port 2 DC Total Energy",
-        "attribute_name": "pv_data[1].energy_total",
-        "conversion_factor": None,
-        "unit_of_measurement": ENERGY_WATT_HOUR,
-        "device_class": SensorDeviceClass.ENERGY,
-        "state_class": STATE_CLASS_TOTAL_INCREASING,
-    },
-    {
-        "name": "Port 2 DC Daily Energy",
-        "attribute_name": "pv_data[1].energy_daily",
-        "conversion_factor": None,
-        "unit_of_measurement": ENERGY_WATT_HOUR,
-        "device_class": SensorDeviceClass.ENERGY,
-        "state_class": STATE_CLASS_TOTAL_INCREASING,
-    },
-]
 
+class ConversionAction(Enum):
+    HEX = 1
+
+@dataclass(frozen=True)
+class HoymilesSensorEntityDescriptionMixin:
+    """Mixin for required keys."""
+
+@dataclass(frozen=True)
+class HoymilesSensorEntityDescription(SensorEntityDescription):
+    """Describes Hoymiles number sensor entity."""
+    conversion_factor: float = None
+
+@dataclass(frozen=True)
+class HoymilesDiagnosticEntityDescription(SensorEntityDescription):
+    """Describes Hoymiles number sensor entity."""
+    conversion: ConversionAction = None,
+    separator: str = None
+
+
+
+HOYMILES_SENSORS = [
+    HoymilesSensorEntityDescription(
+        key="dtu_power",
+        translation_key="ac_power",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        conversion_factor=0.1,
+
+    ),
+    HoymilesSensorEntityDescription(
+        key="dtu_daily_energy",
+        translation_key="ac_daily_energy",
+        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    HoymilesSensorEntityDescription(
+        key="sgs_data[0].voltage",
+        translation_key="grid_voltage",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=STATE_CLASS_MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="sgs_data[0].frequency",
+        translation_key="grid_frequency",
+        native_unit_of_measurement=FREQUENCY_HERTZ,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=STATE_CLASS_MEASUREMENT,
+        conversion_factor=0.01,
+    ),
+    HoymilesSensorEntityDescription(
+        key="sgs_data[0].temperature",
+        translation_key="inverter_temperature",
+        native_unit_of_measurement=TEMP_CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=STATE_CLASS_MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[0].voltage",
+        translation_key="port_1_dc_voltage",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=STATE_CLASS_MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[0].current",
+        translation_key="port_1_dc_current",
+        unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=STATE_CLASS_MEASUREMENT,
+        native_unit_of_measurement=0.01,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[0].power",
+        translation_key="port_1_dc_power",
+        unit_of_measurement=POWER_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        native_unit_of_measurement=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[0].energy_total",
+        translation_key="port_1_dc_total_energy",
+        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[0].energy_daily",
+        translation_key="port_1_dc_daily_energy",
+        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[1].voltage",
+        translation_key="port_2_dc_voltage",
+        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=STATE_CLASS_MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[1].current",
+        translation_key="port_2_dc_current",
+        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=STATE_CLASS_MEASUREMENT,
+        conversion_factor=0.01,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[1].power",
+        translation_key="port_2_dc_power",
+        native_unit_of_measurement=POWER_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=STATE_CLASS_MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[1].energy_total",
+        translation_key="port_2_dc_total_energy",
+        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[1].energy_daily",
+        translation_key="port_2_dc_daily_energy",
+        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=STATE_CLASS_TOTAL_INCREASING,
+    ),
+]
 
 CONFIG_DIAGNOSTIC_SENSORS = [
-    {
-        "name": "Wi-Fi SSID",
-        "attribute_name": "wifi_ssid",
-    },
-    {
-        "name": "Meter Kind",
-        "attribute_name": "meter_kind",
-    },
-    {
-        "name": "MAC Address",
-        "attribute_name": "wifi_mac_[0-5]",
-        "separator": ":",
-        "conversion": CONVERSION_HEX,
-    },
-    {
-        "name": "IP Address",
-        "attribute_name": "wifi_ip_addr_[0-3]",
-        "separator": ".",
-    },
-    {
-        "name": "DTU AP SSID",
-        "attribute_name": "dtu_ap_ssid",
-    },
+    HoymilesDiagnosticEntityDescription(
+        key="wifi_ssid",
+        translation_key="wifi_ssid",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    HoymilesDiagnosticEntityDescription(
+        key="meter_kind",
+        translation_key="meter_kind",
+        entity_category=EntityCategory.DIAGNOSTIC,
+
+    ),
+    HoymilesDiagnosticEntityDescription(
+        key="wifi_mac_[0-5]",
+        translation_key="mac_address",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        separator=":",
+        conversion= ConversionAction.HEX,
+    ),
+    HoymilesDiagnosticEntityDescription(
+        key="wifi_ip_addr_[0-3]",
+        translation_key="ip_address",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        separator=".",
+    ),
+    HoymilesDiagnosticEntityDescription(
+        key="dtu_ap_ssid",
+        translation_key="dtu_ap_ssid",
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
 ]
+
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
@@ -192,7 +222,7 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
     # Sensors
     for sensor_data in HOYMILES_SENSORS:      
-        device_class = sensor_data["device_class"]
+        device_class = sensor_data.device_class
         if device_class == SensorDeviceClass.ENERGY:
             sensors.append(HoymilesEnergySensorEntity(data_coordinator, entry, sensor_data))
         else:
@@ -213,22 +243,17 @@ def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
 class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, config_entry, data):
+    def __init__(self, coordinator, config_entry, description):
         """Pass coordinator to CoordinatorEntity."""
         super().__init__(coordinator, config_entry)
+        self.entity_description = description
 
-        self._name = f'{self._sensor_prefix}{data["name"]}'
-        self._attribute_name = data["attribute_name"]
-        self._conversion_factor = data["conversion_factor"]
-        self._unit_of_measurement = data["unit_of_measurement"]
-        self._device_class = data["device_class"]
-        self._state_class = data["state_class"]
-        self._value = None
-        self._unique_id = f"hoymiles_{self._attribute_name}"
+        self._attribute_name = description.key
+        self._conversion_factor = description.conversion_factor
         self._native_value = None
         self._assumed_state = False
 
-        self._unique_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name)
+        self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
 
         self.update_state_value()
 
@@ -238,29 +263,10 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         self.update_state_value()
         super()._handle_coordinator_update()
 
-    @property
-    def name(self):
-        return self._name
-    
-    @property
-    def unique_id(self):
-        return self._unique_id
     
     @property
     def native_value(self):
         return self._native_value
-
-    @property
-    def native_unit_of_measurement(self):
-        return self._unit_of_measurement
-
-    @property
-    def device_class(self):
-        return self._device_class
-    
-    @property
-    def state_class(self):
-        return self._state_class
     
     @property
     def assumed_state(self):
@@ -330,15 +336,16 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
 class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
-    def __init__(self, coordinator, config_entry, data):
+    def __init__(self, coordinator, config_entry, description):
         super().__init__(coordinator, config_entry)
+        self.entity_description = description
 
-        self._name = data["name"]
-        self._attribute_name = data["attribute_name"]
-        self._unique_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name)
-        self._conversion = data["conversion"] if "conversion" in data else None
-        self._separator = data["separator"] if "separator" in data else None
+        self._attribute_name = description.key
+        self._conversion = description.conversion
+        self._separator = description.separator
         self._native_value = None
+
+        self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
 
         self.update_state_value()
 
@@ -349,21 +356,10 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         super()._handle_coordinator_update()
         
     @property
-    def name(self):
-        return self._name
-
-    @property
     def native_value(self):
         return self._native_value
     
-    @property
-    def unique_id(self):
-        return self._unique_id
-    
-    @property
-    def entity_category(self):
-        return EntityCategory.DIAGNOSTIC
-    
+
     def update_state_value(self):
         
         if "[" in self._attribute_name and "]" in self._attribute_name:

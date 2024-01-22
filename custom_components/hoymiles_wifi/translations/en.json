@@ -47,6 +47,68 @@
       "limit_power_mypower": {
         "name": "Power limit"
       }
+    },
+    "sensor": {
+      "ac_power": {
+        "name": "AC power"
+      },
+      "ac_daily_energy": {
+        "name": "AC daily energy"
+      },
+      "grid_voltage": {
+        "name": "Grid voltage"
+      },
+      "grid_frequency": {
+        "name": "Grid frequency"
+      },
+      "inverter_temperature": {
+        "name": "Inverter temperature"
+      },
+      "port_1_dc_voltage": {
+        "name": "Port 1 DC voltage"
+      },
+      "port_1_dc_current": {
+        "name": "Port 1 DC current"
+      },
+      "port_1_dc_power": {
+        "name": "Port 1 DC power"
+      },
+      "port_1_dc_total_energy": {
+        "name": "Port 1 DC total energy"
+      },
+      "port_1_dc_daily_energy": {
+        "name": "Port 1 DC daily energy"
+      },
+      "port_2_dc_voltage": {
+        "name": "Port 2 DC voltage"
+      },
+      "port_2_dc_current": {
+        "name": "Port 2 DC current"
+      },
+      "port_2_dc_power": {
+        "name": "Port 2 DC power"
+      },
+      "port_2_dc_total_energy": {
+        "name": "Port 2 DC total energy"
+      },
+      "port_2_dc_daily_energy": {
+        "name": "Port 2 DC daily energy"
+      },
+      "wifi_ssid": {
+        "name": "Wi-Fi SSID"
+      },
+      "meter_kind": {
+        "name": "Meter kind"
+      },
+      "mac_address": {
+        "name": "MAC address"
+      },
+      "ip_address": {
+        "name": "IP address"
+      },
+      "dtu_ap_ssid": {
+        "name": "DTU AP SSID"
+      }
     }
   }
 }

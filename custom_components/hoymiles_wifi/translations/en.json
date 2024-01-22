@@ -42,6 +42,11 @@
       "inverter": {
         "name": "Inverter"
       }
+    },
+    "number" : {
+      "limit_power_mypower": {
+        "name": "Power limit"
+      }
     }
   }
 }

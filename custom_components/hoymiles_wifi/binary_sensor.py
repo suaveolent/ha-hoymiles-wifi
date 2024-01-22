@@ -1,5 +1,7 @@
 import logging
 
+from dataclasses import dataclass
+
 from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
@@ -18,25 +20,25 @@ from homeassistant.const import (
     EntityCategory,
 )
 
-
 from .const import (
     DOMAIN,
     HASS_DATA_COORDINATOR,
 )
 
-
 _LOGGER = logging.getLogger(__name__)
 
+@dataclass(frozen=True)
+class HoymilesBinarySensorEntityDescription(BinarySensorEntityDescription):
+    """Describes Homiles binary sensor entity."""
 
 BINARY_SENSORS = (
-    BinarySensorEntityDescription(
+    HoymilesBinarySensorEntityDescription(
         key="inverter",
         translation_key="inverter",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 )
-
 
 async def async_setup_entry(hass, entry, async_add_devices):
     """Setup sensor platform."""
@@ -62,8 +64,6 @@ class HoymilesInverterSensorEntity(HoymilesCoordinatorEntity, BinarySensorEntity
     def __init__(self, coordinator, config_entry, description):
 
         super().__init__(coordinator, config_entry)
-
-        _LOGGER.error(f"Description: {description.key}")
         self.entity_description = description
         self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
         self._inverter = coordinator.get_inverter()

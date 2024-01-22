@@ -1,5 +1,5 @@
 import logging
-
+from dataclasses import dataclass
 from enum import Enum
 
 from homeassistant.core import HomeAssistant
@@ -26,18 +26,27 @@ from .const import (
 class SetAction(Enum):
     POWER_LIMIT = 1
 
-CONFIG_CONTROL_ENTITIES = [
-    {
-        "name": "Power Limit",
-        "attribute_name": "limit_power_mypower",
-        "conversion_factor": 0.1,
-        "mode": NumberMode.SLIDER,
-        "device_class": NumberDeviceClass.POWER_FACTOR,
-        "set_action": SetAction.POWER_LIMIT,
-    },
-]
+@dataclass(frozen=True)
+class HoymilesNumberSensorEntityDescriptionMixin:
+    """Mixin for required keys."""
+
+@dataclass(frozen=True)
+class HoymilesNumberSensorEntityDescription(NumberEntityDescription):
+    """Describes Hoymiles number sensor entity."""
+    set_action: SetAction = None
+    conversion_factor: float = None
 
 
+CONFIG_CONTROL_ENTITIES = (
+    HoymilesNumberSensorEntityDescription(
+        key = "limit_power_mypower",
+        translation_key="limit_power_mypower",
+        mode =  NumberMode.SLIDER,
+        device_class = NumberDeviceClass.POWER_FACTOR,
+        set_action = SetAction.POWER_LIMIT,
+        conversion_factor = 0.1,
+    ),
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,17 +69,15 @@ async def async_setup_entry(
 class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     """Hoymiles Number entity."""
 
-    def __init__(self, coordinator, config_entry: ConfigEntry, data) -> None:
+    def __init__(self, coordinator, config_entry: ConfigEntry, description) -> None:
         super().__init__(coordinator, config_entry)
-        self._name = data["name"]
-        self._attribute_name = data["attribute_name"]
-        self._conversion_factor = data["conversion_factor"]
-        self._mode = data["mode"]
-        self._device_class = data["device_class"]
-        self._set_action = data["set_action"]
+        self.entity_description = description
+        self._attribute_name = description.key
+        self._conversion_factor = description.conversion_factor
+        self._set_action = description.set_action
         self._native_value = None
         self._assumed_state = False
-        self._unique_id = get_hoymiles_unique_id(config_entry.entry_id, self._attribute_name)
+        self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
 
         self.update_state_value()
 
@@ -80,26 +87,11 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         self.update_state_value()
         super()._handle_coordinator_update()
 
-    @property
-    def name(self):
-        return self._name
     
-    @property
-    def unique_id(self):
-        return self._unique_id
-
     @property
     def native_value(self) -> float:
         return self._native_value
         
-    @property
-    def mode(self):
-        return self._mode
-    
-    @property
-    def device_class(self):
-        return self._device_class
-    
     @property
     def assumed_state(self):
         return self._assumed_state

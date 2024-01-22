@@ -178,6 +178,7 @@ CONFIG_DIAGNOSTIC_SENSORS = [
         key="wifi_ssid",
         translation_key="wifi_ssid",
         entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:wifi",
     ),
     HoymilesDiagnosticEntityDescription(
         key="meter_kind",
@@ -202,6 +203,7 @@ CONFIG_DIAGNOSTIC_SENSORS = [
         key="dtu_ap_ssid",
         translation_key="dtu_ap_ssid",
         entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:access-point",
     ),
 ]
 

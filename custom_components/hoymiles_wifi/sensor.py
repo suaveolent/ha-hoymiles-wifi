@@ -14,20 +14,14 @@ from homeassistant.components.sensor import (
 from homeassistant.core import callback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import (
-    ELECTRIC_CURRENT_AMPERE,
-    ELECTRIC_POTENTIAL_VOLT,
-    ENERGY_WATT_HOUR,
-    FREQUENCY_HERTZ,
-    POWER_WATT,
-    TEMP_CELSIUS,
     EntityCategory,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
+    UnitOfTemperature,
 )
-
 
 from .const import (
     DOMAIN,
@@ -65,7 +59,7 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="dtu_power",
         translation_key="ac_power",
-        native_unit_of_measurement=POWER_WATT,
+        native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=STATE_CLASS_MEASUREMENT,
         conversion_factor=0.1,
@@ -74,14 +68,14 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="dtu_daily_energy",
         translation_key="ac_daily_energy",
-        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
         key="sgs_data[0].voltage",
         translation_key="grid_voltage",
-        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=STATE_CLASS_MEASUREMENT,
         conversion_factor=0.1,
@@ -89,7 +83,7 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="sgs_data[0].frequency",
         translation_key="grid_frequency",
-        native_unit_of_measurement=FREQUENCY_HERTZ,
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
         device_class=SensorDeviceClass.FREQUENCY,
         state_class=STATE_CLASS_MEASUREMENT,
         conversion_factor=0.01,
@@ -97,7 +91,7 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="sgs_data[0].temperature",
         translation_key="inverter_temperature",
-        native_unit_of_measurement=TEMP_CELSIUS,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=STATE_CLASS_MEASUREMENT,
         conversion_factor=0.1,
@@ -105,7 +99,7 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="pv_data[0].voltage",
         translation_key="port_1_dc_voltage",
-        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=STATE_CLASS_MEASUREMENT,
         conversion_factor=0.1,
@@ -113,37 +107,37 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="pv_data[0].current",
         translation_key="port_1_dc_current",
-        unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=STATE_CLASS_MEASUREMENT,
-        native_unit_of_measurement=0.01,
+        conversion_factor=0.01,
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[0].power",
         translation_key="port_1_dc_power",
-        unit_of_measurement=POWER_WATT,
+        native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=STATE_CLASS_MEASUREMENT,
-        native_unit_of_measurement=0.1,
+        conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[0].energy_total",
         translation_key="port_1_dc_total_energy",
-        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[0].energy_daily",
         translation_key="port_1_dc_daily_energy",
-        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[1].voltage",
         translation_key="port_2_dc_voltage",
-        native_unit_of_measurement=ELECTRIC_POTENTIAL_VOLT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=STATE_CLASS_MEASUREMENT,
         conversion_factor=0.1,
@@ -151,7 +145,7 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="pv_data[1].current",
         translation_key="port_2_dc_current",
-        native_unit_of_measurement=ELECTRIC_CURRENT_AMPERE,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=STATE_CLASS_MEASUREMENT,
         conversion_factor=0.01,
@@ -159,7 +153,7 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="pv_data[1].power",
         translation_key="port_2_dc_power",
-        native_unit_of_measurement=POWER_WATT,
+        native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=STATE_CLASS_MEASUREMENT,
         conversion_factor=0.1,
@@ -167,14 +161,14 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="pv_data[1].energy_total",
         translation_key="port_2_dc_total_energy",
-        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[1].energy_daily",
         translation_key="port_2_dc_daily_energy",
-        native_unit_of_measurement=ENERGY_WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=STATE_CLASS_TOTAL_INCREASING,
     ),

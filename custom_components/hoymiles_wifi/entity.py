@@ -23,7 +23,7 @@ class HoymilesCoordinatorEntity(CoordinatorEntity):
         self._dtu_sn = ""
 
         if self.coordinator is not None and hasattr(self.coordinator, "data"):
-            self._dtu_sn = getattr(self.coordinator.data, "dtu_sn", "")
+            self._dtu_sn = getattr(self.coordinator.data, "device_serial_number", "")
 
     @property
     def device_info(self):

@@ -292,7 +292,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
             if self._native_value != None and self._conversion_factor != None:
                 self._native_value *= self._conversion_factor
 
-class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):    
+class HoymilesEnergySensorEntity(RestoreSensor, HoymilesDataSensorEntity):
 
     def __init__(self, coordinator, config_entry, data):
         super().__init__(coordinator, config_entry, data)
@@ -302,7 +302,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
     @property
     def native_value(self):
         super_native_value = super().native_value
-        # For an energy sensor a value of 0 woulld mess up long term stats because of how total_increasing works
+        # For an energy sensor a value of 0 would mess up long term stats because of how total_increasing works
         if super_native_value == 0.0:
             _LOGGER.debug(
                 "Returning last known value instead of 0.0 for {self.name) to avoid resetting total_increasing counter"
@@ -328,7 +328,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
 
 
-class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
+class HoymilesDiagnosticSensorEntity(RestoreSensor, HoymilesCoordinatorEntity, SensorEntity):
 
     def __init__(self, coordinator, config_entry, description):
         super().__init__(coordinator, config_entry)
@@ -338,10 +338,13 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         self._conversion = description.conversion
         self._separator = description.separator
         self._native_value = None
+        self._assumed_state = False
 
         self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
 
         self.update_state_value()
+        self._last_known_value = self._native_value
+
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -351,7 +354,15 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         
     @property
     def native_value(self):
-        return self._native_value
+        super_native_value = super().native_value
+
+        if super_native_value == None:
+            self._assumed_state = True
+            return self._last_known_value
+
+        self._last_known_value = super_native_value
+        self._assumed_state = False
+        return super_native_value
     
 
     def update_state_value(self):
@@ -375,4 +386,17 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
             self._native_value = combined_value
         else:
             self._native_value =  getattr(self.coordinator.data, self._attribute_name, None)
+        
+    async def async_added_to_hass(self) -> None:
+        """Call when entity about to be added to hass."""
+        await super().async_added_to_hass()
+        _LOGGER.debug(f"{self.name} Fetch last known state")
+        state = await self.async_get_last_sensor_data()
+        if state:
+            _LOGGER.debug(
+                f"{self.name} Got last known value from state: {state.native_value}"
+            )
+            self.last_known_value = state.native_value
+        else:
+            _LOGGER.debug(f"{self.name} No previous state was found")   
 

@@ -293,7 +293,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
             if self._native_value != None and self._conversion_factor != None:
                 self._native_value *= self._conversion_factor
 
-class HoymilesEnergySensorEntity(RestoreSensor, HoymilesDataSensorEntity):
+class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
     def __init__(self, coordinator, config_entry, data):
         super().__init__(coordinator, config_entry, data)
@@ -329,7 +329,7 @@ class HoymilesEnergySensorEntity(RestoreSensor, HoymilesDataSensorEntity):
 
 
 
-class HoymilesDiagnosticSensorEntity(RestoreSensor, HoymilesCoordinatorEntity, SensorEntity):
+class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, SensorEntity):
 
     def __init__(self, coordinator, config_entry, description):
         super().__init__(coordinator, config_entry)

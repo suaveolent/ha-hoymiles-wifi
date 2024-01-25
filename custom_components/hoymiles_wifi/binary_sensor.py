@@ -1,29 +1,18 @@
+"""This module contains binary sensor entities for Hoymiles WiFi integration."""
+from dataclasses import dataclass
 import logging
 
-from dataclasses import dataclass
-
 from homeassistant.components.binary_sensor import (
+    BinarySensorDeviceClass,
     BinarySensorEntity,
     BinarySensorEntityDescription,
-    BinarySensorDeviceClass,
 )
-
-from .entity import HoymilesCoordinatorEntity
-
-from hoymiles_wifi.inverter import (
-    NetworkState
-)
-
+from homeassistant.const import EntityCategory
 from homeassistant.core import callback
+from hoymiles_wifi.inverter import NetworkState
 
-from homeassistant.const import (
-    EntityCategory,
-)
-
-from .const import (
-    DOMAIN,
-    HASS_DATA_COORDINATOR,
-)
+from .const import DOMAIN, HASS_DATA_COORDINATOR
+from .entity import HoymilesCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 

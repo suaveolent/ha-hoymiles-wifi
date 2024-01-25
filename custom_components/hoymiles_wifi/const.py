@@ -1,3 +1,4 @@
+"""Constants for the Hoymiles integration."""
 DOMAIN = "hoymiles_wifi"
 NAME = "Hoymiles HMS-XXXXW-T2"
 DOMAIN = "hoymiles_wifi"

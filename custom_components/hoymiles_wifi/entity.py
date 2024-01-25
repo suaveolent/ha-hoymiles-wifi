@@ -1,15 +1,15 @@
+"""Entity base for Hoymiles entities."""
 import logging
 
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import (
-    CONF_SENSOR_PREFIX,
-    DOMAIN,
-)
+from .const import CONF_SENSOR_PREFIX, DOMAIN
+
 _LOGGER = logging.getLogger(__name__)
 
 
 class HoymilesCoordinatorEntity(CoordinatorEntity):
+    """Represents a Hoymiles coordinator entity."""
 
     _attr_has_entity_name = True
 
@@ -36,5 +36,4 @@ class HoymilesCoordinatorEntity(CoordinatorEntity):
             "serial_number": self._dtu_sn,
             "via_device": (DOMAIN, "inverter_state"),
         }
-        
-    
+

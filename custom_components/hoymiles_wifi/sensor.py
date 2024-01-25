@@ -1,17 +1,16 @@
-import logging
+"""Support for Hoymiles sensors."""
+
 from dataclasses import dataclass
 from enum import Enum
+import logging
 
 from homeassistant.components.sensor import (
+    RestoreSensor,
+    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
-    SensorDeviceClass,
     SensorStateClass,
-    RestoreSensor,
 )
-
-from homeassistant.core import callback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import (
     EntityCategory,
     UnitOfElectricCurrent,
@@ -21,20 +20,22 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
+from homeassistant.core import callback
 
 from .const import (
-    DOMAIN,
-    HASS_DATA_COORDINATOR,
-    HASS_CONFIG_COORDINATOR,
     CONVERSION_HEX,
+    DOMAIN,
+    HASS_CONFIG_COORDINATOR,
+    HASS_DATA_COORDINATOR,
 )
-
 from .entity import HoymilesCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
 
 
 class ConversionAction(Enum):
+    """Enumeration for conversion actions."""
+
     HEX = 1
 
 @dataclass(frozen=True)
@@ -44,14 +45,15 @@ class HoymilesSensorEntityDescriptionMixin:
 @dataclass(frozen=True)
 class HoymilesSensorEntityDescription(SensorEntityDescription):
     """Describes Hoymiles number sensor entity."""
+
     conversion_factor: float = None
 
 @dataclass(frozen=True)
 class HoymilesDiagnosticEntityDescription(SensorEntityDescription):
     """Describes Hoymiles number sensor entity."""
-    conversion: ConversionAction = None,
-    separator: str = None
 
+    conversion: ConversionAction = None
+    separator: str = None
 
 
 HOYMILES_SENSORS = [
@@ -209,14 +211,15 @@ CONFIG_DIAGNOSTIC_SENSORS = [
 
 
 async def async_setup_entry(hass, entry, async_add_devices):
-    """Setup sensor platform."""
+    """Set up sensor platform."""
+
     hass_data = hass.data[DOMAIN][entry.entry_id]
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
-    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR] 
+    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR]
     sensors = []
 
     # Sensors
-    for sensor_data in HOYMILES_SENSORS:      
+    for sensor_data in HOYMILES_SENSORS:
         device_class = sensor_data.device_class
         if device_class == SensorDeviceClass.ENERGY:
             sensors.append(HoymilesEnergySensorEntity(data_coordinator, entry, sensor_data))
@@ -224,18 +227,21 @@ async def async_setup_entry(hass, entry, async_add_devices):
             sensors.append(HoymilesDataSensorEntity(data_coordinator, entry, sensor_data))
 
     # Diagnostic Sensors
-    for sensor_data in CONFIG_DIAGNOSTIC_SENSORS:      
+    for sensor_data in CONFIG_DIAGNOSTIC_SENSORS:
         sensors.append(HoymilesDiagnosticSensorEntity(config_coordinator, entry, sensor_data))
 
     async_add_devices(sensors)
 
 
 def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
-    """Create a _unique_id id for a Hoymiles entity"""
+    """Create a _unique_id id for a Hoymiles entity."""
+
     return f"hoymiles_{config_entry_id}_{key}"
 
 
 class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
+    """Represents a sensor entity for Hoymiles data."""
+
     _attr_has_entity_name = True
 
     def __init__(self, coordinator, config_entry, description):
@@ -258,18 +264,21 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         self.update_state_value()
         super()._handle_coordinator_update()
 
-    
+
     @property
     def native_value(self):
+        """Return the native value of the sensor."""
         return self._native_value
-    
+
     @property
     def assumed_state(self):
+        """Return the assumed state of the sensor."""
         return self._assumed_state
-    
-    
+
+
     def update_state_value(self):
-        if self.coordinator is not None and (not hasattr(self.coordinator, "data") or self.coordinator.data == None):
+        """Update the state value of the sensor based on the coordinator data."""
+        if self.coordinator is not None and (not hasattr(self.coordinator, "data") or self.coordinator.data is None):
             self._native_value = 0.0
         else:
             if "[" in self._attribute_name and "]" in self._attribute_name:
@@ -290,18 +299,21 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
             else:
                 self._native_value = getattr(self.coordinator.data, self._attribute_name, None)
 
-            if self._native_value != None and self._conversion_factor != None:
+            if self._native_value is not None and self._conversion_factor is not None:
                 self._native_value *= self._conversion_factor
 
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
+    """Represents an energy sensor entity for Hoymiles data."""
 
     def __init__(self, coordinator, config_entry, data):
+        """Initialize the HoymilesEnergySensorEntity."""
         super().__init__(coordinator, config_entry, data)
         self._last_known_value = None
-    
+
 
     @property
     def native_value(self):
+        """Return the native value of the sensor."""
         super_native_value = super().native_value
         # For an energy sensor a value of 0 would mess up long term stats because of how total_increasing works
         if super_native_value == 0.0:
@@ -317,21 +329,16 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
         await super().async_added_to_hass()
-        _LOGGER.debug(f"{self.name} Fetch last known state")
         state = await self.async_get_last_sensor_data()
         if state:
-            _LOGGER.debug(
-                f"{self.name} Got last known value from state: {state.native_value}"
-            )
             self.last_known_value = state.native_value
-        else:
-            _LOGGER.debug(f"{self.name} No previous state was found")   
-
 
 
 class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, SensorEntity):
+    """Represents a diagnostic sensor entity for Hoymiles data."""
 
     def __init__(self, coordinator, config_entry, description):
+        """Initialize the HoymilesSensorEntity."""
         super().__init__(coordinator, config_entry)
         self.entity_description = description
 
@@ -352,22 +359,24 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, S
         """Handle updated data from the coordinator."""
         self.update_state_value()
         super()._handle_coordinator_update()
-        
+
     @property
     def native_value(self):
+        """Return the native value of the sensor."""
         super_native_value = super().native_value
 
-        if super_native_value == None:
+        if super_native_value is None:
             self._assumed_state = True
             return self._last_known_value
 
         self._last_known_value = super_native_value
         self._assumed_state = False
         return super_native_value
-    
+
 
     def update_state_value(self):
-        
+        """Update the state value of the sensor."""
+
         if "[" in self._attribute_name and "]" in self._attribute_name:
             attribute_parts = self._attribute_name.split("[")
             attribute_name = attribute_parts[0]
@@ -382,22 +391,16 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, S
             else:
                 combined_value = self._separator.join(attribute_values)
 
-            if(combined_value != None and self._conversion == CONVERSION_HEX):
+            if(combined_value is not None and self._conversion == CONVERSION_HEX):
                 combined_value = self._separator.join(hex(int(value))[2:] for value in combined_value.split(self._separator)).upper()
             self._native_value = combined_value
         else:
             self._native_value =  getattr(self.coordinator.data, self._attribute_name, None)
-        
+
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
         await super().async_added_to_hass()
-        _LOGGER.debug(f"{self.name} Fetch last known state")
         state = await self.async_get_last_sensor_data()
         if state:
-            _LOGGER.debug(
-                f"{self.name} Got last known value from state: {state.native_value}"
-            )
             self.last_known_value = state.native_value
-        else:
-            _LOGGER.debug(f"{self.name} No previous state was found")   
 

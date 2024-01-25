@@ -1,29 +1,25 @@
-import logging
+"""Support for Hoymiles number sensors."""
 from dataclasses import dataclass
 from enum import Enum
-
-from homeassistant.core import HomeAssistant
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-from homeassistant.core import callback
+import logging
 
 from homeassistant.components.number import (
-    NumberEntity,
     NumberDeviceClass,
+    NumberEntity,
+    NumberEntityDescription,
     NumberMode,
-    NumberEntityDescription
 )
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-
+from .const import DOMAIN, HASS_CONFIG_COORDINATOR
 from .entity import HoymilesCoordinatorEntity
 
-from .const import (
-    DOMAIN,
-    HASS_CONFIG_COORDINATOR,
-)
 
 class SetAction(Enum):
+    """Enum for set actions."""
+
     POWER_LIMIT = 1
 
 @dataclass(frozen=True)
@@ -33,6 +29,7 @@ class HoymilesNumberSensorEntityDescriptionMixin:
 @dataclass(frozen=True)
 class HoymilesNumberSensorEntityDescription(NumberEntityDescription):
     """Describes Hoymiles number sensor entity."""
+
     set_action: SetAction = None
     conversion_factor: float = None
 
@@ -51,7 +48,7 @@ CONFIG_CONTROL_ENTITIES = (
 _LOGGER = logging.getLogger(__name__)
 
 def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
-    """Create a _unique_id id for a Hoymiles entity"""
+    """Create a _unique_id id for a Hoymiles entity."""
     return f"hoymiles_{config_entry_id}_{key}"
 
 
@@ -87,11 +84,11 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         self.update_state_value()
         super()._handle_coordinator_update()
 
-    
+
     @property
     def native_value(self) -> float:
         return self._native_value
-        
+
     @property
     def assumed_state(self):
         return self._assumed_state

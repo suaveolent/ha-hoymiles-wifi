@@ -18,7 +18,7 @@ class HoymilesCoordinatorEntity(CoordinatorEntity):
         super().__init__(coordinator, config_entry)
         self._config_entry = config_entry
 
-        self._sensor_prefix = f'{config_entry.data.get(CONF_SENSOR_PREFIX)} ' if config_entry.data.get(CONF_SENSOR_PREFIX) else ""
+        self._sensor_prefix = f' {config_entry.data.get(CONF_SENSOR_PREFIX)} ' if config_entry.data.get(CONF_SENSOR_PREFIX) else ""
 
         self._dtu_sn = ""
 
@@ -30,7 +30,7 @@ class HoymilesCoordinatorEntity(CoordinatorEntity):
         """Return device information about the sensor."""
         return {
             "identifiers": {(DOMAIN, self._config_entry.entry_id)},
-            "name": "Hoymiles HMS-XXXXW-T2",
+            "name": "Hoymiles HMS-XXXXW-T2" + self._sensor_prefix,
             "manufacturer": "Hoymiles",
             "model": "HMS-XXXXW-T2",
             "serial_number": self._dtu_sn,

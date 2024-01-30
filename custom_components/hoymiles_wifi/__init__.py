@@ -16,11 +16,12 @@ from .const import (
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
     HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER,
+    HASS_INVERTER,
 )
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR, Platform.BUTTON]
 
 async def async_setup(hass: HomeAssistant, config: Config):
     """Set up this integration using YAML is not supported."""
@@ -39,11 +40,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     inverter = Inverter(host)
 
-    data_coordinator = HoymilesDataUpdateCoordinatorInverter(hass, inverter=inverter, update_interval=update_interval, entry=entry)
+    hass_data[HASS_INVERTER] = inverter
+
+    data_coordinator = HoymilesDataUpdateCoordinatorInverter(hass, inverter=inverter, entry=entry, update_interval=update_interval)
     hass_data[HASS_DATA_COORDINATOR] = data_coordinator
 
     config_update_interval = timedelta(seconds=DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS)
-    config_coordinator = HoymilesConfigUpdateCoordinatorInverter(hass, inverter=inverter, update_interval=config_update_interval, entry=entry)
+    config_coordinator = HoymilesConfigUpdateCoordinatorInverter(hass, inverter=inverter, entry=entry, update_interval=config_update_interval)
     hass_data[HASS_CONFIG_COORDINATOR] = config_coordinator
 
     # Registers update listener to update config entry when options are updated.
@@ -95,11 +98,11 @@ async def options_update_listener(hass: HomeAssistant, config_entry: ConfigEntry
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 
-class HoymilesDataUpdateCoordinatorInverter(DataUpdateCoordinator):
-    """Class to manage fetching data from the API."""
+class HoymilesCoordinatorEntity(DataUpdateCoordinator):
+    """Base coordinator entity for Hoymiles integration."""
 
-    def __init__(self, hass: HomeAssistant, inverter: Inverter, update_interval, entry) -> None:
-        """Initialize."""
+    def __init__(self, hass: HomeAssistant, inverter: Inverter, entry: ConfigEntry, update_interval: timedelta) -> None:
+        """Initialize the HoymilesCoordinatorEntity."""
         self._inverter = inverter
         self._entities_added = False
         self._hass = hass
@@ -113,10 +116,14 @@ class HoymilesDataUpdateCoordinatorInverter(DataUpdateCoordinator):
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
 
- 
     def get_inverter(self):
         """Get the inverter object."""
         return self._inverter
+
+
+
+class HoymilesDataUpdateCoordinatorInverter(HoymilesCoordinatorEntity):
+    """Data coordinator entity for Hoymiles integration."""
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -138,26 +145,8 @@ class HoymilesDataUpdateCoordinatorInverter(DataUpdateCoordinator):
 
 
 
-class HoymilesConfigUpdateCoordinatorInverter(DataUpdateCoordinator):
-    """Class to manage fetching data from the API."""
-
-    def __init__(self, hass: HomeAssistant, inverter: Inverter, update_interval, entry) -> None:
-        """Initialize."""
-        self._inverter = inverter
-        self._hass = hass
-        self._entry = entry
-
-        _LOGGER.debug(
-            "Setup entry with update interval %s. IP: %s",
-            update_interval,
-            entry.data.get(CONF_HOST),
-        )
-
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
-
-    def get_inverter(self):
-        """Get the inverter object."""
-        return self._inverter
+class HoymilesConfigUpdateCoordinatorInverter(HoymilesCoordinatorEntity):
+    """Config coordinator entity for Hoymiles integration."""
 
     async def _async_update_data(self):
         """Update data via library."""

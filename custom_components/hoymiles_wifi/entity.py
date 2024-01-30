@@ -1,6 +1,7 @@
 """Entity base for Hoymiles entities."""
 import logging
 
+from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_SENSOR_PREFIX, DOMAIN
@@ -8,22 +9,23 @@ from .const import CONF_SENSOR_PREFIX, DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
-class HoymilesCoordinatorEntity(CoordinatorEntity):
-    """Represents a Hoymiles coordinator entity."""
+class HoymilesEntity(Entity):
+    """Base class for Hoymiles entities."""
 
     _attr_has_entity_name = True
 
-    def __init__(self, coordinator, config_entry):
-        """Pass coordinator to CoordinatorEntity."""
-        super().__init__(coordinator, config_entry)
+    def __init__(self, config_entry):
+        """Initialize the Hoymiles entity."""
+        super().__init__()
         self._config_entry = config_entry
-
         self._sensor_prefix = f' {config_entry.data.get(CONF_SENSOR_PREFIX)} ' if config_entry.data.get(CONF_SENSOR_PREFIX) else ""
 
         self._dtu_sn = ""
 
-        if self.coordinator is not None and hasattr(self.coordinator, "data"):
-            self._dtu_sn = getattr(self.coordinator.data, "device_serial_number", "")
+
+
+        print("Called!")
+
 
     @property
     def device_info(self):
@@ -37,3 +39,14 @@ class HoymilesCoordinatorEntity(CoordinatorEntity):
             "via_device": (DOMAIN, "inverter_state"),
         }
 
+
+class HoymilesCoordinatorEntity(CoordinatorEntity, HoymilesEntity):
+    """Represents a Hoymiles coordinator entity."""
+
+    def __init__(self, coordinator, config_entry):
+        """Pass coordinator to CoordinatorEntity."""
+        super().__init__(coordinator, config_entry)
+        HoymilesEntity.__init__(self, config_entry)
+
+        if self.coordinator is not None and hasattr(self.coordinator, "data"):
+            self._dtu_sn = getattr(self.coordinator.data, "device_serial_number", "")

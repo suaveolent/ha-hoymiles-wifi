@@ -67,7 +67,7 @@ async def async_setup_entry(
 class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     """Hoymiles Number entity."""
 
-    def __init__(self, coordinator, config_entry: ConfigEntry, description) -> None:
+    def __init__(self, coordinator: HoymilesCoordinatorEntity, config_entry: ConfigEntry, description: HoymilesNumberSensorEntityDescription) -> None:
         """Initialize the HoymilesNumberEntity."""
         super().__init__(coordinator, config_entry)
         self.entity_description = description

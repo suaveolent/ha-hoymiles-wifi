@@ -109,6 +109,17 @@
       "dtu_ap_ssid": {
         "name": "DTU AP SSID"
       }
+    },
+    "button" : {
+      "restart" : {
+        "name" : "Restart"
+      },
+      "turn_off" : {
+        "name" : "Turn off"
+      },
+      "turn_on" : {
+        "name" : "Turn on"
+      }
     }
   }
 }

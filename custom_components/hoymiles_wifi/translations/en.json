@@ -5,7 +5,7 @@
         "title": "Hoymiles HMS-XXXXW-T2 connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
-          "host": "Hostname/IP",
+          "host": "[%key:common::config_flow::data::host%]",
           "update_interval": "Update Interval (seconds)",
           "sensor_prefix" : "Sensor Prefix"
         }
@@ -24,7 +24,7 @@
         "title": "Hoymiles HMS-XXXXW-T2 connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
-          "host": "Hostname/IP",
+          "host": "[%key:common::config_flow::data::host%]",
           "update_interval": "Update Interval (seconds)",
           "sensor_prefix" : "Sensor Prefix"
         }
@@ -108,6 +108,17 @@
       },
       "dtu_ap_ssid": {
         "name": "DTU AP SSID"
+      }
+    },
+    "button" : {
+      "restart" : {
+        "name" : "Restart"
+      },
+      "turn_off" : {
+        "name" : "Turn off"
+      },
+      "turn_on" : {
+        "name" : "Turn on"
       }
     }
   }

@@ -1,6 +1,7 @@
 """Support for Hoymiles sensors."""
 
 from dataclasses import dataclass
+import datetime
 from enum import Enum
 import logging
 
@@ -11,6 +12,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     EntityCategory,
     UnitOfElectricCurrent,
@@ -20,7 +22,8 @@ from homeassistant.const import (
     UnitOfPower,
     UnitOfTemperature,
 )
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import (
     CONVERSION_HEX,
@@ -210,7 +213,11 @@ CONFIG_DIAGNOSTIC_SENSORS = [
 ]
 
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up sensor platform."""
 
     hass_data = hass.data[DOMAIN][entry.entry_id]
@@ -219,40 +226,41 @@ async def async_setup_entry(hass, entry, async_add_devices):
     sensors = []
 
     # Sensors
-    for sensor_data in HOYMILES_SENSORS:
-        device_class = sensor_data.device_class
+    for description in HOYMILES_SENSORS:
+        device_class = description.device_class
         if device_class == SensorDeviceClass.ENERGY:
-            sensors.append(HoymilesEnergySensorEntity(data_coordinator, entry, sensor_data))
+            energy_sensor = HoymilesEnergySensorEntity(entry, description, data_coordinator)
+            sensors.append(energy_sensor)
+            # Schedule the reset function to run at midnight
+            midnight = datetime.datetime.combine(datetime.datetime.now().date(), datetime.time(0, 0))
+            now = datetime.datetime.now()
+            midnight = midnight + datetime.timedelta(days=1) if now > midnight else midnight
+            time_until_midnight = (midnight - now).total_seconds()
+
+            hass.loop.call_later(time_until_midnight, energy_sensor.schedule_midnight_reset)
+
         else:
-            sensors.append(HoymilesDataSensorEntity(data_coordinator, entry, sensor_data))
+            sensors.append(HoymilesDataSensorEntity(entry, description, data_coordinator))
 
     # Diagnostic Sensors
-    for sensor_data in CONFIG_DIAGNOSTIC_SENSORS:
-        sensors.append(HoymilesDiagnosticSensorEntity(config_coordinator, entry, sensor_data))
+    for description in CONFIG_DIAGNOSTIC_SENSORS:
+        sensors.append(HoymilesDiagnosticSensorEntity(entry, description, config_coordinator))
 
-    async_add_devices(sensors)
-
-
-def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
-    """Create a _unique_id id for a Hoymiles entity."""
-
-    return f"hoymiles_{config_entry_id}_{key}"
+    async_add_entities(sensors)
 
 
 class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     """Represents a sensor entity for Hoymiles data."""
 
-    _attr_has_entity_name = True
-
-    def __init__(self, coordinator, config_entry, description):
+    def __init__(self, config_entry: ConfigEntry, description: HoymilesSensorEntityDescription, coordinator: HoymilesCoordinatorEntity):
         """Pass coordinator to CoordinatorEntity."""
-        super().__init__(coordinator, config_entry, description)
+        super().__init__(config_entry, description, coordinator)
 
         self._attribute_name = description.key
         self._conversion_factor = description.conversion_factor
         self._native_value = None
         self._assumed_state = False
-        
+
         self.update_state_value()
 
     @callback
@@ -302,11 +310,25 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
     """Represents an energy sensor entity for Hoymiles data."""
 
-    def __init__(self, coordinator, config_entry, data):
+    def __init__(self, config_entry: ConfigEntry, description: HoymilesDiagnosticEntityDescription, coordinator: HoymilesCoordinatorEntity):
         """Initialize the HoymilesEnergySensorEntity."""
-        super().__init__(coordinator, config_entry, data)
+        super().__init__(config_entry, description, coordinator)
         self._last_known_value = None
 
+
+    def schedule_midnight_reset(self):
+        """Schedule the reset function to run again at the next midnight."""
+        midnight = datetime.datetime.combine(datetime.datetime.now().date(), datetime.time(0, 0))
+        midnight = midnight + datetime.timedelta(days=1)
+        time_until_midnight = (midnight - datetime.datetime.now()).total_seconds()
+
+        self.reset_sensor_value()
+
+        self.hass.loop.call_later(time_until_midnight, self.schedule_midnight_reset)
+
+    def reset_sensor_value(self):
+        """Reset the sensor value."""
+        self._last_known_value = 0
 
     @property
     def native_value(self):
@@ -334,17 +356,15 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, SensorEntity):
     """Represents a diagnostic sensor entity for Hoymiles data."""
 
-    def __init__(self, coordinator, config_entry, description):
+    def __init__(self, config_entry, description, coordinator):
         """Initialize the HoymilesSensorEntity."""
-        super().__init__(coordinator, config_entry, description)
+        super().__init__(config_entry, description, coordinator)
 
         self._attribute_name = description.key
         self._conversion = description.conversion
         self._separator = description.separator
         self._native_value = None
         self._assumed_state = False
-
-        self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
 
         self.update_state_value()
         self._last_known_value = self._native_value

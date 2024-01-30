@@ -46,9 +46,13 @@ async def async_setup_entry(
     """Set up the Hoymiles number entities."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
     inverter = hass_data[HASS_INVERTER]
-    async_add_entities(
-        HoymilesButtonEntity(entry, data, inverter) for data in BUTTONS
+
+    buttons = []
+    for description in BUTTONS:
+        buttons.append(HoymilesButtonEntity(entry, description, inverter)
     )
+    async_add_entities(buttons)
+
 
 class HoymilesButtonEntity(HoymilesEntity, ButtonEntity):
     """Hoymiles Number entity."""

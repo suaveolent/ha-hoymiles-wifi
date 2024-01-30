@@ -48,8 +48,6 @@ CONFIG_CONTROL_ENTITIES = (
 _LOGGER = logging.getLogger(__name__)
 
 
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -57,17 +55,21 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Hoymiles number entities."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
-    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR] 
-    async_add_entities(
-        HoymilesNumberEntity(config_coordinator, entry, data) for data in CONFIG_CONTROL_ENTITIES
-    )
+    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR]
+
+    sensors = []
+    for description in CONFIG_CONTROL_ENTITIES:
+        sensors.append(HoymilesNumberEntity(entry, description, config_coordinator))
+
+    async_add_entities(sensors)
+
 
 class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     """Hoymiles Number entity."""
 
-    def __init__(self, coordinator: HoymilesCoordinatorEntity, config_entry: ConfigEntry, description: HoymilesNumberSensorEntityDescription) -> None:
+    def __init__(self, config_entry: ConfigEntry, description: HoymilesNumberSensorEntityDescription, coordinator: HoymilesCoordinatorEntity,) -> None:
         """Initialize the HoymilesNumberEntity."""
-        super().__init__(coordinator, config_entry, description)
+        super().__init__(config_entry, description, coordinator)
         self._attribute_name = description.key
         self._conversion_factor = description.conversion_factor
         self._set_action = description.set_action

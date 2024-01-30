@@ -7,8 +7,10 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
     BinarySensorEntityDescription,
 )
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EntityCategory
-from homeassistant.core import callback
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from hoymiles_wifi.inverter import NetworkState
 
 from .const import DOMAIN, HASS_DATA_COORDINATOR
@@ -29,24 +31,29 @@ BINARY_SENSORS = (
     ),
 )
 
-async def async_setup_entry(hass, entry, async_add_devices):
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
     """Set up sensor platform."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
+
     sensors = []
 
     for description in BINARY_SENSORS:
-        sensors.append(HoymilesInverterSensorEntity(data_coordinator, entry, description))
+        sensors.append(HoymilesInverterSensorEntity(entry, description, data_coordinator))
 
-    async_add_devices(sensors)
+    async_add_entities(sensors)
 
 
 class HoymilesInverterSensorEntity(HoymilesCoordinatorEntity, BinarySensorEntity):
     """Represents a binary sensor entity for Hoymiles WiFi integration."""
 
-    def __init__(self, coordinator, config_entry, description):
+    def __init__(self, config_entry: ConfigEntry, description:HoymilesBinarySensorEntityDescription, coordinator: HoymilesCoordinatorEntity):
         """Initialize the HoymilesInverterSensorEntity."""
-        super().__init__(coordinator, config_entry, description)
+        super().__init__(config_entry, description, coordinator)
         self._inverter = coordinator.get_inverter()
         self._native_value = None
 

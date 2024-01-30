@@ -39,7 +39,7 @@ class HoymilesEntity(Entity):
 class HoymilesCoordinatorEntity(CoordinatorEntity, HoymilesEntity):
     """Represents a Hoymiles coordinator entity."""
 
-    def __init__(self, coordinator: HoymilesCoordinatorEntity, config_entry: ConfigEntry, description: EntityDescription):
+    def __init__(self, config_entry: ConfigEntry, description: EntityDescription, coordinator: HoymilesCoordinatorEntity):
         """Pass coordinator to CoordinatorEntity."""
         CoordinatorEntity.__init__(self, coordinator)
         if self.coordinator is not None and hasattr(self.coordinator, "data"):

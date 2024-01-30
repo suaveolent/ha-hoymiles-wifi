@@ -1,4 +1,4 @@
-"""This module contains binary sensor entities for Hoymiles WiFi integration."""
+"""Contains binary sensor entities for Hoymiles WiFi integration."""
 from dataclasses import dataclass
 import logging
 
@@ -30,7 +30,7 @@ BINARY_SENSORS = (
 )
 
 async def async_setup_entry(hass, entry, async_add_devices):
-    """Setup sensor platform."""
+    """Set up sensor platform."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
     sensors = []
@@ -44,14 +44,15 @@ async def async_setup_entry(hass, entry, async_add_devices):
 
 
 def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
-    """Create a _unique_id id for a Hoymiles entity"""
+    """Create a _unique_id id for a Hoymiles entity."""
     return f"hoymiles_{config_entry_id}_{key}"
 
 
 class HoymilesInverterSensorEntity(HoymilesCoordinatorEntity, BinarySensorEntity):
+    """Represents a binary sensor entity for Hoymiles WiFi integration."""
 
     def __init__(self, coordinator, config_entry, description):
-
+        """Initialize the HoymilesInverterSensorEntity."""
         super().__init__(coordinator, config_entry)
         self.entity_description = description
         self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
@@ -66,13 +67,15 @@ class HoymilesInverterSensorEntity(HoymilesCoordinatorEntity, BinarySensorEntity
         """Handle updated data from the coordinator."""
         self.update_state_value()
         super()._handle_coordinator_update()
-        
+
     @property
     def is_on(self):
+        """Return the state of the binary sensor."""
         return self._native_value
-    
-    
+
+
     def update_state_value(self):
+        """Update the state value of the binary sensor based on the inverter's network state."""
         inverter_state = self._inverter.get_state()
         if inverter_state == NetworkState.Online:
             self._native_value = True

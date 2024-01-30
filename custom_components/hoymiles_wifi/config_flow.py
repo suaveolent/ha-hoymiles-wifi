@@ -62,20 +62,21 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
         return self.async_create_entry(
             title=import_config[CONF_HOST], data=import_config
         )
-    
+
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
         """Get the options flow for this handler."""
         return HoymilesInverterOptionsFlowHandler(config_entry)
-    
+
 
 
 class HoymilesInverterOptionsFlowHandler(config_entries.OptionsFlow):
     """Hoymiles Inverter options flow."""
 
     def __init__(self, config_entry):
+        """Initialize the options flow for Hoymiles Inverter."""
         self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
@@ -99,12 +100,12 @@ class HoymilesInverterOptionsFlowHandler(config_entries.OptionsFlow):
                         CONF_UPDATE_INTERVAL: update_interval
                     }
                 )
-            
+
         options = self.config_entry.options
         host = options.get(CONF_HOST)
         update_interval = options.get(CONF_UPDATE_INTERVAL)
         sensor_prefix = options.get(CONF_SENSOR_PREFIX)
-            
+
         return self.async_show_form(
             step_id="user_options",
             data_schema=vol.Schema({
@@ -117,4 +118,3 @@ class HoymilesInverterOptionsFlowHandler(config_entries.OptionsFlow):
             }),
             errors=errors,
         )
-            

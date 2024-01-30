@@ -57,16 +57,18 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-        hass_data = hass.data[DOMAIN][entry.entry_id]
-        config_coordinator = hass_data[HASS_CONFIG_COORDINATOR] 
-        async_add_entities(
-            HoymilesNumberEntity(config_coordinator, entry, data) for data in CONFIG_CONTROL_ENTITIES
-        )
+    """Set up the Hoymiles number entities."""
+    hass_data = hass.data[DOMAIN][entry.entry_id]
+    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR] 
+    async_add_entities(
+        HoymilesNumberEntity(config_coordinator, entry, data) for data in CONFIG_CONTROL_ENTITIES
+    )
 
 class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     """Hoymiles Number entity."""
 
     def __init__(self, coordinator, config_entry: ConfigEntry, description) -> None:
+        """Initialize the HoymilesNumberEntity."""
         super().__init__(coordinator, config_entry)
         self.entity_description = description
         self._attribute_name = description.key
@@ -87,14 +89,20 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
 
     @property
     def native_value(self) -> float:
+        """Get the native value of the entity."""
         return self._native_value
 
     @property
     def assumed_state(self):
+        """Return the assumed state of the entity."""
         return self._assumed_state
 
     def set_native_value(self, value: float) -> None:
+        """Set the native value of the entity.
 
+        Args:
+            value (float): The value to set.
+        """
         if self._set_action == SetAction.POWER_LIMIT:
                 inverter = self.coordinator.get_inverter()
                 if(value < 0 and value > 100):
@@ -103,16 +111,17 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
                 inverter.set_power_limit(value)
         else:
             _LOGGER.error("Invalid set action!")
-            return 
-        
+            return
+
         self._assumed_state = True
         self._native_value = value
 
 
     def update_state_value(self):
+        """Update the state value of the entity."""
         self._native_value =  getattr(self.coordinator.data, self._attribute_name, None)
 
         self._assumed_state = False
 
-        if self._native_value != None and self._conversion_factor != None:
+        if self._native_value is not None and self._conversion_factor is not None:
             self._native_value *= self._conversion_factor

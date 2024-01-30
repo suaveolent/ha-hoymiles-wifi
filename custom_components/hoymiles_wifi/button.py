@@ -69,11 +69,9 @@ class HoymilesButtonEntity(HoymilesEntity, ButtonEntity):
         """Press the button."""
 
         if hasattr(self._inverter, self.entity_description.key) and callable(getattr(self._inverter, self.entity_description.key)):
-            # Call the method dynamically
-            getattr(self._inverter, self.entity_description.ke)()
+            getattr(self._inverter, self.entity_description.key)()
         else:
-            # Handle the case when the key does not correspond to a valid method
-            raise NotImplementedError(f"Method '{self.entity_description.ke}' not implemented in Inverter class.")
+            raise NotImplementedError(f"Method '{self.entity_description.key}' not implemented in Inverter class.")
 
 
 

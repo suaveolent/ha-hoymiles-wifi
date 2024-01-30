@@ -8,7 +8,6 @@ from homeassistant.components.button import (
     ButtonEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from hoymiles_wifi.inverter import Inverter
@@ -51,19 +50,13 @@ async def async_setup_entry(
         HoymilesButtonEntity(entry, data, inverter) for data in BUTTONS
     )
 
-def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
-    """Create a _unique_id id for a Hoymiles entity."""
-    return f"hoymiles_{config_entry_id}_{key}"
-
 class HoymilesButtonEntity(HoymilesEntity, ButtonEntity):
     """Hoymiles Number entity."""
 
     def __init__(self, config_entry: ConfigEntry, description: HoymilesButtonEntityDescription, inverter: Inverter) -> None:
         """Initialize the HoymilesButtonEntity."""
-        super().__init__(config_entry)
+        super().__init__(config_entry, description)
         self._inverter = inverter
-        self.entity_description = description
-        self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
 
     def press(self) -> None:
         """Press the button."""

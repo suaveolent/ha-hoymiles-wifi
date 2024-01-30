@@ -246,16 +246,13 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
     def __init__(self, coordinator, config_entry, description):
         """Pass coordinator to CoordinatorEntity."""
-        super().__init__(coordinator, config_entry)
-        self.entity_description = description
+        super().__init__(coordinator, config_entry, description)
 
         self._attribute_name = description.key
         self._conversion_factor = description.conversion_factor
         self._native_value = None
         self._assumed_state = False
-
-        self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
-
+        
         self.update_state_value()
 
     @callback
@@ -339,8 +336,7 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, S
 
     def __init__(self, coordinator, config_entry, description):
         """Initialize the HoymilesSensorEntity."""
-        super().__init__(coordinator, config_entry)
-        self.entity_description = description
+        super().__init__(coordinator, config_entry, description)
 
         self._attribute_name = description.key
         self._conversion = description.conversion

@@ -47,9 +47,7 @@ CONFIG_CONTROL_ENTITIES = (
 
 _LOGGER = logging.getLogger(__name__)
 
-def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
-    """Create a _unique_id id for a Hoymiles entity."""
-    return f"hoymiles_{config_entry_id}_{key}"
+
 
 
 async def async_setup_entry(
@@ -69,14 +67,12 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
 
     def __init__(self, coordinator: HoymilesCoordinatorEntity, config_entry: ConfigEntry, description: HoymilesNumberSensorEntityDescription) -> None:
         """Initialize the HoymilesNumberEntity."""
-        super().__init__(coordinator, config_entry)
-        self.entity_description = description
+        super().__init__(coordinator, config_entry, description)
         self._attribute_name = description.key
         self._conversion_factor = description.conversion_factor
         self._set_action = description.set_action
         self._native_value = None
         self._assumed_state = False
-        self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
 
         self.update_state_value()
 

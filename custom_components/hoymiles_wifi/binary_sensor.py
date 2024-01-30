@@ -35,17 +35,10 @@ async def async_setup_entry(hass, entry, async_add_devices):
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
     sensors = []
 
-    # Inverter State
     for description in BINARY_SENSORS:
         sensors.append(HoymilesInverterSensorEntity(data_coordinator, entry, description))
 
     async_add_devices(sensors)
-
-
-
-def get_hoymiles_unique_id(config_entry_id: str, key: str) -> str:
-    """Create a _unique_id id for a Hoymiles entity."""
-    return f"hoymiles_{config_entry_id}_{key}"
 
 
 class HoymilesInverterSensorEntity(HoymilesCoordinatorEntity, BinarySensorEntity):
@@ -53,9 +46,7 @@ class HoymilesInverterSensorEntity(HoymilesCoordinatorEntity, BinarySensorEntity
 
     def __init__(self, coordinator, config_entry, description):
         """Initialize the HoymilesInverterSensorEntity."""
-        super().__init__(coordinator, config_entry)
-        self.entity_description = description
-        self._attr_unique_id = get_hoymiles_unique_id(config_entry.entry_id, description.key)
+        super().__init__(coordinator, config_entry, description)
         self._inverter = coordinator.get_inverter()
         self._native_value = None
 

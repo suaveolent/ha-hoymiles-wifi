@@ -25,12 +25,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import (
-    CONVERSION_HEX,
-    DOMAIN,
-    HASS_CONFIG_COORDINATOR,
-    HASS_DATA_COORDINATOR,
-)
+from .const import DOMAIN, HASS_CONFIG_COORDINATOR, HASS_DATA_COORDINATOR
 from .entity import HoymilesCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -408,7 +403,7 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, S
             else:
                 combined_value = self._separator.join(attribute_values)
 
-            if(combined_value is not None and self._conversion == CONVERSION_HEX):
+            if(combined_value is not None and self._conversion == ConversionAction.HEX):
                 combined_value = self._separator.join(hex(int(value))[2:] for value in combined_value.split(self._separator)).upper()
             self._native_value = combined_value
         else:

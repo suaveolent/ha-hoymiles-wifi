@@ -50,6 +50,7 @@ class HoymilesSensorEntityDescription(SensorEntityDescription):
     """Describes Hoymiles number sensor entity."""
 
     conversion_factor: float = None
+    reset_at_midnight: bool = False
 
 @dataclass(frozen=True)
 class HoymilesDiagnosticEntityDescription(SensorEntityDescription):
@@ -75,6 +76,7 @@ HOYMILES_SENSORS = [
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
+        reset_at_midnight=True,
     ),
     HoymilesSensorEntityDescription(
         key="sgs_data[0].voltage",
@@ -137,6 +139,7 @@ HOYMILES_SENSORS = [
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
+        reset_at_midnight=True,
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[1].voltage",
@@ -175,6 +178,7 @@ HOYMILES_SENSORS = [
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
+        reset_at_midnight=True,
     ),
 ]
 
@@ -231,14 +235,6 @@ async def async_setup_entry(
         if device_class == SensorDeviceClass.ENERGY:
             energy_sensor = HoymilesEnergySensorEntity(entry, description, data_coordinator)
             sensors.append(energy_sensor)
-            # Schedule the reset function to run at midnight
-            midnight = datetime.datetime.combine(datetime.datetime.now().date(), datetime.time(0, 0))
-            now = datetime.datetime.now()
-            midnight = midnight + datetime.timedelta(days=1) if now > midnight else midnight
-            time_until_midnight = (midnight - now).total_seconds()
-
-            hass.loop.call_later(time_until_midnight, energy_sensor.schedule_midnight_reset)
-
         else:
             sensors.append(HoymilesDataSensorEntity(entry, description, data_coordinator))
 
@@ -313,16 +309,19 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
     def __init__(self, config_entry: ConfigEntry, description: HoymilesDiagnosticEntityDescription, coordinator: HoymilesCoordinatorEntity):
         """Initialize the HoymilesEnergySensorEntity."""
         super().__init__(config_entry, description, coordinator)
+        # Important to set to None to not mess with long term stats
         self._last_known_value = None
 
 
-    def schedule_midnight_reset(self):
+    def schedule_midnight_reset(self, reset_sensor_value: bool = True):
         """Schedule the reset function to run again at the next midnight."""
-        midnight = datetime.datetime.combine(datetime.datetime.now().date(), datetime.time(0, 0))
-        midnight = midnight + datetime.timedelta(days=1)
+        now = datetime.datetime.now()
+        midnight = datetime.datetime.combine(now.date(), datetime.time(0, 0))
+        midnight = midnight + datetime.timedelta(days=1) if now > midnight else midnight
         time_until_midnight = (midnight - datetime.datetime.now()).total_seconds()
 
-        self.reset_sensor_value()
+        if reset_sensor_value:
+            self.reset_sensor_value()
 
         self.hass.loop.call_later(time_until_midnight, self.schedule_midnight_reset)
 
@@ -348,9 +347,13 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""
         await super().async_added_to_hass()
+
         state = await self.async_get_last_sensor_data()
         if state:
             self.last_known_value = state.native_value
+
+        if self.entity_description.reset_at_midnight:
+            self.schedule_midnight_reset(reset_sensor_value=False)
 
 
 class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, SensorEntity):
@@ -379,15 +382,13 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, S
     @property
     def native_value(self):
         """Return the native value of the sensor."""
-        super_native_value = super().native_value
-
-        if super_native_value is None:
+        if self._native_value is None:
             self._assumed_state = True
             return self._last_known_value
 
-        self._last_known_value = super_native_value
+        self._last_known_value = self._native_value
         self._assumed_state = False
-        return super_native_value
+        return self._native_value
 
 
     def update_state_value(self):

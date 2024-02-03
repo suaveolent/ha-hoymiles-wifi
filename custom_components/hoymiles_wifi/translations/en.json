@@ -24,7 +24,7 @@
         "title": "Hoymiles HMS-XXXXW-T2 connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
-          "host": "[%key:common::config_flow::data::host%]",
+          "host": "Host",
           "update_interval": "Update Interval (seconds)",
           "sensor_prefix" : "Sensor Prefix"
         }

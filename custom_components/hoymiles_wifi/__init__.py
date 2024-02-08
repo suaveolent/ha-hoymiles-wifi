@@ -6,6 +6,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import Config, HomeAssistant
+from hoymiles_wifi.inverter import Inverter
 
 from .const import (
     CONF_UPDATE_INTERVAL,
@@ -15,6 +16,10 @@ from .const import (
     HASS_DATA_COORDINATOR,
     HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER,
     HASS_INVERTER,
+)
+from .coordinator import (
+    HoymilesConfigUpdateCoordinatorInverter,
+    HoymilesDataUpdateCoordinatorInverter,
 )
 
 _LOGGER = logging.getLogger(__name__)

@@ -108,6 +108,18 @@
       },
       "dtu_ap_ssid": {
         "name": "DTU AP SSID"
+      },
+      "dtu_sw_version": {
+        "name": "DTU SW version"
+      },
+      "dtu_hw_version": {
+        "name": "DTU HW version"
+      },
+      "pv_sw_version": {
+        "name": "Inverter SW version"
+      },
+      "pv_hw_version" : {
+        "name": "Inverter HW version"
       }
     },
     "button" : {

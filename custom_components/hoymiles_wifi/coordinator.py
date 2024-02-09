@@ -15,7 +15,7 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR, Platform.BUTTON]
 
 class HoymilesDataUpdateCoordinator(DataUpdateCoordinator):
-    """Base coordinator entity for Hoymiles integration."""
+    """Base data update coordinator for Hoymiles integration."""
 
     def __init__(self, hass: homeassistant, inverter: Inverter, entry: ConfigEntry, update_interval: timedelta) -> None:
         """Initialize the HoymilesCoordinatorEntity."""
@@ -36,8 +36,8 @@ class HoymilesDataUpdateCoordinator(DataUpdateCoordinator):
         """Get the inverter object."""
         return self._inverter
 
-class HoymilesRealDataUpdateCoordinatorInverter(HoymilesDataUpdateCoordinator):
-    """Data coordinator entity for Hoymiles integration."""
+class HoymilesRealDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """Data coordinator for Hoymiles integration."""
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -59,8 +59,8 @@ class HoymilesRealDataUpdateCoordinatorInverter(HoymilesDataUpdateCoordinator):
 
 
 
-class HoymilesConfigUpdateCoordinatorInverter(HoymilesDataUpdateCoordinator):
-    """Config coordinator entity for Hoymiles integration."""
+class HoymilesConfigUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """Config coordinator for Hoymiles integration."""
 
     async def _async_update_data(self):
         """Update data via library."""
@@ -71,7 +71,22 @@ class HoymilesConfigUpdateCoordinatorInverter(HoymilesDataUpdateCoordinator):
         if response:
             return response
         else:
-            _LOGGER.debug("Unable to retrieve real data new. Inverter might be offline.")
+            _LOGGER.debug("Unable to retrieve config data. Inverter might be offline.")
+            return None
+
+class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """App Info coordinator for Hoymiles integration."""
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        _LOGGER.debug("Hoymiles data coordinator update")
+
+        response = await self._inverter.app_information_data()
+
+        if response:
+            return response
+        else:
+            _LOGGER.debug("Unable to retrieve app information data. Inverter might be offline.")
             return None
 
 

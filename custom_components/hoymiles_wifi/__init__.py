@@ -12,14 +12,16 @@ from .const import (
     CONF_UPDATE_INTERVAL,
     DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
+    HASS_APP_INFO_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
     HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER,
     HASS_INVERTER,
 )
 from .coordinator import (
-    HoymilesConfigUpdateCoordinatorInverter,
-    HoymilesRealDataUpdateCoordinatorInverter,
+    HoymilesAppInfoUpdateCoordinator,
+    HoymilesConfigUpdateCoordinator,
+    HoymilesRealDataUpdateCoordinator,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,12 +47,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hass_data[HASS_INVERTER] = inverter
 
-    data_coordinator = HoymilesRealDataUpdateCoordinatorInverter(hass, inverter=inverter, entry=entry, update_interval=update_interval)
+    data_coordinator = HoymilesRealDataUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=update_interval)
     hass_data[HASS_DATA_COORDINATOR] = data_coordinator
 
     config_update_interval = timedelta(seconds=DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS)
-    config_coordinator = HoymilesConfigUpdateCoordinatorInverter(hass, inverter=inverter, entry=entry, update_interval=config_update_interval)
+    config_coordinator = HoymilesConfigUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=config_update_interval)
     hass_data[HASS_CONFIG_COORDINATOR] = config_coordinator
+
+    app_info_update_interval = timedelta(seconds=DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS)
+    app_info_update_coordinator = HoymilesAppInfoUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=app_info_update_interval)
+    hass_data[HASS_APP_INFO_COORDINATOR] = app_info_update_coordinator
 
     # Registers update listener to update config entry when options are updated.
     unsub_options_update_listener = entry.add_update_listener(options_update_listener)
@@ -60,6 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     await data_coordinator.async_config_entry_first_refresh()
     await config_coordinator.async_config_entry_first_refresh()
+    await app_info_update_coordinator.async_config_entry_first_refresh()
 
     return True
 

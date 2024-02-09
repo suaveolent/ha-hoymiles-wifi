@@ -24,8 +24,17 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+import hoymiles_wifi.utils
 
-from .const import DOMAIN, HASS_CONFIG_COORDINATOR, HASS_DATA_COORDINATOR
+from .const import (
+    DOMAIN,
+    FCTN_GENERATE_DTU_VERSION_STRING,
+    FCTN_GENERATE_INVERTER_HW_VERSION_STRING,
+    FCTN_GENERATE_INVERTER_SW_VERSION_STRING,
+    HASS_APP_INFO_COORDINATOR,
+    HASS_CONFIG_COORDINATOR,
+    HASS_DATA_COORDINATOR,
+)
 from .entity import HoymilesCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,14 +51,17 @@ class HoymilesSensorEntityDescriptionMixin:
 
 @dataclass(frozen=True)
 class HoymilesSensorEntityDescription(SensorEntityDescription):
-    """Describes Hoymiles number sensor entity."""
+    """Describes Hoymiles data sensor entity."""
 
     conversion_factor: float = None
     reset_at_midnight: bool = False
+    version_translation_function: str = None
+    version_prefix: str = None
+
 
 @dataclass(frozen=True)
 class HoymilesDiagnosticEntityDescription(SensorEntityDescription):
-    """Describes Hoymiles number sensor entity."""
+    """Describes Hoymiles diagnostic sensor entity."""
 
     conversion: ConversionAction = None
     separator: str = None
@@ -211,6 +223,38 @@ CONFIG_DIAGNOSTIC_SENSORS = [
     ),
 ]
 
+APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
+    HoymilesSensorEntityDescription(
+        key = "dtu_info.dtu_sw_version",
+        translation_key="dtu_sw_version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
+        version_prefix="V"
+    ),
+    HoymilesSensorEntityDescription(
+        key = "dtu_info.dtu_hw_version",
+        translation_key="dtu_hw_version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
+        version_prefix="H"
+    ),
+    HoymilesSensorEntityDescription(
+        key = "pv_info[0].pv_sw_version",
+        translation_key="pv_sw_version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        version_translation_function=FCTN_GENERATE_INVERTER_SW_VERSION_STRING,
+        version_prefix="V"
+    ),
+    HoymilesSensorEntityDescription(
+        key = "pv_info[0].pv_hw_version",
+        translation_key="pv_hw_version",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        version_translation_function=FCTN_GENERATE_INVERTER_HW_VERSION_STRING,
+        version_prefix="H"
+    ),
+)
+
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
@@ -222,9 +266,10 @@ async def async_setup_entry(
     hass_data = hass.data[DOMAIN][entry.entry_id]
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
     config_coordinator = hass_data[HASS_CONFIG_COORDINATOR]
+    app_info_coordinator = hass_data[HASS_APP_INFO_COORDINATOR]
     sensors = []
 
-    # Sensors
+    # Real Data Sensors
     for description in HOYMILES_SENSORS:
         device_class = description.device_class
         if device_class == SensorDeviceClass.ENERGY:
@@ -236,6 +281,9 @@ async def async_setup_entry(
     # Diagnostic Sensors
     for description in CONFIG_DIAGNOSTIC_SENSORS:
         sensors.append(HoymilesDiagnosticSensorEntity(entry, description, config_coordinator))
+
+    for description in APP_INFO_SENSORS:
+        sensors.append(HoymilesDataSensorEntity(entry, description, app_info_coordinator))
 
     async_add_entities(sensors)
 
@@ -249,6 +297,8 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
         self._attribute_name = description.key
         self._conversion_factor = description.conversion_factor
+        self._version_translation_function = description.version_translation_function
+        self._version_prefix = description.version_prefix
         self._native_value = None
         self._assumed_state = False
 
@@ -276,27 +326,40 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         """Update the state value of the sensor based on the coordinator data."""
         if self.coordinator is not None and (not hasattr(self.coordinator, "data") or self.coordinator.data is None):
             self._native_value = 0.0
-        else:
-            if "[" in self._attribute_name and "]" in self._attribute_name:
-                # Extracting the list index and attribute dynamically
-                attribute_name, index = self._attribute_name.split("[")
-                index = int(index.split("]")[0])
-                nested_attribute = self._attribute_name.split("].")[1] if "]." in self._attribute_name else None
+        elif "[" in self._attribute_name and "]" in self._attribute_name:
+            # Extracting the list index and attribute dynamically
+            attribute_name, index = self._attribute_name.split("[")
+            index = int(index.split("]")[0])
+            nested_attribute = self._attribute_name.split("].")[1] if "]." in self._attribute_name else None
 
-                attribute = getattr(self.coordinator.data, attribute_name.split("[")[0], [])
+            attribute = getattr(self.coordinator.data, attribute_name.split("[")[0], [])
 
-                if index < len(attribute):
-                    if nested_attribute is not None:
-                        self._native_value = getattr(attribute[index], nested_attribute, None)
-                    else:
-                        self._native_value = attribute[index]
+            if index < len(attribute):
+                if nested_attribute is not None:
+                    self._native_value = getattr(attribute[index], nested_attribute, None)
                 else:
-                    self._native_value = None
+                    self._native_value = attribute[index]
             else:
-                self._native_value = getattr(self.coordinator.data, self._attribute_name, None)
+                self._native_value = None
+        elif "." in self._attribute_name:
+            attribute_parts = self._attribute_name.split(".")
+            attribute = self.coordinator.data
+            for part in attribute_parts:
+                attribute = getattr(attribute, part, None)
+            self._native_value = attribute
 
-            if self._native_value is not None and self._conversion_factor is not None:
-                self._native_value *= self._conversion_factor
+        else:
+            self._native_value = getattr(self.coordinator.data, self._attribute_name, None)
+
+
+        if self._native_value is not None and self._conversion_factor is not None:
+            self._native_value *= self._conversion_factor
+
+        if(self._native_value is not None and self._version_translation_function is not None):
+            self._native_value = getattr(hoymiles_wifi.utils, self._version_translation_function)(int(self._native_value))
+
+        if(self._native_value is not None and self._version_prefix is not None):
+            self._native_value = f"{self._version_prefix}{self._native_value}"
 
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
     """Represents an energy sensor entity for Hoymiles data."""
@@ -331,7 +394,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
         # For an energy sensor a value of 0 would mess up long term stats because of how total_increasing works
         if super_native_value == 0.0:
             _LOGGER.debug(
-                "Returning last known value instead of 0.0 for {self.name) to avoid resetting total_increasing counter"
+                "Returning last known value instead of 0.0 for %s to avoid resetting total_increasing counter", self.name
             )
             self._assumed_state = True
             return self._last_known_value
@@ -399,15 +462,14 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, RestoreSensor, S
             attribute_values = [str(getattr(self.coordinator.data, attr, "")) for attr in new_attribute_names]
 
             if("" in attribute_values):
-                combined_value = None
+                self._native_value = None
             else:
-                combined_value = self._separator.join(attribute_values)
-
-            if(combined_value is not None and self._conversion == ConversionAction.HEX):
-                combined_value = self._separator.join(hex(int(value))[2:] for value in combined_value.split(self._separator)).upper()
-            self._native_value = combined_value
+                self._native_value = self._separator.join(attribute_values)
         else:
             self._native_value =  getattr(self.coordinator.data, self._attribute_name, None)
+
+        if(self._native_value is not None and self._conversion == ConversionAction.HEX):
+            self._native_value = self._separator.join(hex(int(value))[2:] for value in self._native_value.split(self._separator)).upper()
 
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""

@@ -16,8 +16,10 @@ This Home Assistant custom component utilizes the [hoymiles-wifi](https://github
    - **Category:** Integration
 
 5. Click "Add"
-6. Navigate to "Settings" - "Devices & Services"
-7. Click "ADD INTEGRATION" and select the `Hoymiles HMS-XXXXW-T2` integration.
+6. Click on the `Hoymiles HMS-XXXXW-T2` integration.
+7. Click "DOWNLOAD"
+8. Navigate to "Settings" - "Devices & Services"
+9. Click "ADD INTEGRATION" and select the `Hoymiles HMS-XXXXW-T2` integration.
 
 
 ### Option 2: Manual Installation

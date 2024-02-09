@@ -120,6 +120,9 @@
       },
       "pv_hw_version" : {
         "name": "Inverter HW version"
+      },
+      "signal_strength" : {
+        "name": "Signal Strength"
       }
     },
     "button" : {

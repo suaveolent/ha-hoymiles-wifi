@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    PERCENTAGE,
     EntityCategory,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
@@ -252,6 +253,14 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         version_translation_function=FCTN_GENERATE_INVERTER_HW_VERSION_STRING,
         version_prefix="H"
     ),
+    HoymilesSensorEntityDescription(
+        key = "dtu_info.signal_strength",
+        translation_key="signal_strength",
+        native_unit_of_measurement=PERCENTAGE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:wifi",
+    ),
+
 )
 
 

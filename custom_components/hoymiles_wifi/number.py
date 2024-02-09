@@ -95,7 +95,7 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         """Return the assumed state of the entity."""
         return self._assumed_state
 
-    def set_native_value(self, value: float) -> None:
+    async def set_native_value(self, value: float) -> None:
         """Set the native value of the entity.
 
         Args:
@@ -106,7 +106,7 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
                 if(value < 0 and value > 100):
                     _LOGGER.error("Power limit value out of range")
                     return
-                inverter.set_power_limit(value)
+                await inverter.set_power_limit(value)
         else:
             _LOGGER.error("Invalid set action!")
             return

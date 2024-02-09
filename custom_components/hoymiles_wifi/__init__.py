@@ -19,7 +19,7 @@ from .const import (
 )
 from .coordinator import (
     HoymilesConfigUpdateCoordinatorInverter,
-    HoymilesDataUpdateCoordinatorInverter,
+    HoymilesRealDataUpdateCoordinatorInverter,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 
     hass_data[HASS_INVERTER] = inverter
 
-    data_coordinator = HoymilesDataUpdateCoordinatorInverter(hass, inverter=inverter, entry=entry, update_interval=update_interval)
+    data_coordinator = HoymilesRealDataUpdateCoordinatorInverter(hass, inverter=inverter, entry=entry, update_interval=update_interval)
     hass_data[HASS_DATA_COORDINATOR] = data_coordinator
 
     config_update_interval = timedelta(seconds=DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS)

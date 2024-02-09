@@ -62,11 +62,11 @@ class HoymilesButtonEntity(HoymilesEntity, ButtonEntity):
         super().__init__(config_entry, description)
         self._inverter = inverter
 
-    def press(self) -> None:
+    async def async_press(self) -> None:
         """Press the button."""
 
         if hasattr(self._inverter, self.entity_description.key) and callable(getattr(self._inverter, self.entity_description.key)):
-            getattr(self._inverter, self.entity_description.key)()
+            await getattr(self._inverter, self.entity_description.key)()
         else:
             raise NotImplementedError(f"Method '{self.entity_description.key}' not implemented in Inverter class.")
 

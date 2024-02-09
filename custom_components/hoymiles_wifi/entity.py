@@ -6,8 +6,8 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import HoymilesCoordinatorEntity
 from .const import CONF_SENSOR_PREFIX, DOMAIN
+from .coordinator import HoymilesDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ class HoymilesEntity(Entity):
 class HoymilesCoordinatorEntity(CoordinatorEntity, HoymilesEntity):
     """Represents a Hoymiles coordinator entity."""
 
-    def __init__(self, config_entry: ConfigEntry, description: EntityDescription, coordinator: HoymilesCoordinatorEntity):
+    def __init__(self, config_entry: ConfigEntry, description: EntityDescription, coordinator: HoymilesDataUpdateCoordinator):
         """Pass coordinator to CoordinatorEntity."""
         CoordinatorEntity.__init__(self, coordinator)
         if self.coordinator is not None and hasattr(self.coordinator, "data"):

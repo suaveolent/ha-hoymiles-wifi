@@ -14,7 +14,7 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR, Platform.BUTTON]
 
-class HoymilesCoordinatorEntity(DataUpdateCoordinator):
+class HoymilesDataUpdateCoordinator(DataUpdateCoordinator):
     """Base coordinator entity for Hoymiles integration."""
 
     def __init__(self, hass: homeassistant, inverter: Inverter, entry: ConfigEntry, update_interval: timedelta) -> None:
@@ -36,14 +36,14 @@ class HoymilesCoordinatorEntity(DataUpdateCoordinator):
         """Get the inverter object."""
         return self._inverter
 
-class HoymilesDataUpdateCoordinatorInverter(HoymilesCoordinatorEntity):
+class HoymilesRealDataUpdateCoordinatorInverter(HoymilesDataUpdateCoordinator):
     """Data coordinator entity for Hoymiles integration."""
 
     async def _async_update_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
-        response = self._inverter.get_real_data_new()
+        response = await self._inverter.get_real_data_new()
 
         if not self._entities_added:
             self._hass.async_add_job(
@@ -59,14 +59,14 @@ class HoymilesDataUpdateCoordinatorInverter(HoymilesCoordinatorEntity):
 
 
 
-class HoymilesConfigUpdateCoordinatorInverter(HoymilesCoordinatorEntity):
+class HoymilesConfigUpdateCoordinatorInverter(HoymilesDataUpdateCoordinator):
     """Config coordinator entity for Hoymiles integration."""
 
     async def _async_update_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
-        response = self._inverter.get_config()
+        response = await self._inverter.get_config()
 
         if response:
             return response

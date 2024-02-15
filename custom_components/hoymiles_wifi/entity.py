@@ -33,11 +33,13 @@ class HoymilesEntity(Entity):
         if hasattr(self.entity_description, "is_dtu_sensor") and self.entity_description.is_dtu_sensor is True:
             device_name += " DTU" + self._sensor_prefix
             device_model += " DTU"
+        else:
+            device_name += " Inverter"
 
         device_name += self._sensor_prefix
 
         self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._config_entry.entry_id)},
+            identifiers={(DOMAIN, self._config_entry.entry_id + device_name)},
             name = device_name,
             manufacturer="Hoymiles",
             serial_number= self._dtu_sn,

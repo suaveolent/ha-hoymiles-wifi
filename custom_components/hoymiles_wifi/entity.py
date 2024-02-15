@@ -49,7 +49,7 @@ class HoymilesEntity(Entity):
             serial_number= serial_number,
             model = device_model,
         )
-        
+
         if not hasattr(self.entity_description, "is_dtu_sensor") or self.entity_description.is_dtu_sensor is False:
             device_info["via_device"] = (DOMAIN, self._config_entry.entry_id + " DTU")
 

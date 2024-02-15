@@ -103,7 +103,7 @@
         "name": "HW version"
       },
       "signal_strength" : {
-        "name": "Signal Strength"
+        "name": "Signal strength"
       }
     },
     "button" : {

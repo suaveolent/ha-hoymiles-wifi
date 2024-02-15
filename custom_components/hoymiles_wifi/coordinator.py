@@ -43,7 +43,7 @@ class HoymilesRealDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
-        response = await self._inverter.get_real_data_new()
+        response = await self._inverter.async_get_real_data_new()
 
         if not self._entities_added:
             self._hass.async_add_job(
@@ -66,7 +66,7 @@ class HoymilesConfigUpdateCoordinator(HoymilesDataUpdateCoordinator):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
-        response = await self._inverter.get_config()
+        response = await self._inverter.async_get_config()
 
         if response:
             return response
@@ -81,7 +81,7 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
-        response = await self._inverter.app_information_data()
+        response = await self._inverter.async_app_information_data()
 
         if response:
             return response

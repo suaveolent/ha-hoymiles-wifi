@@ -58,6 +58,7 @@ class HoymilesSensorEntityDescription(SensorEntityDescription):
     reset_at_midnight: bool = False
     version_translation_function: str = None
     version_prefix: str = None
+    is_dtu_sensor: bool = False
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,7 @@ class HoymilesDiagnosticEntityDescription(SensorEntityDescription):
 
     conversion: ConversionAction = None
     separator: str = None
+    is_dtu_sensor: bool = False
 
 
 HOYMILES_SENSORS = [
@@ -196,12 +198,13 @@ CONFIG_DIAGNOSTIC_SENSORS = [
         translation_key="wifi_ssid",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:wifi",
+        is_dtu_sensor=True,
     ),
     HoymilesDiagnosticEntityDescription(
         key="meter_kind",
         translation_key="meter_kind",
         entity_category=EntityCategory.DIAGNOSTIC,
-
+        is_dtu_sensor=True,
     ),
     HoymilesDiagnosticEntityDescription(
         key="wifi_mac_[0-5]",
@@ -209,18 +212,21 @@ CONFIG_DIAGNOSTIC_SENSORS = [
         entity_category=EntityCategory.DIAGNOSTIC,
         separator=":",
         conversion= ConversionAction.HEX,
+        is_dtu_sensor=True,
     ),
     HoymilesDiagnosticEntityDescription(
         key="wifi_ip_addr_[0-3]",
         translation_key="ip_address",
         entity_category=EntityCategory.DIAGNOSTIC,
         separator=".",
+        is_dtu_sensor=True,
     ),
     HoymilesDiagnosticEntityDescription(
         key="dtu_ap_ssid",
         translation_key="dtu_ap_ssid",
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:access-point",
+        is_dtu_sensor=True,
     ),
 ]
 
@@ -230,14 +236,17 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         translation_key="dtu_sw_version",
         entity_category=EntityCategory.DIAGNOSTIC,
         version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
-        version_prefix="V"
+        version_prefix="V",
+        is_dtu_sensor=True,
     ),
     HoymilesSensorEntityDescription(
         key = "dtu_info.dtu_hw_version",
         translation_key="dtu_hw_version",
         entity_category=EntityCategory.DIAGNOSTIC,
         version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
-        version_prefix="H"
+        version_prefix="H",
+        is_dtu_sensor=True,
+
     ),
     HoymilesSensorEntityDescription(
         key = "pv_info[0].pv_sw_version",
@@ -259,6 +268,7 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         native_unit_of_measurement=PERCENTAGE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:wifi",
+        is_dtu_sensor=True,
     ),
 
 )

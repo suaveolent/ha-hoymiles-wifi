@@ -15,7 +15,6 @@ from .const import (
     HASS_APP_INFO_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
-    HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER,
     HASS_INVERTER,
 )
 from .coordinator import (
@@ -58,10 +57,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     app_info_update_coordinator = HoymilesAppInfoUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=app_info_update_interval)
     hass_data[HASS_APP_INFO_COORDINATOR] = app_info_update_coordinator
 
-    # Registers update listener to update config entry when options are updated.
-    unsub_options_update_listener = entry.add_update_listener(options_update_listener)
-    hass_data[HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER] = unsub_options_update_listener
-
     hass.data[DOMAIN][entry.entry_id] = hass_data
 
     await data_coordinator.async_config_entry_first_refresh()
@@ -69,41 +64,4 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     await app_info_update_coordinator.async_config_entry_first_refresh()
 
     return True
-
-
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Handle removal of an entry."""
-
-    _LOGGER.debug("Unload entry")
-    unloaded = all(
-        await asyncio.gather(
-            *[
-                hass.config_entries.async_forward_entry_unload(entry, platform)
-                for platform in PLATFORMS
-            ]
-        )
-    )
-
-    # Remove options_update_listener.
-    hass.data[DOMAIN][entry.entry_id][HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER]()
-
-    if unloaded:
-        hass.data[DOMAIN].pop(entry.entry_id)
-    else:
-        _LOGGER.error(
-            "async_unload_entry call to hass.config_entries.async_forward_entry_unload returned False"
-        )
-        return False
-
-    return True  # unloaded
-
-async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    """Reload config entry."""
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)
-
-async def options_update_listener(hass: HomeAssistant, config_entry: ConfigEntry) -> None:
-    """Handle options update."""
-    _LOGGER.error("Options update called!")
-    await hass.config_entries.async_reload(config_entry.entry_id)
 

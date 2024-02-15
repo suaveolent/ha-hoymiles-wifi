@@ -22,17 +22,17 @@ class HoymilesButtonEntityDescription(ButtonEntityDescription):
 
 BUTTONS: tuple[HoymilesButtonEntityDescription, ...] = (
     HoymilesButtonEntityDescription(
-        key="restart",
+        key="async_restart",
         translation_key="restart",
         device_class = ButtonDeviceClass.RESTART
     ),
     HoymilesButtonEntityDescription(
-        key="turn_off",
+        key="async_turn_off",
         translation_key="turn_off",
         icon="mdi:power-off",
     ),
     HoymilesButtonEntityDescription(
-        key="turn_on",
+        key="async_turn_on",
         translation_key="turn_on",
         icon="mdi:power-on",
     ),

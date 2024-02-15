@@ -12,29 +12,10 @@
       }
     },
     "error": {
-      "connection": "Failed to connect, check hostname and port."
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
     },
     "abort": {
-      "single_instance_allowed": "Only a single instance is allowed!"
-    }
-  },
-  "options": {
-    "step": {
-      "user_options": {
-        "title": "Hoymiles HMS-XXXXW-T2 connection",
-        "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
-        "data": {
-          "host": "[%key:common::config_flow::data::host%]",
-          "update_interval": "Update Interval (seconds)",
-          "sensor_prefix" : "Sensor Prefix"
-        }
-      }
-    },
-    "error": {
-      "connection": "Failed to connect, check hostname and port."
-    },
-    "abort": {
-      "single_instance_allowed": "Only a single instance is allowed!"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
   },
   "entity": {

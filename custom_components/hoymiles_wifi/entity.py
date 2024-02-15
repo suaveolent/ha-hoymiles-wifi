@@ -26,13 +26,22 @@ class HoymilesEntity(Entity):
         self._attr_unique_id = f"hoymiles_{config_entry.entry_id}_{description.key}"
 
         self._dtu_sn = ""
+        device_name = "Hoymiles HMS-XXXXW-T2"
+        device_model="HMS-XXXXW-T2"
+
+
+        if hasattr(self.entity_description, "is_dtu_sensor") and self.entity_description.is_dtu_sensor is True:
+            device_name += " DTU" + self._sensor_prefix
+            device_model += " DTU"
+
+        device_name += self._sensor_prefix
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._config_entry.entry_id)},
-            name = "Hoymiles HMS-XXXXW-T2" + self._sensor_prefix,
+            name = device_name,
             manufacturer="Hoymiles",
             serial_number= self._dtu_sn,
-            model="HMS-XXXXW-T2"
+            model = device_model
         )
 
 

@@ -106,7 +106,7 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
                 if(value < 0 and value > 100):
                     _LOGGER.error("Power limit value out of range")
                     return
-                await inverter.set_power_limit(value)
+                await inverter.async_set_power_limit(value)
         else:
             _LOGGER.error("Invalid set action!")
             return

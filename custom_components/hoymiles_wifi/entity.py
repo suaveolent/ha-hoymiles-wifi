@@ -31,26 +31,31 @@ class HoymilesEntity(Entity):
         serial_number = ""
         device_name = "Hoymiles HMS-XXXXW-T2"
         device_model="HMS-XXXXW-T2"
+        device_name_suffix = ""
 
 
         if hasattr(self.entity_description, "is_dtu_sensor") and self.entity_description.is_dtu_sensor is True:
-            device_name += " DTU" + self._sensor_prefix
-            device_model += " DTU"
             serial_number = self._dtu_serial_number
+            device_name_suffix = " DTU"
         else:
-            device_name += " Inverter"
             serial_number = self._inverter_serial_number
 
         device_name += self._sensor_prefix
 
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._config_entry.entry_id + device_name)},
-            name = device_name,
+        device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._config_entry.entry_id + device_name_suffix)},
+            name = device_name + device_name_suffix,
             manufacturer="Hoymiles",
             serial_number= serial_number,
-            model = device_model
+            model = device_model,
         )
 
+        print(f"serial: {serial_number}")
+
+        if not hasattr(self.entity_description, "is_dtu_sensor") or self.entity_description.is_dtu_sensor is False:
+            device_info["via_device"] = (DOMAIN, self._config_entry.entry_id + " DTU")
+
+        self._attr_device_info = device_info
 
 class HoymilesCoordinatorEntity(CoordinatorEntity, HoymilesEntity):
     """Represents a Hoymiles coordinator entity."""

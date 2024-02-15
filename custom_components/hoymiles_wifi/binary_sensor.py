@@ -22,12 +22,16 @@ _LOGGER = logging.getLogger(__name__)
 class HoymilesBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Describes Homiles binary sensor entity."""
 
+    is_dtu_sensor: bool = False
+
+
 BINARY_SENSORS = (
     HoymilesBinarySensorEntityDescription(
-        key="inverter",
-        translation_key="inverter",
+        key="DTU",
+        translation_key="dtu",
         device_class=BinarySensorDeviceClass.CONNECTIVITY,
         entity_category=EntityCategory.DIAGNOSTIC,
+        is_dtu_sensor=True,
     ),
 )
 

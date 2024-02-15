@@ -43,7 +43,7 @@
         "name": "Grid frequency"
       },
       "inverter_temperature": {
-        "name": "Inverter temperature"
+        "name": "Temperature"
       },
       "port_1_dc_voltage": {
         "name": "Port 1 DC voltage"
@@ -88,19 +88,19 @@
         "name": "IP address"
       },
       "dtu_ap_ssid": {
-        "name": "DTU AP SSID"
+        "name": "AP SSID"
       },
       "dtu_sw_version": {
-        "name": "DTU SW version"
+        "name": "SW version"
       },
       "dtu_hw_version": {
-        "name": "DTU HW version"
+        "name": "HW version"
       },
       "pv_sw_version": {
-        "name": "Inverter SW version"
+        "name": "SW version"
       },
       "pv_hw_version" : {
-        "name": "Inverter HW version"
+        "name": "HW version"
       },
       "signal_strength" : {
         "name": "Signal Strength"

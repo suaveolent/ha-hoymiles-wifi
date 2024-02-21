@@ -61,8 +61,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = hass_data
 
     await data_coordinator.async_config_entry_first_refresh()
+    await asyncio.sleep(10)
     await config_coordinator.async_config_entry_first_refresh()
-    await asyncio.sleep(35)
+    await asyncio.sleep(10)
     await app_info_update_coordinator.async_config_entry_first_refresh()
 
     return True

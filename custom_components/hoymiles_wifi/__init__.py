@@ -11,7 +11,7 @@ from hoymiles_wifi.inverter import Inverter
 from .const import (
     CONF_UPDATE_INTERVAL,
     DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS,
-    DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS,
+    DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
     HASS_APP_INFO_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
@@ -50,7 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     data_coordinator = HoymilesRealDataUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=update_interval)
     hass_data[HASS_DATA_COORDINATOR] = data_coordinator
 
-    config_update_interval = timedelta(seconds=DEFAULT_DIAGNOSTIC_UPDATE_INTERVAL_SECONDS)
+    config_update_interval = timedelta(seconds=DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS)
     config_coordinator = HoymilesConfigUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=config_update_interval)
     hass_data[HASS_CONFIG_COORDINATOR] = config_coordinator
 
@@ -61,9 +61,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = hass_data
 
     await data_coordinator.async_config_entry_first_refresh()
-    await asyncio.sleep(10)
+    await asyncio.sleep(5)
     await config_coordinator.async_config_entry_first_refresh()
-    await asyncio.sleep(10)
+    await asyncio.sleep(5)
     await app_info_update_coordinator.async_config_entry_first_refresh()
 
     return True

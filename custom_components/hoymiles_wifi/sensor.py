@@ -72,13 +72,12 @@ class HoymilesDiagnosticEntityDescription(SensorEntityDescription):
 
 HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
-        key="dtu_power",
+        key="sgs_data[0].active_power",
         translation_key="ac_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
-
     ),
     HoymilesSensorEntityDescription(
         key="dtu_daily_energy",

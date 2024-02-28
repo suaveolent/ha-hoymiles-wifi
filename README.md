@@ -1,3 +1,4 @@
+
 # HMS-XXXXW-T2 for Home Assistant
 This Home Assistant custom component utilizes the [hoymiles-wifi](https://github.com/suaveolent/hoymiles-wifi) Python library, allowing seamless integration with Hoymiles HMS microinverters, specifically designed for the HMS-XXXXW-T2 series.
 
@@ -5,6 +6,11 @@ This Home Assistant custom component utilizes the [hoymiles-wifi](https://github
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/suaveolent)
 
+## Supported Devices
+The custom component was successfully tested with:
+
+ - Hoymiles HMS-800W-2T
+ - Hoymiles DTU WLite
 
 ## Installation
 

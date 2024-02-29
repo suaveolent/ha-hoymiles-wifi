@@ -20,11 +20,15 @@ from .entity import HoymilesEntity
 class HoymilesButtonEntityDescription(ButtonEntityDescription):
     """Class to describe a Hoymiles Button entity."""
 
+    is_dtu_sensor: bool = False
+
+
 BUTTONS: tuple[HoymilesButtonEntityDescription, ...] = (
     HoymilesButtonEntityDescription(
         key="async_restart",
         translation_key="restart",
-        device_class = ButtonDeviceClass.RESTART
+        device_class = ButtonDeviceClass.RESTART,
+        is_dtu_sensor = True
     ),
     HoymilesButtonEntityDescription(
         key="async_turn_off",

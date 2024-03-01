@@ -1,8 +1,8 @@
 
-# HMS-XXXXW-T2 for Home Assistant
-This Home Assistant custom component utilizes the [hoymiles-wifi](https://github.com/suaveolent/hoymiles-wifi) Python library, allowing seamless integration with Hoymiles HMS microinverters, specifically designed for the HMS-XXXXW-T2 series.
+# HMS-XXXXW-2T for Home Assistant
+This Home Assistant custom component utilizes the [hoymiles-wifi](https://github.com/suaveolent/hoymiles-wifi) Python library, allowing seamless integration with Hoymiles HMS microinverters, specifically designed for the HMS-XXXXW-2T series.
 
-**Disclaimer: This custom component is an independent project and is not affiliated with Hoymiles. It has been developed to provide Home Assistant users with tools for interacting with Hoymiles HMS-XXXXW-T2 series micro-inverters featuring integrated WiFi DTU. Any trademarks or product names mentioned are the property of their respective owners.**
+**Disclaimer: This custom component is an independent project and is not affiliated with Hoymiles. It has been developed to provide Home Assistant users with tools for interacting with Hoymiles HMS-XXXXW-2T series micro-inverters featuring integrated WiFi DTU. Any trademarks or product names mentioned are the property of their respective owners.**
 
 [!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/suaveolent)
 
@@ -22,10 +22,10 @@ The custom component was successfully tested with:
    - **Category:** Integration
 
 5. Click "Add"
-6. Click on the `Hoymiles HMS-XXXXW-T2` integration.
+6. Click on the `Hoymiles HMS-XXXXW-2T` integration.
 7. Click "DOWNLOAD"
 8. Navigate to "Settings" - "Devices & Services"
-9. Click "ADD INTEGRATION" and select the `Hoymiles HMS-XXXXW-T2` integration.
+9. Click "ADD INTEGRATION" and select the `Hoymiles HMS-XXXXW-2T` integration.
 
 
 ### Option 2: Manual Installation

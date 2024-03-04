@@ -7,10 +7,22 @@ from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import hoymiles_wifi.utils
 
-from .const import CONF_SENSOR_PREFIX, DOMAIN
+from .const import (
+    CONF_DTU_SERIAL_NUMBER,
+    CONF_INERTER_SERIAL_NUMBERS,
+    CONF_SENSOR_PREFIX,
+    DOMAIN,
+)
 from .coordinator import HoymilesDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def safe_get_element(lst, index, default):
+    try:
+        return lst[index]
+    except IndexError:
+        return default
 
 
 class HoymilesEntity(Entity):
@@ -29,16 +41,17 @@ class HoymilesEntity(Entity):
         self._attr_unique_id = f"hoymiles_{config_entry.entry_id}_{description.key}"
 
         serial_number = ""
-        device_name = "Hoymiles HMS-XXXXW-T2"
-        device_model="HMS-XXXXW-T2"
+        device_name = "Hoymiles HMS-XXXXW-2T"
+        device_model="HMS-XXXXW-2T"
         device_name_suffix = ""
 
 
         if hasattr(self.entity_description, "is_dtu_sensor") and self.entity_description.is_dtu_sensor is True:
-            serial_number = self._dtu_serial_number
+            serial_number = config_entry.data.get(CONF_DTU_SERIAL_NUMBER, "")
             device_name_suffix = " DTU"
         else:
-            serial_number = self._inverter_serial_number
+            serial_numbers = config_entry.data.get(CONF_INERTER_SERIAL_NUMBERS, [])
+            serial_number = safe_get_element(serial_numbers, 0, "")
 
         device_name += self._sensor_prefix
 

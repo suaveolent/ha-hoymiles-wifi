@@ -2,7 +2,7 @@
   "config": {
     "step": {
       "user": {
-        "title": "Hoymiles HMS-XXXXW-T2 connection",
+        "title": "Hoymiles HMS-XXXXW-2T connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
           "host": "[%key:common::config_flow::data::host%]",
@@ -77,6 +77,36 @@
       },
       "port_2_dc_daily_energy": {
         "name": "Port 2 DC daily energy"
+      },
+      "port_3_dc_voltage": {
+        "name": "Port 3 DC voltage"
+      },
+      "port_3_dc_current": {
+        "name": "Port 3 DC current"
+      },
+      "port_3_dc_power": {
+        "name": "Port 3 DC power"
+      },
+      "port_3_dc_total_energy": {
+        "name": "Port 3 DC total energy"
+      },
+      "port_3_dc_daily_energy": {
+        "name": "Port 3 DC daily energy"
+      },
+      "port_4_dc_voltage": {
+        "name": "Port 4 DC voltage"
+      },
+      "port_4_dc_current": {
+        "name": "Port 4 DC current"
+      },
+      "port_4_dc_power": {
+        "name": "Port 4 DC power"
+      },
+      "port_4_dc_total_energy": {
+        "name": "Port 4 DC total energy"
+      },
+      "port_4_dc_daily_energy": {
+        "name": "Port 4 DC daily energy"
       },
       "wifi_ssid": {
         "name": "Wi-Fi SSID"

@@ -1,5 +1,6 @@
 """Support for Hoymiles sensors."""
 
+import dataclasses
 from dataclasses import dataclass
 import datetime
 from enum import Enum
@@ -28,6 +29,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import hoymiles_wifi.utils
 
 from .const import (
+    CONF_DEVICE_NUMBERS,
+    CONF_PV_NUMBERS,
     DOMAIN,
     FCTN_GENERATE_DTU_VERSION_STRING,
     FCTN_GENERATE_INVERTER_HW_VERSION_STRING,
@@ -72,7 +75,7 @@ class HoymilesDiagnosticEntityDescription(SensorEntityDescription):
 
 HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
-        key="sgs_data[0].active_power",
+        key="sgs_data[<inverter_count>].active_power",
         translation_key="ac_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
@@ -88,7 +91,7 @@ HOYMILES_SENSORS = [
         reset_at_midnight=True,
     ),
     HoymilesSensorEntityDescription(
-        key="sgs_data[0].voltage",
+        key="sgs_data[<inverter_count>].voltage",
         translation_key="grid_voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
@@ -96,7 +99,7 @@ HOYMILES_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
-        key="sgs_data[0].frequency",
+        key="sgs_data[<inverter_count>].frequency",
         translation_key="grid_frequency",
         native_unit_of_measurement=UnitOfFrequency.HERTZ,
         device_class=SensorDeviceClass.FREQUENCY,
@@ -104,7 +107,7 @@ HOYMILES_SENSORS = [
         conversion_factor=0.01,
     ),
     HoymilesSensorEntityDescription(
-        key="sgs_data[0].power_factor",
+        key="sgs_data[<inverter_count>].power_factor",
         translation_key="inverter_power_factor",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.POWER_FACTOR,
@@ -112,7 +115,7 @@ HOYMILES_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
-        key="sgs_data[0].temperature",
+        key="sgs_data[<inverter_count>].temperature",
         translation_key="inverter_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -120,78 +123,39 @@ HOYMILES_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
-        key="pv_data[0].voltage",
-        translation_key="port_1_dc_voltage",
+        key="pv_data[<pv_count>].voltage",
+        translation_key="port_<pv_count>_dc_voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
-        key="pv_data[0].current",
-        translation_key="port_1_dc_current",
+        key="pv_data[<pv_count>].current",
+        translation_key="port_<pv_count>_dc_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.01,
     ),
     HoymilesSensorEntityDescription(
-        key="pv_data[0].power",
-        translation_key="port_1_dc_power",
+        key="pv_data[<pv_count>].power",
+        translation_key="port_<pv_count>_dc_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
-        key="pv_data[0].energy_total",
-        translation_key="port_1_dc_total_energy",
+        key="pv_data[<pv_count>].energy_total",
+        translation_key="port_<pv_count>_dc_total_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
-        key="pv_data[0].energy_daily",
-        translation_key="port_1_dc_daily_energy",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        reset_at_midnight=True,
-    ),
-    HoymilesSensorEntityDescription(
-        key="pv_data[1].voltage",
-        translation_key="port_2_dc_voltage",
-        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-        device_class=SensorDeviceClass.VOLTAGE,
-        state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.1,
-    ),
-    HoymilesSensorEntityDescription(
-        key="pv_data[1].current",
-        translation_key="port_2_dc_current",
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        device_class=SensorDeviceClass.CURRENT,
-        state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.01,
-    ),
-    HoymilesSensorEntityDescription(
-        key="pv_data[1].power",
-        translation_key="port_2_dc_power",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.1,
-    ),
-    HoymilesSensorEntityDescription(
-        key="pv_data[1].energy_total",
-        translation_key="port_2_dc_total_energy",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
-    ),
-    HoymilesSensorEntityDescription(
-        key="pv_data[1].energy_daily",
-        translation_key="port_2_dc_daily_energy",
+        key="pv_data[<pv_count>].energy_daily",
+        translation_key="port_<pv_count>_dc_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -256,14 +220,14 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
 
     ),
     HoymilesSensorEntityDescription(
-        key = "pv_info[0].pv_sw_version",
+        key = "pv_info[<inverter_count>].pv_sw_version",
         translation_key="pv_sw_version",
         entity_category=EntityCategory.DIAGNOSTIC,
         version_translation_function=FCTN_GENERATE_INVERTER_SW_VERSION_STRING,
         version_prefix="V"
     ),
     HoymilesSensorEntityDescription(
-        key = "pv_info[0].pv_hw_version",
+        key = "pv_info[<inverter_count>].pv_hw_version",
         translation_key="pv_hw_version",
         entity_category=EntityCategory.DIAGNOSTIC,
         version_translation_function=FCTN_GENERATE_INVERTER_HW_VERSION_STRING,
@@ -293,25 +257,55 @@ async def async_setup_entry(
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
     config_coordinator = hass_data[HASS_CONFIG_COORDINATOR]
     app_info_coordinator = hass_data[HASS_APP_INFO_COORDINATOR]
+    device_numbers = entry.data[CONF_DEVICE_NUMBERS]
+    pv_numbers = entry.data[CONF_PV_NUMBERS]
     sensors = []
 
     # Real Data Sensors
     for description in HOYMILES_SENSORS:
         device_class = description.device_class
         if device_class == SensorDeviceClass.ENERGY:
-            energy_sensor = HoymilesEnergySensorEntity(entry, description, data_coordinator)
-            sensors.append(energy_sensor)
+            class_name = HoymilesEnergySensorEntity
         else:
-            sensors.append(HoymilesDataSensorEntity(entry, description, data_coordinator))
+            class_name = HoymilesDataSensorEntity
+        sensor_entities = get_sensors_for_description(entry, description, data_coordinator, class_name, device_numbers, pv_numbers)
+        sensors.extend(sensor_entities)
+
+
 
     # Diagnostic Sensors
     for description in CONFIG_DIAGNOSTIC_SENSORS:
         sensors.append(HoymilesDiagnosticSensorEntity(entry, description, config_coordinator))
 
     for description in APP_INFO_SENSORS:
-        sensors.append(HoymilesDataSensorEntity(entry, description, app_info_coordinator))
+        sensor_entities = get_sensors_for_description(entry, description, app_info_coordinator, HoymilesDataSensorEntity, device_numbers, pv_numbers)
+        sensors.extend(sensor_entities)
 
     async_add_entities(sensors)
+
+def get_sensors_for_description(config_entry: ConfigEntry, description: SensorEntityDescription, coordinator: HoymilesCoordinatorEntity, class_name: SensorEntity, device_numbers: int, pv_numbers: int) -> list[SensorEntity]:
+    """Get sensors for the given description."""
+
+    sensors = []
+
+    if "<inverter_count>" in description.key:
+        for device_count in range(device_numbers):
+            new_key = description.key.replace("<inverter_count>", str(device_count))
+            updated_description = dataclasses.replace(description, key=new_key)
+            sensor = class_name(config_entry, updated_description, coordinator)
+            sensors.append(sensor)
+    elif "<pv_count>" in description.key:
+        for pv_count in range(pv_numbers):
+            new_key = str(description.key).replace("<pv_count>", str(pv_count))
+            new_translation_key = description.translation_key.replace("<pv_count>", str(pv_count+1))
+            updated_description = dataclasses.replace(description, key=new_key, translation_key=new_translation_key)
+            sensor = class_name(config_entry, updated_description, coordinator)
+            sensors.append(sensor)
+    else:
+        sensor = class_name(config_entry, description, coordinator)
+        sensors.append(sensor)
+
+    return sensors
 
 
 class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):

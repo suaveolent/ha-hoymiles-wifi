@@ -10,9 +10,8 @@ ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"
 CONF_UPDATE_INTERVAL = "update_interval"
 CONF_SENSOR_PREFIX = "sensor_prefix"
 CONF_DTU_SERIAL_NUMBER = "dtu_serial_number"
-CONF_INERTER_SERIAL_NUMBERS = "inverter_serial_numbers"
-CONF_DEVICE_NUMBERS = "device_numbers"
-CONF_PV_NUMBERS = "pv_numbers"
+CONF_INVERTERS = "inverters"
+CONF_PORTS = "ports"
 
 DEFAULT_UPDATE_INTERVAL_SECONDS = 35
 MIN_UPDATE_INTERVAL_SECONDS = 35

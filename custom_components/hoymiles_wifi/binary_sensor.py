@@ -23,6 +23,8 @@ class HoymilesBinarySensorEntityDescription(BinarySensorEntityDescription):
     """Describes Homiles binary sensor entity."""
 
     is_dtu_sensor: bool = False
+    serial_number: str = None
+
 
 
 BINARY_SENSORS = (

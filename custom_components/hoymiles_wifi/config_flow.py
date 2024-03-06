@@ -15,10 +15,9 @@ from hoymiles_wifi.protobuf import APPInfomationData_pb2
 from hoymiles_wifi.utils import generate_inverter_serial_number
 
 from .const import (
-    CONF_DEVICE_NUMBERS,
     CONF_DTU_SERIAL_NUMBER,
-    CONF_INERTER_SERIAL_NUMBERS,
-    CONF_PV_NUMBERS,
+    CONF_INVERTERS,
+    CONF_PORTS,
     CONF_SENSOR_PREFIX,
     CONF_UPDATE_INTERVAL,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
@@ -55,19 +54,26 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
             sensor_prefix = user_input.get(CONF_SENSOR_PREFIX, "")
 
             try:
-                app_info_data = await get_app_information_data(self.hass, host)
+                real_data = await get_real_data_new.async_get_real_data_new()
             except CannotConnect:
                 errors["base"] = "cannot_connect"
             else:
 
-                device_numbers = app_info_data.device_number
-                pv_numbers = app_info_data.pv_number
-                dtu_sn = app_info_data.dtu_serial_number
+                dtu_sn = real_data.device_serial_number
+                inverters = []
 
-                inverter_serials = []
+                for sgs_data in real_data.sgs_data:
+                    inverter_serial = generate_inverter_serial_number(sgs_data.serial_number)
+                    inverters.append(inverter_serial)
 
-                for pv_info in app_info_data.pv_info:
-                    inverter_serials.append(generate_inverter_serial_number(pv_info.pv_serial_number))
+                ports = []
+                for pv_data in real_data.pv_data:
+                    inverter_serial = generate_inverter_serial_number(pv_data.serial_number)
+                    port_number = pv_data.port_number
+                    ports.append({
+                        "inverter_serial_number": inverter_serial,
+                        "port_number": port_number
+                    })
 
                 return self.async_create_entry(
                     title=host, data= {
@@ -75,9 +81,8 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
                         CONF_SENSOR_PREFIX: sensor_prefix,
                         CONF_UPDATE_INTERVAL: update_interval,
                         CONF_DTU_SERIAL_NUMBER: dtu_sn,
-                        CONF_INERTER_SERIAL_NUMBERS: inverter_serials,
-                        CONF_DEVICE_NUMBERS: device_numbers,
-                        CONF_PV_NUMBERS: pv_numbers,
+                        CONF_INVERTERS: inverters,
+                        CONF_PORTS: ports,
                     }
                 )
 
@@ -93,11 +98,11 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
         )
 
 
-async def get_app_information_data(hass: HomeAssistant, host: str) -> APPInfomationData_pb2.APPInfoDataResDTO:
+async def get_real_data_new(hass: HomeAssistant, host: str) -> APPInfomationData_pb2.APPInfoDataResDTO:
     """Test if the host is reachable and is actually a Hoymiles HMS device."""
 
     inverter = Inverter(host)
-    response = await inverter.async_app_information_data()
+    response = await inverter.get_real_data_new()
     if(response is None):
         raise CannotConnect
     return response

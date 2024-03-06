@@ -32,6 +32,8 @@ class HoymilesNumberSensorEntityDescription(NumberEntityDescription):
 
     set_action: SetAction = None
     conversion_factor: float = None
+    serial_number: str = None
+
 
 
 CONFIG_CONTROL_ENTITIES = (

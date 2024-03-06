@@ -10,10 +10,9 @@ from hoymiles_wifi.inverter import Inverter
 from hoymiles_wifi.utils import generate_inverter_serial_number
 
 from .const import (
-    CONF_DEVICE_NUMBERS,
     CONF_DTU_SERIAL_NUMBER,
-    CONF_INERTER_SERIAL_NUMBERS,
-    CONF_PV_NUMBERS,
+    CONF_INVERTERS,
+    CONF_PORTS,
     CONF_UPDATE_INTERVAL,
     DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS,
     DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS,
@@ -96,27 +95,34 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         host = config_entry.data.get(CONF_HOST)
 
         inverter = Inverter(host)
-        app_info_data = await inverter.async_app_information_data()
-        if(app_info_data is None):
-            _LOGGER.error("Could not retrieve app information data from inverter: %s. Please ensure inverter is available!", host)
+
+        real_data = await inverter.async_get_real_data_new()
+        if(real_data is None):
+            _LOGGER.error("Could not retrieve real data information data from inverter: %s. Please ensure inverter is available!", host)
             return False
 
-        device_numbers = app_info_data.device_number
-        pv_numbers = app_info_data.pv_number
-        dtu_sn = app_info_data.dtu_serial_number
+        dtu_sn = real_data.device_serial_number
 
-        inverter_serials = []
+        inverters = []
 
-        for pv_info in app_info_data.pv_info:
-            inverter_serials.append(generate_inverter_serial_number(pv_info.pv_serial_number))
+        for sgs_data in real_data.sgs_data:
+            inverter_serial = generate_inverter_serial_number(sgs_data.serial_number)
+            inverters.append(inverter_serial)
+
+        ports = []
+        for pv_data in real_data.pv_data:
+            inverter_serial = generate_inverter_serial_number(pv_data.serial_number)
+            port_number = pv_data.port_number
+            ports.append({
+                "inverter_serial_number": inverter_serial,
+                "port_number": port_number
+            })
 
         new[CONF_DTU_SERIAL_NUMBER] = dtu_sn
-        new[CONF_INERTER_SERIAL_NUMBERS] = inverter_serials
-        new[CONF_DEVICE_NUMBERS] = device_numbers
-        new[CONF_PV_NUMBERS] = pv_numbers
+        new[CONF_INVERTERS] = inverters
+        new[CONF_PORTS] = ports
 
-
-    # Update the config entry with the new data
+        # Update the config entry with the new data
         hass.config_entries.async_update_entry(config_entry, data=new, version=2)
 
     _LOGGER.info("Migration of entry %s to version %s successful", config_entry.entry_id, CURRENT_VERSION)

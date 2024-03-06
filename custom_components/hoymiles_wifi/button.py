@@ -21,6 +21,8 @@ class HoymilesButtonEntityDescription(ButtonEntityDescription):
     """Class to describe a Hoymiles Button entity."""
 
     is_dtu_sensor: bool = False
+    serial_number: str = None
+
 
 
 BUTTONS: tuple[HoymilesButtonEntityDescription, ...] = (

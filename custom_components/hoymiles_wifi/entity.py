@@ -7,12 +7,7 @@ from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 import hoymiles_wifi.utils
 
-from .const import (
-    CONF_DTU_SERIAL_NUMBER,
-    CONF_INERTER_SERIAL_NUMBERS,
-    CONF_SENSOR_PREFIX,
-    DOMAIN,
-)
+from .const import CONF_DTU_SERIAL_NUMBER, CONF_SENSOR_PREFIX, DOMAIN
 from .coordinator import HoymilesDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,11 +42,9 @@ class HoymilesEntity(Entity):
 
 
         if hasattr(self.entity_description, "is_dtu_sensor") and self.entity_description.is_dtu_sensor is True:
-            serial_number = config_entry.data.get(CONF_DTU_SERIAL_NUMBER, "")
             device_name_suffix = " DTU"
-        else:
-            serial_numbers = config_entry.data.get(CONF_INERTER_SERIAL_NUMBERS, [])
-            serial_number = safe_get_element(serial_numbers, 0, "")
+
+        serial_number = self.entity_description.serial_number
 
         device_name += self._sensor_prefix
 

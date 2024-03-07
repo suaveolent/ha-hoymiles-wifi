@@ -14,6 +14,7 @@ from .const import (
     CONF_INVERTERS,
     CONF_PORTS,
     CONF_UPDATE_INTERVAL,
+    CONFIG_VERSION,
     DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS,
     DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
@@ -27,12 +28,12 @@ from .coordinator import (
     HoymilesConfigUpdateCoordinator,
     HoymilesRealDataUpdateCoordinator,
 )
+from .error import CannotConnect
+from .util import async_get_config_entry_data_for_host
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR, Platform.BUTTON]
-
-CURRENT_VERSION = 2
 
 async def async_setup(hass: HomeAssistant, config: Config):
     """Set up this integration using YAML is not supported."""
@@ -78,8 +79,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry data to the new entry schema."""
 
-    _LOGGER.info("Migrating entry %s to version %s", config_entry.entry_id, CURRENT_VERSION)
-
     # Get the current data from the config entry
     data = config_entry.data.copy()
 
@@ -88,35 +87,16 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     # Perform migrations based on the version
     if current_version == 1:
-        _LOGGER.info("Migrating from version 1 to version 2")
-
+        _LOGGER.info("Migrating entry %s to version %s", config_entry.entry_id, CONFIG_VERSION)
         new = {**config_entry.data}
 
         host = config_entry.data.get(CONF_HOST)
 
-        inverter = Inverter(host)
-
-        real_data = await inverter.async_get_real_data_new()
-        if(real_data is None):
+        try:
+            dtu_sn, inverters, ports = await async_get_config_entry_data_for_host(host)
+        except CannotConnect:
             _LOGGER.error("Could not retrieve real data information data from inverter: %s. Please ensure inverter is available!", host)
             return False
-
-        dtu_sn = real_data.device_serial_number
-
-        inverters = []
-
-        for sgs_data in real_data.sgs_data:
-            inverter_serial = generate_inverter_serial_number(sgs_data.serial_number)
-            inverters.append(inverter_serial)
-
-        ports = []
-        for pv_data in real_data.pv_data:
-            inverter_serial = generate_inverter_serial_number(pv_data.serial_number)
-            port_number = pv_data.port_number
-            ports.append({
-                "inverter_serial_number": inverter_serial,
-                "port_number": port_number
-            })
 
         new[CONF_DTU_SERIAL_NUMBER] = dtu_sn
         new[CONF_INVERTERS] = inverters
@@ -124,7 +104,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
         # Update the config entry with the new data
         hass.config_entries.async_update_entry(config_entry, data=new, version=2)
+        _LOGGER.info("Migration of entry %s to version %s successful", config_entry.entry_id, CONFIG_VERSION)
 
-    _LOGGER.info("Migration of entry %s to version %s successful", config_entry.entry_id, CURRENT_VERSION)
     return True
 

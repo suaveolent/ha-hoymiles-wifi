@@ -37,12 +37,10 @@ class HoymilesEntity(Entity):
         device_model="HMS-XXXXW-2T"
         device_name_suffix = ""
 
-
         if hasattr(self.entity_description, "is_dtu_sensor") and self.entity_description.is_dtu_sensor is True:
             device_name_suffix = " DTU"
 
         device_name += self._sensor_prefix
-        print(f"Name: {self.entity_description.key}, Serial number: {self.entity_description.serial_number}, is dtu: {self.entity_description.is_dtu_sensor}")
 
         device_info = DeviceInfo(
             identifiers={(DOMAIN, self._config_entry.entry_id + device_name_suffix)},

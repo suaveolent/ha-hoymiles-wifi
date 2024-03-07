@@ -1,4 +1,5 @@
 """Support for Hoymiles number sensors."""
+import dataclasses
 from dataclasses import dataclass
 from enum import Enum
 import logging
@@ -13,7 +14,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import DOMAIN, HASS_CONFIG_COORDINATOR
+from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN, HASS_CONFIG_COORDINATOR
 from .entity import HoymilesCoordinatorEntity
 
 
@@ -33,7 +34,7 @@ class HoymilesNumberSensorEntityDescription(NumberEntityDescription):
     set_action: SetAction = None
     conversion_factor: float = None
     serial_number: str = None
-
+    is_dtu_sensor: bool = False
 
 
 CONFIG_CONTROL_ENTITIES = (
@@ -58,10 +59,12 @@ async def async_setup_entry(
     """Set up the Hoymiles number entities."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
     config_coordinator = hass_data[HASS_CONFIG_COORDINATOR]
+    dtu_serial_number = entry.data[CONF_DTU_SERIAL_NUMBER]
 
     sensors = []
     for description in CONFIG_CONTROL_ENTITIES:
-        sensors.append(HoymilesNumberEntity(entry, description, config_coordinator))
+        updated_description = dataclasses.replace(description, serial_number=dtu_serial_number)
+        sensors.append(HoymilesNumberEntity(entry, updated_description, config_coordinator))
 
     async_add_entities(sensors)
 

@@ -29,6 +29,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import hoymiles_wifi.utils
 
 from .const import (
+    CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
     CONF_PORTS,
     DOMAIN,
@@ -61,8 +62,8 @@ class HoymilesSensorEntityDescription(SensorEntityDescription):
     reset_at_midnight: bool = False
     version_translation_function: str = None
     version_prefix: str = None
-    is_dtu_sensor: bool = False
     serial_number: str = None
+    is_dtu_sensor: bool = False
 
 
 @dataclass(frozen=True)
@@ -71,8 +72,8 @@ class HoymilesDiagnosticEntityDescription(SensorEntityDescription):
 
     conversion: ConversionAction = None
     separator: str = None
-    is_dtu_sensor: bool = False
     serial_number: str = None
+    is_dtu_sensor: bool = False
 
 
 
@@ -92,6 +93,7 @@ HOYMILES_SENSORS = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         reset_at_midnight=True,
+        is_dtu_sensor=True,
     ),
     HoymilesSensorEntityDescription(
         key="sgs_data[<inverter_count>].voltage",
@@ -220,7 +222,6 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
         version_prefix="H",
         is_dtu_sensor=True,
-
     ),
     HoymilesSensorEntityDescription(
         key = "pv_info[<inverter_count>].pv_sw_version",
@@ -247,8 +248,6 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
 
 )
 
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
@@ -260,6 +259,7 @@ async def async_setup_entry(
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
     config_coordinator = hass_data[HASS_CONFIG_COORDINATOR]
     app_info_coordinator = hass_data[HASS_APP_INFO_COORDINATOR]
+    dtu_serial_number = entry.data[CONF_DTU_SERIAL_NUMBER]
     inverters = entry.data[CONF_INVERTERS]
     ports = entry.data[CONF_PORTS]
     sensors = []
@@ -271,22 +271,21 @@ async def async_setup_entry(
             class_name = HoymilesEnergySensorEntity
         else:
             class_name = HoymilesDataSensorEntity
-        sensor_entities = get_sensors_for_description(entry, description, data_coordinator, class_name, inverters, ports)
+        sensor_entities = get_sensors_for_description(entry, description, data_coordinator, class_name, dtu_serial_number, inverters, ports)
         sensors.extend(sensor_entities)
-
-
 
     # Diagnostic Sensors
     for description in CONFIG_DIAGNOSTIC_SENSORS:
-        sensors.append(HoymilesDiagnosticSensorEntity(entry, description, config_coordinator))
+        sensor_entities = get_sensors_for_description(entry, description, config_coordinator, HoymilesDiagnosticSensorEntity, dtu_serial_number, inverters, ports)
+        sensors.extend(sensor_entities)
 
     for description in APP_INFO_SENSORS:
-        sensor_entities = get_sensors_for_description(entry, description, app_info_coordinator, HoymilesDataSensorEntity, inverters, ports)
+        sensor_entities = get_sensors_for_description(entry, description, app_info_coordinator, HoymilesDataSensorEntity, dtu_serial_number, inverters, ports)
         sensors.extend(sensor_entities)
 
     async_add_entities(sensors)
 
-def get_sensors_for_description(config_entry: ConfigEntry, description: SensorEntityDescription, coordinator: HoymilesCoordinatorEntity, class_name: SensorEntity, inverters: list, ports: list) -> list[SensorEntity]:
+def get_sensors_for_description(config_entry: ConfigEntry, description: SensorEntityDescription, coordinator: HoymilesCoordinatorEntity, class_name: SensorEntity, dtu_serial_number: str, inverters: list, ports: list) -> list[SensorEntity]:
     """Get sensors for the given description."""
 
     sensors = []
@@ -294,7 +293,7 @@ def get_sensors_for_description(config_entry: ConfigEntry, description: SensorEn
     if "<inverter_count>" in description.key:
         for index, inverter_serial in enumerate(inverters):
             new_key = description.key.replace("<inverter_count>", str(index))
-            updated_description = dataclasses.replace(description, key=new_key, serial_number = inverter_serial)
+            updated_description = dataclasses.replace(description, key=new_key, serial_number=inverter_serial)
             sensor = class_name(config_entry, updated_description, coordinator)
             sensors.append(sensor)
     elif "<pv_count>" in description.key:
@@ -303,11 +302,12 @@ def get_sensors_for_description(config_entry: ConfigEntry, description: SensorEn
             port_number = port["port_number"]
             new_key = str(description.key).replace("<pv_count>", str(index))
             new_translation_key = description.translation_key.replace("<pv_count>", str(port_number))
-            updated_description = dataclasses.replace(description, key=new_key, translation_key=new_translation_key, serial_number = inverter_serial)
+            updated_description = dataclasses.replace(description, key=new_key, translation_key=new_translation_key, serial_number=inverter_serial)
             sensor = class_name(config_entry, updated_description, coordinator)
             sensors.append(sensor)
     else:
-        sensor = class_name(config_entry, description, coordinator)
+        updated_description = dataclasses.replace(description, serial_number=dtu_serial_number)
+        sensor = class_name(config_entry, updated_description, coordinator)
         sensors.append(sensor)
 
     return sensors

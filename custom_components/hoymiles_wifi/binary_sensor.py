@@ -1,4 +1,5 @@
 """Contains binary sensor entities for Hoymiles WiFi integration."""
+import dataclasses
 from dataclasses import dataclass
 import logging
 
@@ -13,7 +14,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from hoymiles_wifi.inverter import NetworkState
 
-from .const import DOMAIN, HASS_DATA_COORDINATOR
+from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN, HASS_DATA_COORDINATOR
 from .entity import HoymilesCoordinatorEntity
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,11 +46,13 @@ async def async_setup_entry(
     """Set up sensor platform."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
     data_coordinator = hass_data[HASS_DATA_COORDINATOR]
+    dtu_serial_number = entry.data[CONF_DTU_SERIAL_NUMBER]
 
     sensors = []
 
     for description in BINARY_SENSORS:
-        sensors.append(HoymilesInverterSensorEntity(entry, description, data_coordinator))
+        updated_description = dataclasses.replace(description, serial_number=dtu_serial_number)
+        sensors.append(HoymilesInverterSensorEntity(entry, updated_description, data_coordinator))
 
     async_add_entities(sensors)
 

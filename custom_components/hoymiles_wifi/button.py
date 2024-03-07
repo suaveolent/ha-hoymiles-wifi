@@ -1,5 +1,6 @@
 """Support for Hoymiles buttons."""
 
+import dataclasses
 from dataclasses import dataclass
 
 from homeassistant.components.button import (
@@ -12,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from hoymiles_wifi.inverter import Inverter
 
-from .const import DOMAIN, HASS_INVERTER
+from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN, HASS_INVERTER
 from .entity import HoymilesEntity
 
 
@@ -30,17 +31,19 @@ BUTTONS: tuple[HoymilesButtonEntityDescription, ...] = (
         key="async_restart",
         translation_key="restart",
         device_class = ButtonDeviceClass.RESTART,
-        is_dtu_sensor = True
+        is_dtu_sensor = True,
     ),
     HoymilesButtonEntityDescription(
         key="async_turn_off",
         translation_key="turn_off",
         icon="mdi:power-off",
+        is_dtu_sensor = True,
     ),
     HoymilesButtonEntityDescription(
         key="async_turn_on",
         translation_key="turn_on",
         icon="mdi:power-on",
+        is_dtu_sensor = True,
     ),
 )
 
@@ -52,10 +55,12 @@ async def async_setup_entry(
     """Set up the Hoymiles number entities."""
     hass_data = hass.data[DOMAIN][entry.entry_id]
     inverter = hass_data[HASS_INVERTER]
+    dtu_serial_number = entry.data[CONF_DTU_SERIAL_NUMBER]
 
     buttons = []
     for description in BUTTONS:
-        buttons.append(HoymilesButtonEntity(entry, description, inverter)
+        updated_description = dataclasses.replace(description, serial_number=dtu_serial_number)
+        buttons.append(HoymilesButtonEntity(entry, updated_description, inverter)
     )
     async_add_entities(buttons)
 

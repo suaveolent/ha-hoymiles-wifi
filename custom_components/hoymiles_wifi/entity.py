@@ -24,8 +24,6 @@ class HoymilesEntity(Entity):
     """Base class for Hoymiles entities."""
 
     _attr_has_entity_name = True
-    _inverter_serial_number = ""
-    _dtu_serial_number = ""
 
     def __init__(self, config_entry: ConfigEntry, description: EntityDescription):
         """Initialize the Hoymiles entity."""
@@ -35,7 +33,6 @@ class HoymilesEntity(Entity):
         self._sensor_prefix = f' {config_entry.data.get(CONF_SENSOR_PREFIX)} ' if config_entry.data.get(CONF_SENSOR_PREFIX) else ""
         self._attr_unique_id = f"hoymiles_{config_entry.entry_id}_{description.key}"
 
-        serial_number = ""
         device_name = "Hoymiles HMS-XXXXW-2T"
         device_model="HMS-XXXXW-2T"
         device_name_suffix = ""
@@ -44,15 +41,14 @@ class HoymilesEntity(Entity):
         if hasattr(self.entity_description, "is_dtu_sensor") and self.entity_description.is_dtu_sensor is True:
             device_name_suffix = " DTU"
 
-        serial_number = self.entity_description.serial_number
-
         device_name += self._sensor_prefix
+        print(f"Name: {self.entity_description.key}, Serial number: {self.entity_description.serial_number}, is dtu: {self.entity_description.is_dtu_sensor}")
 
         device_info = DeviceInfo(
             identifiers={(DOMAIN, self._config_entry.entry_id + device_name_suffix)},
             name = device_name + device_name_suffix,
             manufacturer="Hoymiles",
-            serial_number= serial_number,
+            serial_number= self.entity_description.serial_number,
             model = device_model,
         )
 

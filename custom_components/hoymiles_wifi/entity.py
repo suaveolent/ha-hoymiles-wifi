@@ -1,11 +1,16 @@
 """Entity base for Hoymiles entities."""
+from dataclasses import dataclass
 import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-import hoymiles_wifi.utils
+from hoymiles_wifi.hoymiles import (
+    generate_inverter_serial_number,
+    get_dtu_model_name,
+    get_inverter_model_name,
+)
 
 from .const import CONF_DTU_SERIAL_NUMBER, CONF_SENSOR_PREFIX, DOMAIN
 from .coordinator import HoymilesDataUpdateCoordinator
@@ -13,11 +18,12 @@ from .coordinator import HoymilesDataUpdateCoordinator
 _LOGGER = logging.getLogger(__name__)
 
 
-def safe_get_element(lst, index, default):
-    try:
-        return lst[index]
-    except IndexError:
-        return default
+@dataclass(frozen=True)
+class HoymilesEntityDescription(EntityDescription):
+    """Class to describe a Hoymiles Button entity."""
+
+    is_dtu_sensor: bool = False
+    serial_number: str = None
 
 
 class HoymilesEntity(Entity):
@@ -30,46 +36,61 @@ class HoymilesEntity(Entity):
         super().__init__()
         self.entity_description = description
         self._config_entry = config_entry
-        self._sensor_prefix = f' {config_entry.data.get(CONF_SENSOR_PREFIX)} ' if config_entry.data.get(CONF_SENSOR_PREFIX) else ""
+        self._sensor_prefix = (
+            f" {config_entry.data.get(CONF_SENSOR_PREFIX)} "
+            if config_entry.data.get(CONF_SENSOR_PREFIX)
+            else ""
+        )
         self._attr_unique_id = f"hoymiles_{config_entry.entry_id}_{description.key}"
 
-        device_name = "Hoymiles HMS-XXXXW-2T"
-        device_model="HMS-XXXXW-2T"
-        device_name_suffix = ""
+        dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
 
-        if hasattr(self.entity_description, "is_dtu_sensor") and self.entity_description.is_dtu_sensor is True:
-            device_name_suffix = " DTU"
+        if self.entity_description.is_dtu_sensor is True:
+            device_name = "DTU"
+            device_model = get_dtu_model_name(self.entity_description.serial_number)
+        else:
+            device_model = get_inverter_model_name(
+                self.entity_description.serial_number
+            )
+            device_name = "Inverter"
 
         device_name += self._sensor_prefix
 
         device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._config_entry.entry_id + device_name_suffix)},
-            name = device_name + device_name_suffix,
+            identifiers={(DOMAIN, self.entity_description.serial_number)},
+            name=device_name,
             manufacturer="Hoymiles",
-            serial_number= self.entity_description.serial_number,
-            model = device_model,
+            serial_number=self.entity_description.serial_number,
+            model=device_model,
         )
 
-        if not hasattr(self.entity_description, "is_dtu_sensor") or self.entity_description.is_dtu_sensor is False:
-            device_info["via_device"] = (DOMAIN, self._config_entry.entry_id + " DTU")
+        if self.entity_description.is_dtu_sensor is False:
+            device_info["via_device"] = (DOMAIN, dtu_serial_number)
 
         self._attr_device_info = device_info
+
 
 class HoymilesCoordinatorEntity(CoordinatorEntity, HoymilesEntity):
     """Represents a Hoymiles coordinator entity."""
 
-    def __init__(self, config_entry: ConfigEntry, description: EntityDescription, coordinator: HoymilesDataUpdateCoordinator):
+    def __init__(
+        self,
+        config_entry: ConfigEntry,
+        description: EntityDescription,
+        coordinator: HoymilesDataUpdateCoordinator,
+    ):
         """Pass coordinator to CoordinatorEntity."""
         CoordinatorEntity.__init__(self, coordinator)
         if self.coordinator is not None and hasattr(self.coordinator, "data"):
-            self._dtu_serial_number = getattr(self.coordinator.data, "device_serial_number", "")
+            self._dtu_serial_number = getattr(
+                self.coordinator.data, "device_serial_number", ""
+            )
             sgs_data = getattr(self.coordinator.data, "sgs_data", None)
-            if(sgs_data is not None):
+            if sgs_data is not None:
                 serial_number = getattr(sgs_data[0], "serial_number", None)
-                if(serial_number is not None):
-                    self._inverter_serial_number = hoymiles_wifi.utils.generate_inverter_serial_number(serial_number)
+                if serial_number is not None:
+                    self._inverter_serial_number = generate_inverter_serial_number(
+                        serial_number
+                    )
 
         HoymilesEntity.__init__(self, config_entry, description)
-
-
-

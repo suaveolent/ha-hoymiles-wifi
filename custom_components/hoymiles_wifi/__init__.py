@@ -6,8 +6,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import Config, HomeAssistant
-from hoymiles_wifi.inverter import Inverter
-from hoymiles_wifi.utils import generate_inverter_serial_number
+from hoymiles_wifi.dtu import DTU
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
@@ -21,7 +20,7 @@ from .const import (
     HASS_APP_INFO_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
-    HASS_INVERTER,
+    HASS_DTU,
 )
 from .coordinator import (
     HoymilesAppInfoUpdateCoordinator,
@@ -34,6 +33,7 @@ from .util import async_get_config_entry_data_for_host
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR, Platform.BUTTON]
+
 
 async def async_setup(hass: HomeAssistant, config: Config):
     """Set up this integration using YAML is not supported."""
@@ -50,19 +50,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     host = entry.data.get(CONF_HOST)
     update_interval = timedelta(seconds=entry.data.get(CONF_UPDATE_INTERVAL))
 
-    inverter = Inverter(host)
+    dtu = DTU(host)
 
-    hass_data[HASS_INVERTER] = inverter
+    hass_data[HASS_DTU] = dtu
 
-    data_coordinator = HoymilesRealDataUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=update_interval)
+    data_coordinator = HoymilesRealDataUpdateCoordinator(
+        hass, dtu=dtu, entry=entry, update_interval=update_interval
+    )
     hass_data[HASS_DATA_COORDINATOR] = data_coordinator
 
     config_update_interval = timedelta(seconds=DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS)
-    config_coordinator = HoymilesConfigUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=config_update_interval)
+    config_coordinator = HoymilesConfigUpdateCoordinator(
+        hass, dtu=dtu, entry=entry, update_interval=config_update_interval
+    )
     hass_data[HASS_CONFIG_COORDINATOR] = config_coordinator
 
-    app_info_update_interval = timedelta(seconds=DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS)
-    app_info_update_coordinator = HoymilesAppInfoUpdateCoordinator(hass, inverter=inverter, entry=entry, update_interval=app_info_update_interval)
+    app_info_update_interval = timedelta(
+        seconds=DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS
+    )
+    app_info_update_coordinator = HoymilesAppInfoUpdateCoordinator(
+        hass, dtu=dtu, entry=entry, update_interval=app_info_update_interval
+    )
     hass_data[HASS_APP_INFO_COORDINATOR] = app_info_update_coordinator
 
     hass.data[DOMAIN][entry.entry_id] = hass_data
@@ -87,7 +95,9 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     # Perform migrations based on the version
     if current_version == 1:
-        _LOGGER.info("Migrating entry %s to version %s", config_entry.entry_id, CONFIG_VERSION)
+        _LOGGER.info(
+            "Migrating entry %s to version %s", config_entry.entry_id, CONFIG_VERSION
+        )
         new = {**config_entry.data}
 
         host = config_entry.data.get(CONF_HOST)
@@ -95,7 +105,10 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         try:
             dtu_sn, inverters, ports = await async_get_config_entry_data_for_host(host)
         except CannotConnect:
-            _LOGGER.error("Could not retrieve real data information data from inverter: %s. Please ensure inverter is available!", host)
+            _LOGGER.error(
+                "Could not retrieve real data information data from inverter: %s. Please ensure inverter is available!",
+                host,
+            )
             return False
 
         new[CONF_DTU_SERIAL_NUMBER] = dtu_sn
@@ -104,7 +117,10 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
         # Update the config entry with the new data
         hass.config_entries.async_update_entry(config_entry, data=new, version=2)
-        _LOGGER.info("Migration of entry %s to version %s successful", config_entry.entry_id, CONFIG_VERSION)
+        _LOGGER.info(
+            "Migration of entry %s to version %s successful",
+            config_entry.entry_id,
+            CONFIG_VERSION,
+        )
 
     return True
-

@@ -1,6 +1,6 @@
 
 # Hoymiles for Home Assistant
-This Home Assistant custom component utilizes the [hoymiles-wifi](https://github.com/suaveolent/hoymiles-wifi) Python library, allowing seamless integration with Hoymiles HMS microinverters, specifically designed for the HMS-XXXXW-2T series and Hoymiles DTU Wlite.
+This Home Assistant custom component utilizes the [hoymiles-wifi](https://github.com/suaveolent/hoymiles-wifi) Python library, allowing seamless integration with Hoymiles HMS microinverters via Hoymiles DTUs and the HMS-XXXXW-2T microinverters.
 
 **Disclaimer: This custom component is an independent project and is not affiliated with Hoymiles. It has been developed to provide Home Assistant users with tools for interacting with Hoymiles HMS-XXXXW-2T series micro-inverters featuring integrated WiFi DTU. Any trademarks or product names mentioned are the property of their respective owners.**
 

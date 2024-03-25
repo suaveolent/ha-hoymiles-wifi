@@ -6,8 +6,8 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import Config, HomeAssistant
-from hoymiles_wifi.dtu import DTU
 from homeassistant.helpers import device_registry as dr
+from hoymiles_wifi.dtu import DTU
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,

@@ -118,7 +118,17 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         for device_entry in dr.async_entries_for_config_entry(
             device_registry, config_entry.entry_id
         ):
-            device_registry.async_remove_device(device_entry.id)
+            if device_entry.name == "Hoymiles HMS-XXXXW-T2":
+                device_name = "Inverter"
+            elif device_entry.name == "Hoymiles HMS-XXXXW-T2 DTU":
+                device_name = "DTU"
+            else:
+                continue
+
+            device_registry.async_update_device(
+                device_entry.id,
+                name=device_name,
+            )
 
         hass.config_entries.async_update_entry(config_entry, data=new, version=2)
         _LOGGER.info(

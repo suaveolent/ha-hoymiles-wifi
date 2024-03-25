@@ -7,6 +7,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import Config, HomeAssistant
 from hoymiles_wifi.dtu import DTU
+from homeassistant.helpers import device_registry as dr
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
@@ -87,13 +88,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry data to the new entry schema."""
 
-    # Get the current data from the config entry
     data = config_entry.data.copy()
 
-    # Check the version of the existing data
     current_version = data.get("version", 1)
 
-    # Perform migrations based on the version
     if current_version == 1:
         _LOGGER.info(
             "Migrating entry %s to version %s", config_entry.entry_id, CONFIG_VERSION
@@ -115,7 +113,13 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new[CONF_INVERTERS] = inverters
         new[CONF_PORTS] = ports
 
-        # Update the config entry with the new data
+        device_registry = dr.async_get(hass)
+
+        for device_entry in dr.async_entries_for_config_entry(
+            device_registry, config_entry.entry_id
+        ):
+            device_registry.async_remove_device(device_entry.id)
+
         hass.config_entries.async_update_entry(config_entry, data=new, version=2)
         _LOGGER.info(
             "Migration of entry %s to version %s successful",

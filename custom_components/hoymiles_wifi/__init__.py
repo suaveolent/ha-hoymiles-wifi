@@ -6,7 +6,7 @@ import logging
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import Config, HomeAssistant
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers.device_registry import DeviceEntry
 from hoymiles_wifi.dtu import DTU
 
 from .const import (
@@ -85,6 +85,13 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     return True
 
 
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry: DeviceEntry
+) -> bool:
+    """Remove a config entry from a device."""
+    return True
+
+
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     """Migrate old entry data to the new entry schema."""
 
@@ -112,23 +119,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new[CONF_DTU_SERIAL_NUMBER] = dtu_sn
         new[CONF_INVERTERS] = inverters
         new[CONF_PORTS] = ports
-
-        device_registry = dr.async_get(hass)
-
-        for device_entry in dr.async_entries_for_config_entry(
-            device_registry, config_entry.entry_id
-        ):
-            if device_entry.name == "Hoymiles HMS-XXXXW-T2":
-                device_name = "Inverter"
-            elif device_entry.name == "Hoymiles HMS-XXXXW-T2 DTU":
-                device_name = "DTU"
-            else:
-                continue
-
-            device_registry.async_update_device(
-                device_entry.id,
-                name=device_name,
-            )
 
         hass.config_entries.async_update_entry(config_entry, data=new, version=2)
         _LOGGER.info(

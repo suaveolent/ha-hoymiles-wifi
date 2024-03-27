@@ -3,6 +3,7 @@
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/suaveolent/ha-hoymiles-wifi",
+  "issue_tracker": "https://github.com/suaveolent/ha-hoymiles-wifi/issues",
   "domain": "hoymiles_wifi",
   "iot_class": "local_polling",
   "name": "Hoymiles HMS-XXXXW-2T",

@@ -1,4 +1,5 @@
 """Platform for retrieving values of a Hoymiles inverter."""
+
 import asyncio
 from datetime import timedelta
 import logging
@@ -77,9 +78,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
     hass.data[DOMAIN][entry.entry_id] = hass_data
 
     await data_coordinator.async_config_entry_first_refresh()
-    await asyncio.sleep(5)
+    await asyncio.sleep(2)
     await config_coordinator.async_config_entry_first_refresh()
-    await asyncio.sleep(5)
+    await asyncio.sleep(2)
     await app_info_update_coordinator.async_config_entry_first_refresh()
 
     return True

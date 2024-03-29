@@ -1,26 +1,29 @@
 """Constants for the Hoymiles integration."""
 DOMAIN = "hoymiles_wifi"
-NAME = "Hoymiles HMS-XXXXW-T2"
+NAME = "Hoymiles HMS-XXXXW-2T"
 DOMAIN = "hoymiles_wifi"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.1.2"
+VERSION = "0.1.5"
+CONFIG_VERSION = 2
 
 ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"
 
 CONF_UPDATE_INTERVAL = "update_interval"
-CONF_SENSOR_PREFIX = "sensor_prefix"
+CONF_DTU_SERIAL_NUMBER = "dtu_serial_number"
+CONF_INVERTERS = "inverters"
+CONF_PORTS = "ports"
 
 DEFAULT_UPDATE_INTERVAL_SECONDS = 35
 MIN_UPDATE_INTERVAL_SECONDS = 35
 
-DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS = 60*5
-DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS = 60*60*2
+DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS = 60 * 5
+DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS = 60 * 60 * 2
 
 
 HASS_DATA_COORDINATOR = "data_coordinator"
 HASS_CONFIG_COORDINATOR = "config_coordinator"
 HASS_APP_INFO_COORDINATOR = "app_info_coordinator"
-HASS_INVERTER = "inverter"
+HASS_DTU = "dtu"
 HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER = "unsub_options_update_listener"
 
 

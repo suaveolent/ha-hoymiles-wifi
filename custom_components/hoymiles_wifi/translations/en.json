@@ -2,20 +2,20 @@
   "config": {
     "step": {
       "user": {
-        "title": "Hoymiles HMS-XXXXW-T2 connection",
+        "title": "Hoymiles DTU connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
-          "host": "Host",
+          "host": "[%key:common::config_flow::data::host%]",
           "update_interval": "Update Interval (seconds)",
           "sensor_prefix" : "Sensor Prefix"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect."
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
     },
     "abort": {
-      "already_configured": "Already configured."
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
     }
   },
   "entity": {
@@ -48,35 +48,20 @@
       "inverter_temperature": {
         "name": "Temperature"
       },
-      "port_1_dc_voltage": {
-        "name": "Port 1 DC voltage"
+      "port_dc_voltage": {
+        "name": "Port {port_number} DC voltage"
       },
-      "port_1_dc_current": {
-        "name": "Port 1 DC current"
+      "port_dc_current": {
+        "name": "Port {port_number} DC current"
       },
-      "port_1_dc_power": {
-        "name": "Port 1 DC power"
+      "port_dc_power": {
+        "name": "Port {port_number} DC power"
       },
-      "port_1_dc_total_energy": {
-        "name": "Port 1 DC total energy"
+      "port_dc_total_energy": {
+        "name": "Port {port_number} DC total energy"
       },
-      "port_1_dc_daily_energy": {
-        "name": "Port 1 DC daily energy"
-      },
-      "port_2_dc_voltage": {
-        "name": "Port 2 DC voltage"
-      },
-      "port_2_dc_current": {
-        "name": "Port 2 DC current"
-      },
-      "port_2_dc_power": {
-        "name": "Port 2 DC power"
-      },
-      "port_2_dc_total_energy": {
-        "name": "Port 2 DC total energy"
-      },
-      "port_2_dc_daily_energy": {
-        "name": "Port 2 DC daily energy"
+      "port_dc_daily_energy": {
+        "name": "Port {port_number} DC daily energy"
       },
       "wifi_ssid": {
         "name": "Wi-Fi SSID"
@@ -119,6 +104,14 @@
       "turn_on" : {
         "name" : "Turn on"
       }
+    }
+  },
+  "device": {
+    "inverter": {
+      "name": "Inverter"
+    },
+    "dtu": {
+      "name": "DTU"
     }
   }
 }

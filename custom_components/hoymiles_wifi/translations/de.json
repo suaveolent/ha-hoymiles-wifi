@@ -48,16 +48,16 @@
       "inverter_temperature": {
         "name": "Temperatur"
       },
-      "port_1_dc_voltage": {
+      "port_dc_voltage": {
         "name": "Port {port_number} Gleichspannung"
       },
-      "port_1_dc_current": {
+      "port_dc_current": {
         "name": "Port {port_number} Gleichstrom"
       },
-      "port_1_dc_power": {
+      "port_dc_power": {
         "name": "Port {port_number} DC-Leistung"
       },
-      "port_1_dc_total_energy": {
+      "port_dc_total_energy": {
         "name": "Port {port_numbe} DC-Gesamtenergie"
       },
       "port_1_dc_daily_energy": {

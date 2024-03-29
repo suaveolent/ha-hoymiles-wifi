@@ -48,65 +48,20 @@
       "inverter_temperature": {
         "name": "Temperature"
       },
-      "port_1_dc_voltage": {
-        "name": "Port 1 DC voltage"
+      "port_dc_voltage": {
+        "name": "Port {port_number} DC voltage"
       },
-      "port_1_dc_current": {
-        "name": "Port 1 DC current"
+      "port_dc_current": {
+        "name": "Port {port_number} DC current"
       },
-      "port_1_dc_power": {
-        "name": "Port 1 DC power"
+      "port_dc_power": {
+        "name": "Port {port_number} DC power"
       },
-      "port_1_dc_total_energy": {
-        "name": "Port 1 DC total energy"
+      "port_dc_total_energy": {
+        "name": "Port {port_number} DC total energy"
       },
-      "port_1_dc_daily_energy": {
-        "name": "Port 1 DC daily energy"
-      },
-      "port_2_dc_voltage": {
-        "name": "Port 2 DC voltage"
-      },
-      "port_2_dc_current": {
-        "name": "Port 2 DC current"
-      },
-      "port_2_dc_power": {
-        "name": "Port 2 DC power"
-      },
-      "port_2_dc_total_energy": {
-        "name": "Port 2 DC total energy"
-      },
-      "port_2_dc_daily_energy": {
-        "name": "Port 2 DC daily energy"
-      },
-      "port_3_dc_voltage": {
-        "name": "Port 3 DC voltage"
-      },
-      "port_3_dc_current": {
-        "name": "Port 3 DC current"
-      },
-      "port_3_dc_power": {
-        "name": "Port 3 DC power"
-      },
-      "port_3_dc_total_energy": {
-        "name": "Port 3 DC total energy"
-      },
-      "port_3_dc_daily_energy": {
-        "name": "Port 3 DC daily energy"
-      },
-      "port_4_dc_voltage": {
-        "name": "Port 4 DC voltage"
-      },
-      "port_4_dc_current": {
-        "name": "Port 4 DC current"
-      },
-      "port_4_dc_power": {
-        "name": "Port 4 DC power"
-      },
-      "port_4_dc_total_energy": {
-        "name": "Port 4 DC total energy"
-      },
-      "port_4_dc_daily_energy": {
-        "name": "Port 4 DC daily energy"
+      "port_dc_daily_energy": {
+        "name": "Port {port_number} DC daily energy"
       },
       "wifi_ssid": {
         "name": "Wi-Fi SSID"

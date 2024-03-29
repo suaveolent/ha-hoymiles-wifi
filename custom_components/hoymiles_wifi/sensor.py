@@ -130,7 +130,7 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].voltage",
-        translation_key="port_<pv_count>_dc_voltage",
+        translation_key="port_dc_voltage",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
@@ -138,7 +138,7 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].current",
-        translation_key="port_<pv_count>_dc_current",
+        translation_key="port_dc_current",
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
@@ -146,7 +146,7 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].power",
-        translation_key="port_<pv_count>_dc_power",
+        translation_key="port_dc_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
@@ -154,14 +154,14 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].energy_total",
-        translation_key="port_<pv_count>_dc_total_energy",
+        translation_key="port_dc_total_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].energy_daily",
-        translation_key="port_<pv_count>_dc_daily_energy",
+        translation_key="port_dc_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -337,14 +337,11 @@ def get_sensors_for_description(
             inverter_serial = port["inverter_serial_number"]
             port_number = port["port_number"]
             new_key = str(description.key).replace("<pv_count>", str(index))
-            new_translation_key = description.translation_key.replace(
-                "<pv_count>", str(port_number)
-            )
             updated_description = dataclasses.replace(
                 description,
                 key=new_key,
-                translation_key=new_translation_key,
                 serial_number=inverter_serial,
+                port_number=port_number,
             )
             sensor = class_name(config_entry, updated_description, coordinator)
             sensors.append(sensor)

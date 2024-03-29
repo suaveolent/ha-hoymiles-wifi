@@ -20,7 +20,7 @@ from .const import (
     DOMAIN,
     HASS_CONFIG_COORDINATOR,
 )
-from .entity import HoymilesCoordinatorEntity
+from .entity import HoymilesCoordinatorEntity, HoymilesEntityDescription
 
 
 class SetAction(Enum):
@@ -35,7 +35,9 @@ class HoymilesNumberSensorEntityDescriptionMixin:
 
 
 @dataclass(frozen=True)
-class HoymilesNumberSensorEntityDescription(NumberEntityDescription):
+class HoymilesNumberSensorEntityDescription(
+    HoymilesEntityDescription, NumberEntityDescription
+):
     """Describes Hoymiles number sensor entity."""
 
     set_action: SetAction = None

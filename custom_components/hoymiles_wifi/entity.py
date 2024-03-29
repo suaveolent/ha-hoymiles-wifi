@@ -24,6 +24,7 @@ class HoymilesEntityDescription(EntityDescription):
 
     is_dtu_sensor: bool = False
     serial_number: str = None
+    port_number: int = None
 
 
 class HoymilesEntity(Entity):
@@ -42,6 +43,9 @@ class HoymilesEntity(Entity):
             else ""
         )
         self._attr_unique_id = f"hoymiles_{config_entry.entry_id}_{description.key}"
+        self._attr_translation_placeholders = {
+            "port_number": f"{description.port_number}"
+        }
 
         dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
 

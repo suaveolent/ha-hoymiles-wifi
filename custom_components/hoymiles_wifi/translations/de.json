@@ -49,64 +49,19 @@
         "name": "Temperatur"
       },
       "port_1_dc_voltage": {
-        "name": "Port 1 Gleichspannung"
+        "name": "Port {port_number} Gleichspannung"
       },
       "port_1_dc_current": {
-        "name": "Port 1 Gleichstrom"
+        "name": "Port {port_number} Gleichstrom"
       },
       "port_1_dc_power": {
-        "name": "Port 1 DC-Leistung"
+        "name": "Port {port_number} DC-Leistung"
       },
       "port_1_dc_total_energy": {
-        "name": "Port 1 DC-Gesamtenergie"
+        "name": "Port {port_numbe} DC-Gesamtenergie"
       },
       "port_1_dc_daily_energy": {
-        "name": "Port 1 DC-Tagesenergie"
-      },
-      "port_2_dc_voltage": {
-        "name": "Port 2 Gleichspannung"
-      },
-      "port_2_dc_current": {
-        "name": "Port 2 Gleichstrom"
-      },
-      "port_2_dc_power": {
-        "name": "Port 2 DC-Leistung"
-      },
-      "port_2_dc_total_energy": {
-        "name": "Port 2 DC-Gesamtenergie"
-      },
-      "port_2_dc_daily_energy": {
-        "name": "Port 2 DC-Tagesenergie"
-      },
-      "port_3_dc_voltage": {
-        "name": "Port 3 Gleichspannung"
-      },
-      "port_3_dc_current": {
-        "name": "Port 3 Gleichstrom"
-      },
-      "port_3_dc_power": {
-        "name": "Port 3 DC-Leistung"
-      },
-      "port_3_dc_total_energy": {
-        "name": "Port 3 DC-Gesamtenergie"
-      },
-      "port_3_dc_daily_energy": {
-        "name": "Port 3 DC-Tagesenergie"
-      },
-      "port_4_dc_voltage": {
-        "name": "Port 4 Gleichspannung"
-      },
-      "port_4_dc_current": {
-        "name": "Port 4 Gleichspannung"
-      },
-      "port_4_dc_power": {
-        "name": "Port 4 DC-Leistung"
-      },
-      "port_4_dc_total_energy": {
-        "name": "Port 4 DC-Gesamtenergie"
-      },
-      "port_4_dc_daily_energy": {
-        "name": "Port 4 DC-Tagesenergie"
+        "name": "Port {port_number} DC-Tagesenergie"
       },
       "wifi_ssid": {
         "name": "WLAN-SSID"

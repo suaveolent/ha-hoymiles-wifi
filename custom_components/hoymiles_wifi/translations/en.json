@@ -105,5 +105,13 @@
         "name" : "Turn on"
       }
     }
+  },
+  "device": {
+    "inverter": {
+      "name": "Inverter"
+    },
+    "dtu": {
+      "name": "DTU"
+    }
   }
 }

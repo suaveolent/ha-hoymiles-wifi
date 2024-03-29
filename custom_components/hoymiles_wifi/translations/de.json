@@ -105,5 +105,13 @@
         "name": "Einschalten"
       }
     }
+  },
+    "device": {
+    "inverter": {
+      "name": "Wechselrichter"
+    },
+    "dtu": {
+      "name": "DTU"
+    }
   }
 }

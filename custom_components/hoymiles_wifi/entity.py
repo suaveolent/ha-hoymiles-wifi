@@ -12,7 +12,7 @@ from hoymiles_wifi.hoymiles import (
     get_inverter_model_name,
 )
 
-from .const import CONF_DTU_SERIAL_NUMBER, CONF_SENSOR_PREFIX, DOMAIN
+from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN
 from .coordinator import HoymilesDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -37,11 +37,6 @@ class HoymilesEntity(Entity):
         super().__init__()
         self.entity_description = description
         self._config_entry = config_entry
-        self._sensor_prefix = (
-            f" {config_entry.data.get(CONF_SENSOR_PREFIX)} "
-            if config_entry.data.get(CONF_SENSOR_PREFIX)
-            else ""
-        )
         self._attr_unique_id = f"hoymiles_{config_entry.entry_id}_{description.key}"
         self._attr_translation_placeholders = {
             "port_number": f"{description.port_number}"
@@ -50,19 +45,17 @@ class HoymilesEntity(Entity):
         dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
 
         if self.entity_description.is_dtu_sensor is True:
-            device_name = "DTU"
+            device_translation_key = "dtu"
             device_model = get_dtu_model_name(self.entity_description.serial_number)
         else:
             device_model = get_inverter_model_name(
                 self.entity_description.serial_number
             )
-            device_name = "Inverter"
-
-        device_name += self._sensor_prefix
+            device_translation_key = "inverter"
 
         device_info = DeviceInfo(
             identifiers={(DOMAIN, self.entity_description.serial_number)},
-            name=device_name,
+            translation_key=device_translation_key,
             manufacturer="Hoymiles",
             serial_number=self.entity_description.serial_number,
             model=device_model,

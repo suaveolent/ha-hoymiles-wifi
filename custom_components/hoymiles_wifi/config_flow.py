@@ -16,7 +16,6 @@ from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
     CONF_PORTS,
-    CONF_SENSOR_PREFIX,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
@@ -38,7 +37,6 @@ DATA_SCHEMA = vol.Schema(
             vol.Coerce(int),
             vol.Range(min=timedelta(seconds=MIN_UPDATE_INTERVAL_SECONDS).seconds),
         ),
-        vol.Optional(CONF_SENSOR_PREFIX): str,
     }
 )
 
@@ -60,7 +58,6 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
             update_interval = user_input.get(
                 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS
             )
-            sensor_prefix = user_input.get(CONF_SENSOR_PREFIX, "")
 
             try:
                 dtu_sn, inverters, ports = await async_get_config_entry_data_for_host(
@@ -73,7 +70,6 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
                     title=host,
                     data={
                         CONF_HOST: host,
-                        CONF_SENSOR_PREFIX: sensor_prefix,
                         CONF_UPDATE_INTERVAL: update_interval,
                         CONF_DTU_SERIAL_NUMBER: dtu_sn,
                         CONF_INVERTERS: inverters,

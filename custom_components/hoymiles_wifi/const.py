@@ -1,4 +1,5 @@
 """Constants for the Hoymiles integration."""
+
 DOMAIN = "hoymiles_wifi"
 NAME = "Hoymiles HMS-XXXXW-2T"
 DOMAIN = "hoymiles_wifi"
@@ -37,7 +38,7 @@ STARTUP_MESSAGE = f"""
 {NAME}
 Version: {VERSION}
 This is a custom integration!
-If you have any issues with this you need to open an issue here:
+If you have any issues with it please open an issue here:
 {ISSUE_URL}
 -------------------------------------------------------------------
 """

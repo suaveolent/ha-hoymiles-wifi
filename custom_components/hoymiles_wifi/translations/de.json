@@ -60,7 +60,7 @@
       "port_dc_total_energy": {
         "name": "Port {port_numbe} DC-Gesamtenergie"
       },
-      "port_1_dc_daily_energy": {
+      "port_dc_daily_energy": {
         "name": "Port {port_number} DC-Tagesenergie"
       },
       "wifi_ssid": {

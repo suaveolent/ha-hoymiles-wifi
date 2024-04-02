@@ -58,7 +58,7 @@
         "name": "Port {port_number} DC-Leistung"
       },
       "port_dc_total_energy": {
-        "name": "Port {port_numbe} DC-Gesamtenergie"
+        "name": "Port {port_number} DC-Gesamtenergie"
       },
       "port_dc_daily_energy": {
         "name": "Port {port_number} DC-Tagesenergie"

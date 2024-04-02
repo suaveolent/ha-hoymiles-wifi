@@ -83,15 +83,3 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
         )
-
-
-async def get_real_data_new(
-    hass: HomeAssistant, host: str
-) -> APPInfomationData_pb2.APPInfoDataResDTO:
-    """Test if the host is reachable and is actually a Hoymiles device."""
-
-    dtu = DTU(host)
-    response = await dtu.get_real_data_new()
-    if response is None:
-        raise CannotConnect
-    return response

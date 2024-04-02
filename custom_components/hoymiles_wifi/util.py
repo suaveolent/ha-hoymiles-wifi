@@ -11,7 +11,7 @@ from .error import CannotConnect
 async def async_get_config_entry_data_for_host(
     host,
 ) -> tuple[str, list[str], list[dict[str, Union[str, int]]]]:
-    """Migrate data from version 1 to version 2."""
+    """Get data for config entry from host."""
 
     dtu = DTU(host)
 

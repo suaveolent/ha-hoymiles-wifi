@@ -12,6 +12,9 @@ The custom component was successfully tested with:
  - Hoymiles HMS-800W-2T
  - Hoymiles DTU Wlite
 
+## Warning
+Please refrain from using the current power limitation feature for zero feed-in, as it may lead to damaging the inverter due to excessive writes to the EEPROM.
+
 ## Installation
 
 1. Open the [HACS](https://hacs.xyz) panel in your Home Assistant frontend.

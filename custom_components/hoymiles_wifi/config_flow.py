@@ -1,4 +1,5 @@
 """Config flow for Hoymiles."""
+
 from datetime import timedelta
 import logging
 from typing import Any
@@ -66,6 +67,9 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
             except CannotConnect:
                 errors["base"] = "cannot_connect"
             else:
+                await self.async_set_unique_id(dtu_sn)
+                self._abort_if_unique_id_configured()
+
                 return self.async_create_entry(
                     title=host,
                     data={
@@ -79,13 +83,6 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
 
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
-        )
-
-    async def async_step_import(self, import_config):
-        """Import a configuration."""
-        # Validate the imported configuration, and create an entry if valid
-        return self.async_create_entry(
-            title=import_config[CONF_HOST], data=import_config
         )
 
 

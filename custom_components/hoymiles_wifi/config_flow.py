@@ -1,5 +1,6 @@
 """Config flow for Hoymiles."""
 
+from dataclasses import dataclass
 from datetime import timedelta
 import logging
 from typing import Any
@@ -7,6 +8,8 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant import config_entries
+from homeassistant.components import dhcp
+from homeassistant.config_entries import ConfigFlowResult
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
@@ -42,10 +45,24 @@ DATA_SCHEMA = vol.Schema(
 )
 
 
+@dataclass
+class DiscoveredHostInfo:
+    """Host info for discovery."""
+
+    host: str
+    dtu_sn: str | None
+    inverters: list[dict[str, Any]] | None
+    ports: list[dict[str, Any]] | None
+
+
 class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Hoymiles Inverter config flow."""
 
     VERSION = CONFIG_VERSION
+
+    def __init__(self) -> None:
+        """Initialize the config flow."""
+        self._discovered_device: DiscoveredHostInfo = None
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -54,7 +71,6 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
         errors = {}
 
         if user_input is not None:
-            self._async_abort_entries_match(user_input)
             host = user_input[CONF_HOST]
             update_interval = user_input.get(
                 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS
@@ -83,6 +99,61 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
 
         return self.async_show_form(
             step_id="user", data_schema=DATA_SCHEMA, errors=errors
+        )
+
+    async def async_step_dhcp(
+        self, discovery_info: dhcp.DhcpServiceInfo
+    ) -> ConfigFlowResult:
+        """Handle dhcp discovery for hoymiles."""
+
+        try:
+            dtu_sn, inverters, ports = await async_get_config_entry_data_for_host(
+                discovery_info.ip
+            )
+        except CannotConnect:
+            return self.async_abort(reason="cannot_connect")
+
+        await self.async_set_unique_id(dtu_sn)
+        self._abort_if_unique_id_configured()
+
+        self._discovered_device = DiscoveredHostInfo(
+            discovery_info.ip, dtu_sn, inverters, ports
+        )
+        return await self.async_step_discovery_confirm()
+
+    async def async_step_discovery_confirm(self, user_input=None) -> ConfigFlowResult:
+        """Confirm discovery."""
+        assert self._discovered_device is not None
+        # Add the hosts one by one
+        host = self._discovered_device.host
+        dtu_sn = self._discovered_device.dtu_sn
+        inverters = self._discovered_device.inverters
+        ports = self._discovered_device.ports
+
+        if user_input is None:
+            # Show the confirmation dialog
+            return self.async_show_form(
+                step_id="dhcp_confirm",
+                description_placeholders={
+                    CONF_HOST: host,
+                    CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_SECONDS,
+                },
+            )
+
+        host = user_input[CONF_HOST]
+        update_interval = user_input.get(
+            CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS
+        )
+
+        return self.async_create_entry(
+            title=host,
+            data={
+                CONF_HOST: host,
+                CONF_UPDATE_INTERVAL: update_interval,
+                CONF_DTU_SERIAL_NUMBER: dtu_sn,
+                CONF_INVERTERS: inverters,
+                CONF_PORTS: ports,
+            },
         )
 
 

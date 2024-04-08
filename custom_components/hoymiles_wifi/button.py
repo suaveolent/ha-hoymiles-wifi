@@ -90,10 +90,10 @@ class HoymilesButtonEntity(HoymilesEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Press the button."""
 
-        if hasattr(self._inverter, self.entity_description.key) and callable(
-            getattr(self._inverter, self.entity_description.key)
+        if hasattr(self._dtu, self.entity_description.key) and callable(
+            getattr(self._dtu, self.entity_description.key)
         ):
-            await getattr(self._inverter, self.entity_description.key)()
+            await getattr(self._dtu, self.entity_description.key)()
         else:
             raise NotImplementedError(
                 f"Method '{self.entity_description.key}' not implemented in Inverter class."

@@ -1,4 +1,5 @@
-""""Coordinator for Hoymiles integration."""
+""" "Coordinator for Hoymiles integration."""
+
 from datetime import timedelta
 import logging
 
@@ -54,7 +55,7 @@ class HoymilesRealDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
         response = await self._dtu.async_get_real_data_new()
 
         if not self._entities_added:
-            self._hass.async_add_job(
+            self._hass.async_create_task(
                 self._hass.config_entries.async_forward_entry_setups(
                     self._entry, PLATFORMS
                 )

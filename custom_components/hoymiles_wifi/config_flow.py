@@ -53,8 +53,6 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
         """Handle a flow initiated by the user."""
         errors = {}
 
-        print("Called!!!")
-
         if user_input is not None:
             host = user_input[CONF_HOST]
             update_interval = user_input.get(

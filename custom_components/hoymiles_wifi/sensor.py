@@ -2,7 +2,7 @@
 
 import dataclasses
 from dataclasses import dataclass
-import datetime
+from datetime import datetime, time, timedelta
 from enum import Enum
 import logging
 
@@ -373,6 +373,8 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         self._version_prefix = description.version_prefix
         self._native_value = None
         self._assumed_state = False
+        self._last_known_value = None
+        self._last_successful_update = None
 
         self.update_state_value()
 
@@ -385,6 +387,24 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     @property
     def native_value(self):
         """Return the native value of the sensor."""
+        # For an energy sensor a value of 0 would mess up long term stats because of how total_increasing works
+        if self._native_value == 0.0:
+            if (
+                self._last_successful_update is not None
+                and datetime.now() - self._last_successful_update
+                <= timedelta(minutes=3)
+            ):
+                _LOGGER.debug(
+                    "[%s] Returning last known value: %s, instead of 0.0 to cope with inverter in offline mode.",
+                    self.name,
+                    self._last_known_value,
+                )
+                self._assumed_state = True
+                return self._last_known_value
+        else:
+            self._last_successful_update = datetime.now()
+        self._last_known_value = self._native_value
+        self._assumed_state = False
         return self._native_value
 
     @property
@@ -462,10 +482,10 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
     def schedule_midnight_reset(self, reset_sensor_value: bool = True):
         """Schedule the reset function to run again at the next midnight."""
-        now = datetime.datetime.now()
-        midnight = datetime.datetime.combine(now.date(), datetime.time(0, 0))
-        midnight = midnight + datetime.timedelta(days=1) if now > midnight else midnight
-        time_until_midnight = (midnight - datetime.datetime.now()).total_seconds()
+        now = datetime.now()
+        midnight = datetime.combine(now.date(), time(0, 0))
+        midnight = midnight + timedelta(days=1) if now > midnight else midnight
+        time_until_midnight = (midnight - datetime.now()).total_seconds()
 
         if reset_sensor_value:
             self.reset_sensor_value()

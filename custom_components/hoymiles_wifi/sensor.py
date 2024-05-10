@@ -387,7 +387,6 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     @property
     def native_value(self):
         """Return the native value of the sensor."""
-        # For an energy sensor a value of 0 would mess up long term stats because of how total_increasing works
         if self._native_value == 0.0:
             if (
                 self._last_successful_update is not None
@@ -403,7 +402,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
                 return self._last_known_value
         else:
             self._last_successful_update = datetime.now()
-        self._last_known_value = self._native_value
+            self._last_known_value = self._native_value
         self._assumed_state = False
         return self._native_value
 

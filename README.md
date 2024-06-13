@@ -1,4 +1,5 @@
 
+
 # Hoymiles for Home Assistant
 This Home Assistant custom component utilizes the [hoymiles-wifi](https://github.com/suaveolent/hoymiles-wifi) Python library, allowing seamless integration with Hoymiles HMS microinverters via Hoymiles DTUs and the HMS-XXXXW-2T microinverters.
 
@@ -29,6 +30,11 @@ Please refrain from using the current power limitation feature for zero feed-in,
 7. Click "DOWNLOAD"
 8. Navigate to "Settings" - "Devices & Services"
 9. Click "ADD INTEGRATION" and select the `Hoymiles` integration.
+
+> **Note**: Sometimes the necessary lib
+> (https://github.com/suaveolent/hoymiles-wifi) is not correctly
+> installed. In this case you need to manually install the library by
+> running the `pip install hoymiles-wifi` command yourself.
 
 
 ### Option 2: Manual Installation

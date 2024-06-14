@@ -1,6 +1,7 @@
 """Support for Hoymiles buttons."""
 
 import dataclasses
+from inspect import signature
 from dataclasses import dataclass
 
 from homeassistant.components.button import (
@@ -13,7 +14,13 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from hoymiles_wifi.dtu import DTU
 
-from .const import CONF_DTU_SERIAL_NUMBER, CONF_INVERTERS, DOMAIN, HASS_DTU
+from .const import (
+    CONF_DTU_SERIAL_NUMBER,
+    CONF_INVERTERS,
+    CONF_THREE_PHASE_INVERTERS,
+    DOMAIN,
+    HASS_DTU,
+)
 from .entity import HoymilesEntity, HoymilesEntityDescription
 
 
@@ -23,23 +30,28 @@ class HoymilesButtonEntityDescription(
 ):
     """Class to describe a Hoymiles Button entity."""
 
+    action: str = ""
+
 
 BUTTONS: tuple[HoymilesButtonEntityDescription, ...] = (
     HoymilesButtonEntityDescription(
-        key="async_restart_dtu",
+        key="restart_dtu",
         translation_key="restart",
         device_class=ButtonDeviceClass.RESTART,
         is_dtu_sensor=True,
+        action="async_restart_dtu",
     ),
     HoymilesButtonEntityDescription(
-        key="async_turn_off_inverter",
+        key="turn_off_inverter_<inverter_serial>",
         translation_key="turn_off",
         icon="mdi:power-off",
+        action="async_turn_off_inverter",
     ),
     HoymilesButtonEntityDescription(
-        key="async_turn_on_inverter",
+        key="turn_on_inverter_<inverter_serial>",
         translation_key="turn_on",
         icon="mdi:power-on",
+        action="async_turn_on_inverter",
     ),
 )
 
@@ -53,7 +65,9 @@ async def async_setup_entry(
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
     dtu = hass_data[HASS_DTU]
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
-    inverters = config_entry.data[CONF_INVERTERS]
+    single_phase_inverters = config_entry.data[CONF_INVERTERS]
+    three_phase_inverters = config_entry.data[CONF_THREE_PHASE_INVERTERS]
+    inverters = single_phase_inverters + three_phase_inverters
 
     buttons = []
     for description in BUTTONS:
@@ -64,8 +78,9 @@ async def async_setup_entry(
             buttons.append(HoymilesButtonEntity(config_entry, updated_description, dtu))
         else:
             for inverter_serial in inverters:
+                new_key = description.key.replace("<inverter_serial>", inverter_serial)
                 updated_description = dataclasses.replace(
-                    description, serial_number=inverter_serial
+                    description, key=new_key, serial_number=inverter_serial
                 )
                 buttons.append(
                     HoymilesButtonEntity(config_entry, updated_description, dtu)
@@ -90,11 +105,17 @@ class HoymilesButtonEntity(HoymilesEntity, ButtonEntity):
     async def async_press(self) -> None:
         """Press the button."""
 
-        if hasattr(self._dtu, self.entity_description.key) and callable(
-            getattr(self._dtu, self.entity_description.key)
+        if hasattr(self._dtu, self.entity_description.action) and callable(
+            getattr(self._dtu, self.entity_description.action)
         ):
-            await getattr(self._dtu, self.entity_description.key)()
+            method = getattr(self._dtu, self.entity_description.action)
+            method_signature = signature(method)
+            params = method_signature.parameters
+            if "inverter_serial" in params:
+                await method(self.entity_description.serial_number)
+            else:
+                await method()
         else:
             raise NotImplementedError(
-                f"Method '{self.entity_description.key}' not implemented in Inverter class."
+                f"Method '{self.entity_description.action}' not implemented in DTU class."
             )

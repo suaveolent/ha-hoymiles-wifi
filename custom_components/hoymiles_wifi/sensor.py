@@ -31,6 +31,7 @@ import hoymiles_wifi.hoymiles
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
+    CONF_THREE_PHASE_INVERTERS,
     CONF_PORTS,
     DOMAIN,
     FCTN_GENERATE_DTU_VERSION_STRING,
@@ -80,14 +81,6 @@ class HoymilesDiagnosticEntityDescription(
 
 HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
-        key="sgs_data[<inverter_count>].active_power",
-        translation_key="ac_power",
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.1,
-    ),
-    HoymilesSensorEntityDescription(
         key="dtu_daily_energy",
         translation_key="ac_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
@@ -95,6 +88,14 @@ HOYMILES_SENSORS = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         reset_at_midnight=True,
         is_dtu_sensor=True,
+    ),
+    HoymilesSensorEntityDescription(
+        key="sgs_data[<inverter_count>].active_power",
+        translation_key="ac_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
         key="sgs_data[<inverter_count>].voltage",
@@ -122,6 +123,70 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="sgs_data[<inverter_count>].temperature",
+        translation_key="inverter_temperature",
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=SensorDeviceClass.TEMPERATURE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].voltage_phase_A",
+        translation_key="voltage_phase_A",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].voltage_phase_B",
+        translation_key="voltage_phase_B",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].voltage_phase_C",
+        translation_key="voltage_phase_C",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].voltage_line_AB",
+        translation_key="voltage_line_AB",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].voltage_line_BC",
+        translation_key="voltage_line_BC",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].voltage_line_CA",
+        translation_key="voltage_line_CA",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].frequency",
+        translation_key="grid_frequency",
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].temperature",
         translation_key="inverter_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,
         device_class=SensorDeviceClass.TEMPERATURE,
@@ -168,6 +233,7 @@ HOYMILES_SENSORS = [
         reset_at_midnight=True,
     ),
 ]
+
 
 CONFIG_DIAGNOSTIC_SENSORS = [
     HoymilesDiagnosticEntityDescription(
@@ -261,7 +327,9 @@ async def async_setup_entry(
     config_coordinator = hass_data[HASS_CONFIG_COORDINATOR]
     app_info_coordinator = hass_data[HASS_APP_INFO_COORDINATOR]
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
-    inverters = config_entry.data[CONF_INVERTERS]
+    single_phase_inverters = config_entry.data[CONF_INVERTERS]
+    three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
+    inverters = single_phase_inverters + three_phase_inverters
     ports = config_entry.data[CONF_PORTS]
     sensors = []
 
@@ -272,16 +340,42 @@ async def async_setup_entry(
             class_name = HoymilesEnergySensorEntity
         else:
             class_name = HoymilesDataSensorEntity
-        sensor_entities = get_sensors_for_description(
-            config_entry,
-            description,
-            data_coordinator,
-            class_name,
-            dtu_serial_number,
-            inverters,
-            ports,
-        )
-        sensors.extend(sensor_entities)
+
+        if "sgs_data" in description.key and len(single_phase_inverters) > 0:
+            sensor_entities = get_sensors_for_description(
+                config_entry,
+                description,
+                data_coordinator,
+                class_name,
+                dtu_serial_number,
+                single_phase_inverters,
+                [],
+            )
+            sensors.extend(sensor_entities)
+
+        elif "tgs_data" in description.key and len(three_phase_inverters) > 0:
+            sensor_entities = get_sensors_for_description(
+                config_entry,
+                description,
+                data_coordinator,
+                class_name,
+                dtu_serial_number,
+                three_phase_inverters,
+                [],
+            )
+            sensors.extend(sensor_entities)
+
+        else:
+            sensor_entities = get_sensors_for_description(
+                config_entry,
+                description,
+                data_coordinator,
+                class_name,
+                dtu_serial_number,
+                [],
+                ports,
+            )
+            sensors.extend(sensor_entities)
 
     # Diagnostic Sensors
     for description in CONFIG_DIAGNOSTIC_SENSORS:

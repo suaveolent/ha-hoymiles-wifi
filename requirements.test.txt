@@ -2,5 +2,5 @@ pytest
 pytest-cov>=4.1.0
 pytest-asyncio>=0.23.5
 pytest-homeassistant-custom-component
-hoymiles-wifi>=0.1.8
+hoymiles-wifi>=0.2.1
 

@@ -16,6 +16,7 @@ from hoymiles_wifi.protobuf import APPInfomationData_pb2
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
+    CONF_THREE_PHASE_INVERTERS,
     CONF_PORTS,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
@@ -60,9 +61,12 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
             )
 
             try:
-                dtu_sn, inverters, ports = await async_get_config_entry_data_for_host(
-                    host
-                )
+                (
+                    dtu_sn,
+                    single_phase_inverters,
+                    three_phase_inverters,
+                    ports,
+                ) = await async_get_config_entry_data_for_host(host)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
             else:
@@ -75,7 +79,8 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
                         CONF_HOST: host,
                         CONF_UPDATE_INTERVAL: update_interval,
                         CONF_DTU_SERIAL_NUMBER: dtu_sn,
-                        CONF_INVERTERS: inverters,
+                        CONF_INVERTERS: single_phase_inverters,
+                        CONF_THREE_PHASE_INVERTERS: three_phase_inverters,
                         CONF_PORTS: ports,
                     },
                 )

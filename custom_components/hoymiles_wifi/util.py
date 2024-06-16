@@ -20,7 +20,9 @@ async def async_get_config_entry_data_for_host(
 
     real_data = await dtu.async_get_real_data_new()
     if real_data is None:
-        logging.error("RealData is None. Cannoct to DTU or invalid response received!")
+        logging.error(
+            "RealData is None. Cannot connect to DTU or invalid response received!"
+        )
         raise CannotConnect
 
     dtu_sn = real_data.device_serial_number

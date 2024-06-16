@@ -549,13 +549,18 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
         if (
             self._native_value is not None
+            and self._native_value != 0
             and self._version_translation_function is not None
         ):
             self._native_value = getattr(
                 hoymiles_wifi.hoymiles, self._version_translation_function
             )(int(self._native_value))
 
-        if self._native_value is not None and self._version_prefix is not None:
+        if (
+            self._native_value is not None
+            and self._native_value != 0
+            and self._version_prefix is not None
+        ):
             self._native_value = f"{self._version_prefix}{self._native_value}"
 
 

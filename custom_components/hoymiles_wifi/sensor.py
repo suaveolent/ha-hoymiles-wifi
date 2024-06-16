@@ -67,6 +67,7 @@ class HoymilesSensorEntityDescription(
     reset_at_midnight: bool = False
     version_translation_function: str = None
     version_prefix: str = None
+    assume_state: bool = False
 
 
 @dataclass(frozen=True)
@@ -281,6 +282,7 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
         version_prefix="V",
         is_dtu_sensor=True,
+        assume_state=True,
     ),
     HoymilesSensorEntityDescription(
         key="dtu_info.dtu_hw_version",
@@ -289,6 +291,7 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
         version_prefix="H",
         is_dtu_sensor=True,
+        assume_state=True,
     ),
     HoymilesSensorEntityDescription(
         key="pv_info[<inverter_count>].pv_sw_version",
@@ -296,6 +299,7 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         version_translation_function=FCTN_GENERATE_INVERTER_SW_VERSION_STRING,
         version_prefix="V",
+        assume_state=True,
     ),
     HoymilesSensorEntityDescription(
         key="pv_info[<inverter_count>].pv_hw_version",
@@ -303,6 +307,7 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         version_translation_function=FCTN_GENERATE_INVERTER_HW_VERSION_STRING,
         version_prefix="H",
+        assume_state=True,
     ),
     HoymilesSensorEntityDescription(
         key="dtu_info.signal_strength",
@@ -449,7 +454,7 @@ def get_sensors_for_description(
     return sensors
 
 
-class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
+class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
     """Represents a sensor entity for Hoymiles data."""
 
     def __init__(
@@ -482,7 +487,9 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     def native_value(self):
         """Return the native value of the sensor."""
         if self._native_value == 0.0:
-            if (
+            if self.entity_description.assume_state:
+                return self._last_known_value
+            elif (
                 self._last_successful_update is not None
                 and datetime.now() - self._last_successful_update
                 <= timedelta(minutes=3)
@@ -549,7 +556,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
         if (
             self._native_value is not None
-            and self._native_value != 0
+            and self._native_value != 0.0
             and self._version_translation_function is not None
         ):
             self._native_value = getattr(
@@ -558,10 +565,18 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
         if (
             self._native_value is not None
-            and self._native_value != 0
+            and self._native_value != 0.0
             and self._version_prefix is not None
         ):
             self._native_value = f"{self._version_prefix}{self._native_value}"
+
+    async def async_added_to_hass(self) -> None:
+        """Call when entity about to be added to hass."""
+        await super().async_added_to_hass()
+
+        state = await self.async_get_last_sensor_data()
+        if state:
+            self.last_known_value = state.native_value
 
 
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
@@ -616,7 +631,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
         state = await self.async_get_last_sensor_data()
         if state:
-            self.last_known_value = state.native_value
+            self._last_known_value = state.native_value
 
         if self.entity_description.reset_at_midnight:
             self.schedule_midnight_reset(reset_sensor_value=False)
@@ -694,4 +709,4 @@ class HoymilesDiagnosticSensorEntity(
         await super().async_added_to_hass()
         state = await self.async_get_last_sensor_data()
         if state:
-            self.last_known_value = state.native_value
+            self._last_known_value = state.native_value

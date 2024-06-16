@@ -1,11 +1,14 @@
 """Utils for hoymiles-wifi."""
 
 from typing import Union
+import logging
 
 from hoymiles_wifi.dtu import DTU
 from hoymiles_wifi.hoymiles import generate_inverter_serial_number
 
 from .error import CannotConnect
+
+_LOGGER = logging.getLogger(__name__)
 
 
 async def async_get_config_entry_data_for_host(
@@ -17,6 +20,7 @@ async def async_get_config_entry_data_for_host(
 
     real_data = await dtu.async_get_real_data_new()
     if real_data is None:
+        logging.error("RealData is None. Cannoct to DTU or invalid response received!")
         raise CannotConnect
 
     dtu_sn = real_data.device_serial_number

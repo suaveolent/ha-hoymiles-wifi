@@ -111,7 +111,6 @@
       "voltage_line_CA": {
         "name": "Voltage line CA"
       }
-      }
     },
     "button" : {
       "restart" : {

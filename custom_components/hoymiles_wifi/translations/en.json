@@ -94,22 +94,22 @@
         "name": "Signal strength"
       },
       "voltage_phase_A": {
-        "name": "Voltage A"
+        "name": "Voltage phase A"
       },
       "voltage_phase_B": {
-        "name": "Voltage B"
+        "name": "Voltage phase B"
       },
       "voltage_phase_C": {
-        "name": "Voltage C"
+        "name": "Voltage phase C"
       },
       "voltage_line_AB": {
-        "name": "Voltage AB"
+        "name": "Voltage line AB"
       },
       "voltage_line_BC": {
-        "name": "Voltage BC"
+        "name": "Voltage line BC"
       },
       "voltage_line_CA": {
-        "name": "Voltage CA"
+        "name": "Voltage line CA"
       }
     },
     "button" : {

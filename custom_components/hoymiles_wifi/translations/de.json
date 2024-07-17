@@ -49,10 +49,10 @@
         "name": "Temperatur"
       },
       "port_dc_voltage": {
-        "name": "Port {port_number} Gleichspannung"
+        "name": "Port {port_number} DC-Spannung"
       },
       "port_dc_current": {
-        "name": "Port {port_number} Gleichstrom"
+        "name": "Port {port_number} DC-Strom"
       },
       "port_dc_power": {
         "name": "Port {port_number} DC-Leistung"
@@ -97,19 +97,19 @@
         "name": "Spannung Phase A"
       },
       "voltage_phase_B": {
-        "name": "Voltage Phase B"
+        "name": "Spannung Phase B"
       },
       "voltage_phase_C": {
-        "name": "Voltage Phase C"
+        "name": "Spannung Phase C"
       },
       "voltage_line_AB": {
-        "name": "Voltage Phase AB"
+        "name": "Spannung Phase AB"
       },
       "voltage_line_BC": {
-        "name": "Voltage Phase BC"
+        "name": "Spannung Phase BC"
       },
       "voltage_line_CA": {
-        "name": "Voltage Phase CA"
+        "name": "Spannung Phase CA"
       }
     },
     "button": {

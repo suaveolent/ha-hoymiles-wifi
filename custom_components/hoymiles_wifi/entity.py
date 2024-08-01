@@ -10,6 +10,7 @@ from hoymiles_wifi.hoymiles import (
     generate_inverter_serial_number,
     get_dtu_model_name,
     get_inverter_model_name,
+    get_meter_model_name,
 )
 
 from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN
@@ -48,6 +49,12 @@ class HoymilesEntity(Entity):
             device_translation_key = "dtu"
             device_model = get_dtu_model_name(self.entity_description.serial_number)
         else:
+            if "meter" in self.entity_description.key:
+                device_model = get_meter_model_name(
+                    self.entity_description.serial_number
+                )
+                device_translation_key = "meter"
+            else:
             device_model = get_inverter_model_name(
                 self.entity_description.serial_number
             )

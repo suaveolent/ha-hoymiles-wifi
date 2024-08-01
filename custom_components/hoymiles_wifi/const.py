@@ -4,7 +4,7 @@ DOMAIN = "hoymiles_wifi"
 NAME = "Hoymiles HMS-XXXXW-2T"
 DOMAIN = "hoymiles_wifi"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.2.3"
+VERSION = "0.2.4"
 CONFIG_VERSION = 2
 
 ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"
@@ -14,6 +14,7 @@ CONF_DTU_SERIAL_NUMBER = "dtu_serial_number"
 CONF_INVERTERS = "inverters"
 CONF_THREE_PHASE_INVERTERS = "three_phase_inverters"
 CONF_PORTS = "ports"
+CONF_METERS = "meters"
 
 DEFAULT_UPDATE_INTERVAL_SECONDS = 35
 MIN_UPDATE_INTERVAL_SECONDS = 35

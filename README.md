@@ -41,7 +41,8 @@ Please refrain from using the current power limitation feature for zero feed-in,
 8. Navigate to "Settings" - "Devices & Services"
 
 9. Click "ADD INTEGRATION" and select the `Hoymiles` integration.
-
+10. Insert IP address of hoymiles DTUBI-xxxx in field Host and click on SUBMIT
+    
 > **Note**: Sometimes the necessary lib
 
 > (https://github.com/suaveolent/hoymiles-wifi) is not correctly

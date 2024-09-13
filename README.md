@@ -67,7 +67,7 @@ Please refrain from using the current power limitation feature for zero feed-in,
 
 Configuration is done in the UI.
 
-1. `HOST`: Enter the IP address or the hostname of your inverter or DTU.
+1. `Host`: Enter the IP address or the hostname of your inverter or DTU.
 
 > **Note**: To find the IP address or hostname of your inverter/DTU, you can either access your router’s web interface to view connected devices, or use a network scanning tool (such as Fing or Angry IP Scanner) to identify the device on your local network.
 

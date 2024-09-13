@@ -1,4 +1,5 @@
 """Entity base for Hoymiles entities."""
+
 from dataclasses import dataclass
 import logging
 
@@ -55,16 +56,16 @@ class HoymilesEntity(Entity):
                 )
                 device_translation_key = "meter"
             else:
-            device_model = get_inverter_model_name(
-                self.entity_description.serial_number
-            )
-            device_translation_key = "inverter"
+                device_model = get_inverter_model_name(
+                    self.entity_description.serial_number
+                )
+                device_translation_key = "inverter"
 
         device_info = DeviceInfo(
             identifiers={(DOMAIN, self.entity_description.serial_number)},
             translation_key=device_translation_key,
             manufacturer="Hoymiles",
-            serial_number=self.entity_description.serial_number,
+            serial_number=self.entity_description.serial_number.upper(),
             model=device_model,
         )
 

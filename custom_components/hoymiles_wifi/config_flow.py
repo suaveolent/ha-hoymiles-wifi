@@ -137,8 +137,11 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
                 self.hass.config_entries.async_update_entry(
                     entry, data=data, version=CONFIG_VERSION
                 )
-                await self.hass.config_entries.async_reload(entry.entry_id)
-                return self.async_abort(reason="reconfigure_successful")
+                result = await self.hass.config_entries.async_reload(entry.entry_id)
+                if not result:
+                    errors["base"] = "unknown"
+                else:
+                    return self.async_abort(reason="reconfigure_successful")
 
         return self.async_show_form(
             step_id="reconfigure",

@@ -110,6 +110,33 @@
       },
       "voltage_line_CA": {
         "name": "Voltage line CA"
+      },
+      "phase_total_power": {
+        "name": "Phase total power"
+      },
+      "phase_A_power": {
+        "name": "Phase A power"
+      },
+      "power_factor_total": {
+        "name": "Power factor total"
+      },
+      "energy_total_power": {
+        "name": "Enery total power"
+      },
+      "energy_phase_A": {
+        "name": "Enery phase A"
+      },
+      "energy_total_consumed": {
+        "name": "Enery total consumed"
+      },
+      "energy_phase_A_consumed": {
+        "name": "Enery phase A consumed"
+      },
+      "current_phase_A": {
+        "name": "Current phase A"
+      },
+      "power_factor_phase_A": {
+        "name": "Power factor phase A"
       }
     },
     "button" : {

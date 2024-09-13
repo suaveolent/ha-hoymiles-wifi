@@ -32,6 +32,7 @@ from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
     CONF_THREE_PHASE_INVERTERS,
+    CONF_METERS,
     CONF_PORTS,
     DOMAIN,
     FCTN_GENERATE_DTU_VERSION_STRING,
@@ -233,6 +234,90 @@ HOYMILES_SENSORS = [
         state_class=SensorStateClass.TOTAL_INCREASING,
         reset_at_midnight=True,
     ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<inverter_count>].phase_total_power",
+        translation_key="phase_total_power",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].phase_total_power",
+        translation_key="phase_total_power",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].phase_A_power",
+        translation_key="phase_A_power",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].power_factor_total",
+        translation_key="power_factor_total",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].energy_total_power",
+        translation_key="energy_total_power",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].energy-phase_A",
+        translation_key="energy_phase_A",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].energy_total_consumed",
+        translation_key="energy_total_consumed",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].energy-phase_A_consumed:",
+        translation_key="energy_phase_A_consumed:",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].voltage_phase_A",
+        translation_key="voltage_phase_A",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].current_phase_A",
+        translation_key="current_phase_A",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].power_factor_phase_A",
+        translation_key="power_factor_total",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
 ]
 
 
@@ -334,6 +419,7 @@ async def async_setup_entry(
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
     single_phase_inverters = config_entry.data[CONF_INVERTERS]
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
+    meters = config_entry.data.get(CONF_METERS, [])
     inverters = single_phase_inverters + three_phase_inverters
     ports = config_entry.data[CONF_PORTS]
     sensors = []
@@ -367,6 +453,18 @@ async def async_setup_entry(
                 dtu_serial_number,
                 three_phase_inverters,
                 [],
+            )
+            sensors.extend(sensor_entities)
+        elif "meter" in description.key and len(meters) > 0:
+            sensor_entities = get_sensors_for_description(
+                config_entry,
+                description,
+                data_coordinator,
+                class_name,
+                dtu_serial_number,
+                [],
+                [],
+                meters,
             )
             sensors.extend(sensor_entities)
 
@@ -418,6 +516,7 @@ def get_sensors_for_description(
     dtu_serial_number: str,
     inverters: list,
     ports: list,
+    meters: list = [],
 ) -> list[SensorEntity]:
     """Get sensors for the given description."""
 
@@ -441,6 +540,14 @@ def get_sensors_for_description(
                 key=new_key,
                 serial_number=inverter_serial,
                 port_number=port_number,
+            )
+            sensor = class_name(config_entry, updated_description, coordinator)
+            sensors.append(sensor)
+    elif "meter_count" in description.key:
+        for index, meter_serial in enumerate(meters):
+            new_key = description.key.replace("<meter_count>", str(index))
+            updated_description = dataclasses.replace(
+                description, key=new_key, serial_number=meter_serial
             )
             sensor = class_name(config_entry, updated_description, coordinator)
             sensors.append(sensor)

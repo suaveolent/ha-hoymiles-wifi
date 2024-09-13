@@ -130,6 +130,9 @@
     },
     "dtu": {
       "name": "DTU"
+    },
+    "meter": {
+      "name": "Zähler"
     }
   }
 }

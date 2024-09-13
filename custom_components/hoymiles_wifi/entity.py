@@ -1,4 +1,5 @@
 """Entity base for Hoymiles entities."""
+
 from dataclasses import dataclass
 import logging
 
@@ -10,6 +11,7 @@ from hoymiles_wifi.hoymiles import (
     generate_inverter_serial_number,
     get_dtu_model_name,
     get_inverter_model_name,
+    get_meter_model_name,
 )
 
 from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN
@@ -48,16 +50,22 @@ class HoymilesEntity(Entity):
             device_translation_key = "dtu"
             device_model = get_dtu_model_name(self.entity_description.serial_number)
         else:
-            device_model = get_inverter_model_name(
-                self.entity_description.serial_number
-            )
-            device_translation_key = "inverter"
+            if "meter" in self.entity_description.key:
+                device_model = get_meter_model_name(
+                    self.entity_description.serial_number
+                )
+                device_translation_key = "meter"
+            else:
+                device_model = get_inverter_model_name(
+                    self.entity_description.serial_number
+                )
+                device_translation_key = "inverter"
 
         device_info = DeviceInfo(
             identifiers={(DOMAIN, self.entity_description.serial_number)},
             translation_key=device_translation_key,
             manufacturer="Hoymiles",
-            serial_number=self.entity_description.serial_number,
+            serial_number=self.entity_description.serial_number.upper(),
             model=device_model,
         )
 

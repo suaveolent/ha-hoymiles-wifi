@@ -18,6 +18,7 @@ from .const import (
     CONF_INVERTERS,
     CONF_THREE_PHASE_INVERTERS,
     CONF_PORTS,
+    CONF_METERS,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
@@ -66,6 +67,7 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
                     single_phase_inverters,
                     three_phase_inverters,
                     ports,
+                    meters,
                 ) = await async_get_config_entry_data_for_host(host)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -82,6 +84,7 @@ class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN
                         CONF_INVERTERS: single_phase_inverters,
                         CONF_THREE_PHASE_INVERTERS: three_phase_inverters,
                         CONF_PORTS: ports,
+                        CONF_METERS: meters,
                     },
                 )
 

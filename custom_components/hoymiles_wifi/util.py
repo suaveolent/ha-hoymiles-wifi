@@ -47,4 +47,9 @@ async def async_get_config_entry_data_for_host(
         for pv_data in real_data.pv_data
     ]
 
-    return dtu_sn, single_phase_inverters, three_phase_inverters, ports
+    meters = [
+        generate_inverter_serial_number(meter_data.serial_number)
+        for meter_data in real_data.meter_data
+    ]
+
+    return dtu_sn, single_phase_inverters, three_phase_inverters, ports, meters

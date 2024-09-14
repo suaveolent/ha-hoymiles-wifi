@@ -237,9 +237,10 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].phase_total_power",
         translation_key="phase_total_power",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.ENERGY,
-        state_class=SensorStateClass.TOTAL_INCREASING,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].phase_A_power",
@@ -265,7 +266,7 @@ HOYMILES_SENSORS = [
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
-        key="meter_data[<meter_count>].energy-phase_A",
+        key="meter_data[<meter_count>].energy_phase_A",
         translation_key="energy_phase_A",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -279,7 +280,7 @@ HOYMILES_SENSORS = [
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
-        key="meter_data[<meter_count>].energy-phase_A_consumed",
+        key="meter_data[<meter_count>].energy_phase_A_consumed",
         translation_key="energy_phase_A_consumed",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -291,7 +292,7 @@ HOYMILES_SENSORS = [
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.1,
+        conversion_factor=0.01,
     ),
     HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].current_phase_A",

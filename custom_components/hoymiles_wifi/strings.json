@@ -121,16 +121,16 @@
         "name": "Power factor total"
       },
       "energy_total_power": {
-        "name": "Enery total power"
+        "name": "Energy total power"
       },
       "energy_phase_A": {
-        "name": "Enery phase A"
+        "name": "Energy phase A"
       },
       "energy_total_consumed": {
-        "name": "Enery total consumed"
+        "name": "Energy total consumed"
       },
       "energy_phase_A_consumed": {
-        "name": "Enery phase A consumed"
+        "name": "Energy phase A consumed"
       },
       "current_phase_A": {
         "name": "Current phase A"

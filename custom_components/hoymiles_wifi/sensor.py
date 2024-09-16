@@ -238,7 +238,7 @@ HOYMILES_SENSORS = [
         key="meter_data[<meter_count>].phase_total_power",
         translation_key="phase_total_power",
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.ENERGY,
+        device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
     ),

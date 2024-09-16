@@ -7,7 +7,14 @@
         "data": {
           "host": "[%key:common::config_flow::data::host%]",
           "update_interval": "Update Interval (seconds)",
-          "sensor_prefix" : "Sensor Prefix"
+        }
+      },
+      "reconfigure": {
+        "title": "Hoymiles DTU connection",
+        "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]",
+          "update_interval": "Update Interval (seconds)",
         }
       }
     },

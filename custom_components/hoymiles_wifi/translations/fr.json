@@ -1,0 +1,172 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connexion DTU Hoymiles",
+        "description": "Si vous avez besoin d'aide pour la configuration, consultez ici : https://github.com/suaveolent/ha-hoymiles-wifi",
+        "data": {
+          "host": "Hôte",
+          "update_interval": "Intervalle de mise à jour (secondes)"
+        }
+      },
+      "reconfigure": {
+        "title": "Connexion DTU Hoymiles",
+        "description": "Si vous avez besoin d'aide pour la configuration, consultez ici : https://github.com/suaveolent/ha-hoymiles-wifi",
+        "data": {
+          "host": "Hôte",
+          "update_interval": "Intervalle de mise à jour (secondes)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Échec de la connexion."
+    },
+    "abort": {
+      "already_configured": "Déjà configuré."
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "dtu": {
+        "name": "DTU"
+      }
+    },
+    "number" : {
+      "limit_power_mypower": {
+        "name": "Limite de puissance"
+      }
+    },
+    "sensor": {
+      "ac_power": {
+        "name": "Puissance AC"
+      },
+      "ac_daily_energy": {
+        "name": "Énergie quotidienne AC"
+      },
+      "grid_voltage": {
+        "name": "Tension du réseau"
+      },
+      "grid_frequency": {
+        "name": "Fréquence du réseau"
+      },
+      "inverter_power_factor": {
+        "name": "Facteur de puissance de l'onduleur"
+      },
+      "inverter_temperature": {
+        "name": "Température de l'onduleur"
+      },
+      "port_dc_voltage": {
+        "name": "Tension DC du port {port_number}"
+      },
+      "port_dc_current": {
+        "name": "Courant DC du port {port_number}"
+      },
+      "port_dc_power": {
+        "name": "Puissance DC du port {port_number}"
+      },
+      "port_dc_total_energy": {
+        "name": "Énergie totale DC du port {port_number}"
+      },
+      "port_dc_daily_energy": {
+        "name": "Énergie quotidienne DC du port {port_number}"
+      },
+      "wifi_ssid": {
+        "name": "SSID Wi-Fi"
+      },
+      "meter_kind": {
+        "name": "Type de compteur"
+      },
+      "mac_address": {
+        "name": "Adresse MAC"
+      },
+      "ip_address": {
+        "name": "Adresse IP"
+      },
+      "dtu_ap_ssid": {
+        "name": "SSID AP"
+      },
+      "dtu_sw_version": {
+        "name": "Version SW"
+      },
+      "dtu_hw_version": {
+        "name": "Version HW"
+      },
+      "pv_sw_version": {
+        "name": "Version SW"
+      },
+      "pv_hw_version" : {
+        "name": "Version HW"
+      },
+      "signal_strength" : {
+        "name": "Force du signal"
+      },
+      "voltage_phase_A": {
+        "name": "Tension phase A"
+      },
+      "voltage_phase_B": {
+        "name": "Tension phase B"
+      },
+      "voltage_phase_C": {
+        "name": "Tension phase C"
+      },
+      "voltage_line_AB": {
+        "name": "Tension ligne AB"
+      },
+      "voltage_line_BC": {
+        "name": "Tension ligne BC"
+      },
+      "voltage_line_CA": {
+        "name": "Tension ligne CA"
+      },
+      "phase_total_power": {
+        "name": "Puissance totale de phase"
+      },
+      "phase_A_power": {
+        "name": "Puissance phase A"
+      },
+      "power_factor_total": {
+        "name": "Facteur de puissance total"
+      },
+      "energy_total_power": {
+        "name": "Énergie totale de puissance"
+      },
+      "energy_phase_A": {
+        "name": "Énergie phase A"
+      },
+      "energy_total_consumed": {
+        "name": "Énergie totale consommée"
+      },
+      "energy_phase_A_consumed": {
+        "name": "Énergie phase A consommée"
+      },
+      "current_phase_A": {
+        "name": "Courant phase A"
+      },
+      "power_factor_phase_A": {
+        "name": "Facteur de puissance phase A"
+      }
+    },
+    "button" : {
+      "restart" : {
+        "name" : "Redémarrer"
+      },
+      "turn_off" : {
+        "name" : "Éteindre"
+      },
+      "turn_on" : {
+        "name" : "Allumer"
+      }
+    }
+  },
+  "device": {
+    "inverter": {
+      "name": "Onduleur"
+    },
+    "dtu": {
+      "name": "DTU"
+    },
+    "meter": {
+      "name": "Compteur"
+    }
+  }
+}

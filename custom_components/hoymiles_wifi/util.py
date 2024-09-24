@@ -13,7 +13,9 @@ _LOGGER = logging.getLogger(__name__)
 
 async def async_get_config_entry_data_for_host(
     host,
-) -> tuple[str, list[str], list[dict[str, Union[str, int]]]]:
+) -> tuple[
+    str, list[str], list[dict[str, Union[str, int]]], list[dict[str, Union[str, int]]]
+]:
     """Get data for config entry from host."""
 
     dtu = DTU(host)
@@ -48,7 +50,12 @@ async def async_get_config_entry_data_for_host(
     ]
 
     meters = [
-        generate_inverter_serial_number(meter_data.serial_number)
+        {
+            "meter_serial_number": generate_inverter_serial_number(
+                meter_data.serial_number
+            ),
+            "device_type": meter_data.device_type,
+        }
         for meter_data in real_data.meter_data
     ]
 

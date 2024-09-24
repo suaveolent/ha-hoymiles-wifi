@@ -1,11 +1,11 @@
 """Constants for the Hoymiles integration."""
 
 DOMAIN = "hoymiles_wifi"
-NAME = "Hoymiles HMS-XXXXW-2T"
+NAME = "Hoymiles WiFi"
 DOMAIN = "hoymiles_wifi"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.2.4"
-CONFIG_VERSION = 2
+VERSION = "0.2.6"
+CONFIG_VERSION = 3
 
 ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"
 

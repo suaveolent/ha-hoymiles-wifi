@@ -14,6 +14,8 @@ from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
     CONF_PORTS,
+    CONF_METERS,
+    CONF_THREE_PHASE_INVERTERS,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
     DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS,
@@ -100,16 +102,23 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
 
     current_version = data.get("version", 1)
 
-    if current_version == 1:
+    if current_version != CONFIG_VERSION:
         _LOGGER.info(
             "Migrating entry %s to version %s", config_entry.entry_id, CONFIG_VERSION
         )
         new = {**config_entry.data}
 
         host = config_entry.data.get(CONF_HOST)
+        print(await async_get_config_entry_data_for_host(host))
 
         try:
-            dtu_sn, inverters, ports = await async_get_config_entry_data_for_host(host)
+            (
+                dtu_sn,
+                single_phase_inverters,
+                three_phase_inverters,
+                ports,
+                meters,
+            ) = await async_get_config_entry_data_for_host(host)
         except CannotConnect:
             _LOGGER.error(
                 "Could not retrieve real data information data from inverter: %s. Please ensure inverter is available!",
@@ -118,10 +127,14 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
             return False
 
         new[CONF_DTU_SERIAL_NUMBER] = dtu_sn
-        new[CONF_INVERTERS] = inverters
+        new[CONF_INVERTERS] = single_phase_inverters
+        new[CONF_THREE_PHASE_INVERTERS] = three_phase_inverters
         new[CONF_PORTS] = ports
+        new[CONF_METERS] = meters
 
-        hass.config_entries.async_update_entry(config_entry, data=new, version=2)
+        hass.config_entries.async_update_entry(
+            config_entry, data=new, version=CONFIG_VERSION
+        )
         _LOGGER.info(
             "Migration of entry %s to version %s successful",
             config_entry.entry_id,

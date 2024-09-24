@@ -8,7 +8,6 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from hoymiles_wifi.hoymiles import (
-    generate_inverter_serial_number,
     get_dtu_model_name,
     get_inverter_model_name,
     get_meter_model_name,

@@ -4,7 +4,7 @@ DOMAIN = "hoymiles_wifi"
 NAME = "Hoymiles"
 DOMAIN = "hoymiles_wifi"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.2.6"
+VERSION = "0.3.0"
 CONFIG_VERSION = 3
 
 ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"

@@ -124,6 +124,12 @@
       "phase_A_power": {
         "name": "Phase A power"
       },
+      "phase_B_power": {
+        "name": "Phase B power"
+      },
+      "phase_C_power": {
+        "name": "Phase C power"
+      },
       "power_factor_total": {
         "name": "Power factor total"
       },
@@ -133,17 +139,41 @@
       "energy_phase_A": {
         "name": "Energy phase A"
       },
+      "energy_phase_B": {
+        "name": "Energy phase B"
+      },
+      "energy_phase_C": {
+        "name": "Energy phase C"
+      },
       "energy_total_consumed": {
         "name": "Energy total consumed"
       },
       "energy_phase_A_consumed": {
         "name": "Energy phase A consumed"
       },
+      "energy_phase_B_consumed": {
+        "name": "Energy phase B consumed"
+      },
+      "energy_phase_C_consumed": {
+        "name": "Energy phase C consumed"
+      },
       "current_phase_A": {
         "name": "Current phase A"
       },
+      "current_phase_B": {
+        "name": "Current phase B"
+      },
+      "current_phase_C": {
+        "name": "Current phase C"
+      },
       "power_factor_phase_A": {
         "name": "Power factor phase A"
+      },
+      "power_factor_phase_B": {
+        "name": "Power factor phase B"
+      },
+      "power_factor_phase_C": {
+        "name": "Power factor phase C"
       }
     },
     "button" : {

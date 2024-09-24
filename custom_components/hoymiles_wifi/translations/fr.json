@@ -124,6 +124,12 @@
       "phase_A_power": {
         "name": "Puissance phase A"
       },
+      "phase_B_power": {
+        "name": "Puissance phase A"
+      },
+      "phase_C_power": {
+        "name": "Puissance phase A"
+      },
       "power_factor_total": {
         "name": "Facteur de puissance total"
       },
@@ -133,17 +139,41 @@
       "energy_phase_A": {
         "name": "Énergie phase A"
       },
+      "energy_phase_B": {
+        "name": "Énergie phase B"
+      },
+      "energy_phase_C": {
+        "name": "Énergie phase C"
+      },
       "energy_total_consumed": {
         "name": "Énergie totale consommée"
       },
       "energy_phase_A_consumed": {
         "name": "Énergie phase A consommée"
       },
+      "energy_phase_B_consumed": {
+        "name": "Énergie phase B consommée"
+      },
+      "energy_phase_C_consumed": {
+        "name": "Énergie phase C consommée"
+      },
       "current_phase_A": {
         "name": "Courant phase A"
       },
+      "current_phase_B": {
+        "name": "Courant phase B"
+      },
+      "current_phase_C": {
+        "name": "Courant phase C"
+      },
       "power_factor_phase_A": {
         "name": "Facteur de puissance phase A"
+      }, 
+      "power_factor_phase_B": {
+        "name": "Facteur de puissance phase B"
+      },
+      "power_factor_phase_C": {
+        "name": "Facteur de puissance phase C"
       }
     },
     "button" : {

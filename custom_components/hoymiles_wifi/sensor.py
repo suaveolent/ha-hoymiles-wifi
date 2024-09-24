@@ -309,7 +309,7 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].energy_phase_C",
-        translation_key="energy_phase_B",
+        translation_key="energy_phase_C",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
@@ -339,7 +339,7 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].energy_phase_C_consumed",
-        translation_key="energy_phase_B_consumed",
+        translation_key="energy_phase_C_consumed",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,

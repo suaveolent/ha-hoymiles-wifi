@@ -53,6 +53,14 @@ class ConversionAction(Enum):
     HEX = 1
 
 
+class DeviceType(Enum):
+    """Meter type."""
+
+    ALL_DEVICES = 0
+    DEVICE_TYPE_SINGLE_PHASE_METER = 1
+    DEVICE_TYPE_THREE_PHASE_METER = 3
+
+
 @dataclass(frozen=True)
 class HoymilesSensorEntityDescriptionMixin:
     """Mixin for required keys."""
@@ -69,6 +77,7 @@ class HoymilesSensorEntityDescription(
     version_translation_function: str = None
     version_prefix: str = None
     assume_state: bool = False
+    requires_device_type: int = DeviceType.ALL_DEVICES
 
 
 @dataclass(frozen=True)
@@ -251,6 +260,24 @@ HOYMILES_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].phase_B_power",
+        translation_key="phase_B_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].phase_C_power",
+        translation_key="phase_C_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].power_factor_total",
         translation_key="power_factor_total",
         native_unit_of_measurement=PERCENTAGE,
@@ -273,6 +300,22 @@ HOYMILES_SENSORS = [
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].energy_phase_B",
+        translation_key="energy_phase_B",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].energy_phase_C",
+        translation_key="energy_phase_B",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].energy_total_consumed",
         translation_key="energy_total_consumed",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
@@ -287,12 +330,46 @@ HOYMILES_SENSORS = [
         state_class=SensorStateClass.TOTAL_INCREASING,
     ),
     HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].energy_phase_B_consumed",
+        translation_key="energy_phase_B_consumed",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].energy_phase_C_consumed",
+        translation_key="energy_phase_B_consumed",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].voltage_phase_A",
         translation_key="voltage_phase_A",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.01,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].voltage_phase_B",
+        translation_key="voltage_phase_B",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].voltage_phase_C",
+        translation_key="voltage_phase_C",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
     ),
     HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].current_phase_A",
@@ -303,12 +380,48 @@ HOYMILES_SENSORS = [
         conversion_factor=0.01,
     ),
     HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].current_phase_B",
+        translation_key="current_phase_B",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].current_phase_C",
+        translation_key="current_phase_C",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].power_factor_phase_A",
         translation_key="power_factor_phase_A",
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.POWER_FACTOR,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].power_factor_phase_B",
+        translation_key="power_factor_phase_B",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
+    ),
+    HoymilesSensorEntityDescription(
+        key="meter_data[<meter_count>].power_factor_phase_C",
+        translation_key="power_factor_phase_C",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+        requires_device_type=DeviceType.DEVICE_TYPE_THREE_PHASE_METER,
     ),
 ]
 
@@ -536,13 +649,20 @@ def get_sensors_for_description(
             sensor = class_name(config_entry, updated_description, coordinator)
             sensors.append(sensor)
     elif "meter_count" in description.key:
-        for index, meter_serial in enumerate(meters):
-            new_key = description.key.replace("<meter_count>", str(index))
-            updated_description = dataclasses.replace(
-                description, key=new_key, serial_number=meter_serial
-            )
-            sensor = class_name(config_entry, updated_description, coordinator)
-            sensors.append(sensor)
+        for index, meter in enumerate(meters):
+            meter_serial = meter["meter_serial_number"]
+            meter_type = meter["device_type"]
+
+            if description.requires_device_type.value in (
+                DeviceType.ALL_DEVICES.value,
+                meter_type,
+            ):
+                new_key = description.key.replace("<meter_count>", str(index))
+                updated_description = dataclasses.replace(
+                    description, key=new_key, serial_number=meter_serial
+                )
+                sensor = class_name(config_entry, updated_description, coordinator)
+                sensors.append(sensor)
     else:
         updated_description = dataclasses.replace(
             description, serial_number=dtu_serial_number

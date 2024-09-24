@@ -86,16 +86,4 @@ class HoymilesCoordinatorEntity(CoordinatorEntity, HoymilesEntity):
     ):
         """Pass coordinator to CoordinatorEntity."""
         CoordinatorEntity.__init__(self, coordinator)
-        if self.coordinator is not None and hasattr(self.coordinator, "data"):
-            self._dtu_serial_number = getattr(
-                self.coordinator.data, "device_serial_number", ""
-            )
-            sgs_data = getattr(self.coordinator.data, "sgs_data", None)
-            if sgs_data is not None:
-                serial_number = getattr(sgs_data[0], "serial_number", None)
-                if serial_number is not None:
-                    self._inverter_serial_number = generate_inverter_serial_number(
-                        serial_number
-                    )
-
         HoymilesEntity.__init__(self, config_entry, description)

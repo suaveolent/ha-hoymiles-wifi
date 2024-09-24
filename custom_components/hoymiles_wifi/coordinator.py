@@ -62,13 +62,11 @@ class HoymilesRealDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
             )
             self._entities_added = True
 
-        if response:
-            return response
-        else:
+        if not response:
             _LOGGER.debug(
                 "Unable to retrieve real data new. Inverter might be offline."
             )
-            return None
+        return response
 
 
 class HoymilesConfigUpdateCoordinator(HoymilesDataUpdateCoordinator):
@@ -80,11 +78,10 @@ class HoymilesConfigUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
         response = await self._dtu.async_get_config()
 
-        if response:
-            return response
-        else:
+        if not response:
             _LOGGER.debug("Unable to retrieve config data. Inverter might be offline.")
-            return None
+
+        return response
 
 
 class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
@@ -96,10 +93,8 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
         response = await self._dtu.async_app_information_data()
 
-        if response:
-            return response
-        else:
+        if not response:
             _LOGGER.debug(
                 "Unable to retrieve app information data. Inverter might be offline."
             )
-            return None
+        return response

@@ -1,7 +1,7 @@
 """Constants for the Hoymiles integration."""
 
 DOMAIN = "hoymiles_wifi"
-NAME = "Hoymiles WiFi"
+NAME = "Hoymiles"
 DOMAIN = "hoymiles_wifi"
 DOMAIN_DATA = f"{DOMAIN}_data"
 VERSION = "0.2.6"

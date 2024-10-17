@@ -141,6 +141,14 @@ HOYMILES_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].active_power",
+        translation_key="ac_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
         key="tgs_data[<inverter_count>].voltage_phase_A",
         translation_key="voltage_phase_A",
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,

@@ -229,6 +229,14 @@ HOYMILES_SENSORS = [
         conversion_factor=0.01,
     ),
     HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].power_factor",
+        translation_key="inverter_power_factor",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
         key="tgs_data[<inverter_count>].temperature",
         translation_key="inverter_temperature",
         native_unit_of_measurement=UnitOfTemperature.CELSIUS,

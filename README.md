@@ -12,7 +12,9 @@ The custom component was successfully tested with:
 
 - Hoymiles HMS-800W-2T
 
-- Hoymiles DTU Wlite
+- Hoymiles DTU-Wlite
+
+- Hoymiles DTU-Pro (S)
 
 ## Warning
 
@@ -62,6 +64,21 @@ Please refrain from using the current power limitation feature for zero feed-in,
 4. Install the python requirements
 
 5. Restart your Home Assistant instance to apply the changes.
+
+### Docker Users: Workaround for HTTP 500 Error
+
+If you encounter an HTTP 500 error when adding the integration in a Home Assistant Docker container, follow this workaround:
+
+1. Create a new Docker image for Home Assistant with the `hoymiles-wifi` library pre-installed:
+    ```dockerfile
+    FROM homeassistant/home-assistant
+    RUN pip install hoymiles-wifi
+    ```
+2. Build the new Docker image:
+    ```bash
+    docker build -t ha-hoymiles .
+    ```
+3. Switch to this newly built image when running Home Assistant.
 
 ## Configuration
 

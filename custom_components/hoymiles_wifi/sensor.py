@@ -284,6 +284,10 @@ HOYMILES_SENSORS = [
         reset_at_midnight=True,
     ),
     HoymilesSensorEntityDescription(
+        key="pv_data[<pv_count>].error_code",
+        translation_key="port_error_code",
+    ),
+    HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].phase_total_power",
         translation_key="phase_total_power",
         native_unit_of_measurement=UnitOfPower.WATT,

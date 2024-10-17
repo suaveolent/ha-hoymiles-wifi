@@ -70,6 +70,9 @@
       "port_dc_daily_energy": {
         "name": "Port {port_number} DC-Tagesenergie"
       },
+      "port_error_code": {
+        "name": "Port {port_number} Fehlercode"
+      },
       "wifi_ssid": {
         "name": "WLAN-SSID"
       },

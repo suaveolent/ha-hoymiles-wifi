@@ -8,6 +8,7 @@ from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from hoymiles_wifi.hoymiles import (
+    DTUType,
     get_dtu_model_name,
     get_inverter_model_name,
     get_meter_model_name,
@@ -26,6 +27,7 @@ class HoymilesEntityDescription(EntityDescription):
     is_dtu_sensor: bool = False
     serial_number: str = None
     port_number: int = None
+    supported_dtu_types: list[DTUType] = None
 
 
 class HoymilesEntity(Entity):

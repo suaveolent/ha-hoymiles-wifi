@@ -109,8 +109,6 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new = {**config_entry.data}
 
         host = config_entry.data.get(CONF_HOST)
-        print(await async_get_config_entry_data_for_host(host))
-
         try:
             (
                 dtu_sn,

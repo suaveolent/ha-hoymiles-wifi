@@ -4,7 +4,6 @@ DOMAIN = "hoymiles_wifi"
 NAME = "Hoymiles"
 DOMAIN = "hoymiles_wifi"
 DOMAIN_DATA = f"{DOMAIN}_data"
-VERSION = "0.3.0"
 CONFIG_VERSION = 3
 
 ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"
@@ -38,7 +37,6 @@ STARTUP_MESSAGE = f"""
 
 -------------------------------------------------------------------
 {NAME}
-Version: {VERSION}
 This is a custom integration!
 If you have any issues with it please open an issue here:
 {ISSUE_URL}

@@ -6,20 +6,16 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST
-from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResult
-from hoymiles_wifi.dtu import DTU
-from hoymiles_wifi.protobuf import APPInfomationData_pb2
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
-    CONF_THREE_PHASE_INVERTERS,
-    CONF_PORTS,
     CONF_METERS,
+    CONF_PORTS,
+    CONF_THREE_PHASE_INVERTERS,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
@@ -45,7 +41,7 @@ DATA_SCHEMA = vol.Schema(
 )
 
 
-class HoymilesInverterConfigFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
+class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     """Hoymiles Inverter config flow."""
 
     VERSION = CONFIG_VERSION

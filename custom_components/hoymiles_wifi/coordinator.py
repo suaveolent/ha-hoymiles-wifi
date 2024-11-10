@@ -1,4 +1,4 @@
-""" "Coordinator for Hoymiles integration."""
+"""Coordinator for Hoymiles integration."""
 
 from datetime import timedelta
 import logging

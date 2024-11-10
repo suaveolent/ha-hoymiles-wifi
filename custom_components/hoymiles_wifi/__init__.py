@@ -6,15 +6,16 @@ import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
-from homeassistant.core import Config, HomeAssistant
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
+from homeassistant.helpers.typing import ConfigType
 from hoymiles_wifi.dtu import DTU
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
-    CONF_PORTS,
     CONF_METERS,
+    CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
@@ -39,7 +40,7 @@ _LOGGER = logging.getLogger(__name__)
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR, Platform.BUTTON]
 
 
-async def async_setup(hass: HomeAssistant, config: Config):
+async def async_setup(hass: HomeAssistant, config: ConfigType):
     """Set up this integration using YAML is not supported."""
     return True
 

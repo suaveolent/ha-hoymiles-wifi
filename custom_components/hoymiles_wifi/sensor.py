@@ -729,7 +729,12 @@ def get_sensors_for_description(
     else:
         if description.supported_dtu_types is not None:
             serial_bytes = bytes.fromhex(dtu_serial_number)
-            dtu_type = get_dtu_model_type(serial_bytes)
+
+            dtu_type = None
+            try:
+                dtu_type = get_dtu_model_type(serial_bytes)
+            except ValueError as e:
+                _LOGGER.error(f"Error getting DTU model type: {e}")
 
         if (
             description.supported_dtu_types is None

@@ -1,4 +1,5 @@
 """Support for Hoymiles number sensors."""
+
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum
@@ -48,7 +49,7 @@ class HoymilesNumberSensorEntityDescription(
 
 CONFIG_CONTROL_ENTITIES = (
     HoymilesNumberSensorEntityDescription(
-        key="limit_power_mypower",
+        key="limit_power_mypower_<inverter_serial>",
         translation_key="limit_power_mypower",
         mode=NumberMode.SLIDER,
         device_class=NumberDeviceClass.POWER_FACTOR,

@@ -3,6 +3,8 @@
 from dataclasses import dataclass
 import logging
 
+from enum import Enum
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
@@ -18,6 +20,14 @@ from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN
 from .coordinator import HoymilesDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
+
+
+class DeviceType(Enum):
+    """Device type."""
+
+    ALL_DEVICES = 0
+    SINGLE_PHASE_METER = 1
+    THREE_PHASE_METER = 3
 
 
 @dataclass(frozen=True)

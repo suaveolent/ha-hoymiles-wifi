@@ -43,7 +43,11 @@ from .const import (
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
 )
-from .entity import HoymilesCoordinatorEntity, HoymilesEntityDescription
+from .entity import (
+    HoymilesCoordinatorEntity,
+    HoymilesEntityDescription,
+    DeviceType,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,14 +56,6 @@ class ConversionAction(Enum):
     """Enumeration for conversion actions."""
 
     HEX = 1
-
-
-class DeviceType(Enum):
-    """Meter type."""
-
-    ALL_DEVICES = 0
-    SINGLE_PHASE_METER = 1
-    THREE_PHASE_METER = 3
 
 
 @dataclass(frozen=True)

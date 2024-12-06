@@ -188,6 +188,9 @@
       },
       "turn_on" : {
         "name" : "Allumer"
+      },
+      "enable_performance_data_mode" : {
+        "name" : "Expérimental: Activer le mode de données de performance"
       }
     }
   },

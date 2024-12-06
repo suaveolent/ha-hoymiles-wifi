@@ -188,6 +188,9 @@
       },
       "turn_on": {
         "name": "Einschalten"
+      },
+      "enable_performance_data_mode" : {
+        "name" : "Experimentell: Leistungsdatenmodus aktivieren"
       }
     }
   },

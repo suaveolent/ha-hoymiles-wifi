@@ -158,6 +158,9 @@
       },
       "turn_on" : {
         "name" : "Turn on"
+      },
+      "enable_performance_data_mode" : {
+        "name" : "Experimental: Enable performance data mode"
       }
     }
   },

@@ -48,9 +48,6 @@ The custom component was successfully tested with:
 10. Insert IP address of hoymiles DTUBI-xxxx in field Host and click on SUBMIT
 
 > [!NOTE]
-> Disclaimer: This library is not affiliated with Hoymiles. It is an independent project developed to provide tools for interacting with Hoymiles DTUs and Hoymiles HMS-XXXXW series micro-inverters featuring integrated WiFi DTU. Any trademarks or product names mentioned are the property of their respective owners.
-
-> [!NOTE]
 > Sometimes the necessary lib
 > (https://github.com/suaveolent/hoymiles-wifi) is not correctly
 > installed. In this case you need to manually install the library by

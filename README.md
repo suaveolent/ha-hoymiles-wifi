@@ -100,11 +100,13 @@ Use this custom component responsibly and be aware of potential risks. There are
 
 ## Known Limitations
 
-> [!NOTE] > **Update Frequency:** The library may experience limitations in fetching updates, potentially around twice per minute. The inverter firmware may enforce a mandatory wait period of approximately 30 seconds between requests.
+> [!NOTE]
+> **Update Frequency:** The library may experience limitations in fetching updates, potentially around twice per minute. The inverter firmware may enforce a mandatory wait period of approximately 30 seconds between requests.
 > This issue can be identified when the data returned matches the response from the previous request.
 > If you encounter this, you can try the _experimental_ performance data mode. (Needs to be enabled on each reboot of the DTU.)
 
-> [!NOTE] > **Compatibility:** While developed for the HMS-800W-2T inverter, compatibility with other inverters from the series is untested at the time of writing. Exercise caution and conduct thorough testing if using with different inverter models.
+> [!NOTE]
+> **Compatibility:** While developed for the HMS-800W-2T inverter, compatibility with other inverters from the series is untested at the time of writing. Exercise caution and conduct thorough testing if using with different inverter models.
 
 ## Attribution
 

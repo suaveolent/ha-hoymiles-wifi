@@ -75,6 +75,7 @@ class HoymilesSensorEntityDescription(
     version_prefix: str = None
     assume_state: bool = False
     requires_device_type: int = DeviceType.ALL_DEVICES
+    force_keep_maximum_within_day: bool = False
 
 
 @dataclass(frozen=True)
@@ -95,6 +96,7 @@ HOYMILES_SENSORS = [
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         reset_at_midnight=True,
+        force_keep_maximum_within_day=True,
         is_dtu_sensor=True,
         supported_dtu_types=[
             DTUType.DTU_G100,
@@ -765,6 +767,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
         self._assumed_state = False
         self._last_known_value = None
         self._last_successful_update = None
+        self._last_update_state = None
 
         self.update_state_value()
 
@@ -805,10 +808,12 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
 
     def update_state_value(self):
         """Update the state value of the sensor based on the coordinator data."""
+        new_native_value = 0.0
+
         if self.coordinator is not None and (
             not hasattr(self.coordinator, "data") or self.coordinator.data is None
         ):
-            self._native_value = 0.0
+            new_native_value = 0.0
         elif "[" in self._attribute_name and "]" in self._attribute_name:
             # Extracting the list index and attribute dynamically
             attribute_name, index = self._attribute_name.split("[")
@@ -823,43 +828,53 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
 
             if index < len(attribute):
                 if nested_attribute is not None:
-                    self._native_value = getattr(
+                    new_native_value = getattr(
                         attribute[index], nested_attribute, None
                     )
                 else:
-                    self._native_value = attribute[index]
+                    new_native_value = attribute[index]
             else:
-                self._native_value = None
+                new_native_value = None
         elif "." in self._attribute_name:
             attribute_parts = self._attribute_name.split(".")
             attribute = self.coordinator.data
             for part in attribute_parts:
                 attribute = getattr(attribute, part, None)
-            self._native_value = attribute
+            new_native_value = attribute
 
         else:
-            self._native_value = getattr(
+            new_native_value = getattr(
                 self.coordinator.data, self._attribute_name, None
             )
 
-        if self._native_value is not None and self._conversion_factor is not None:
-            self._native_value *= self._conversion_factor
+        if new_native_value is not None and self._conversion_factor is not None:
+            new_native_value *= self._conversion_factor
 
         if (
-            self._native_value is not None
-            and self._native_value != 0.0
+            new_native_value is not None
+            and new_native_value != 0.0
             and self._version_translation_function is not None
         ):
-            self._native_value = getattr(
+            new_native_value = getattr(
                 hoymiles_wifi.hoymiles, self._version_translation_function
-            )(int(self._native_value))
+            )(int(new_native_value))
 
         if (
-            self._native_value is not None
-            and self._native_value != 0.0
+            new_native_value is not None
+            and new_native_value != 0.0
             and self._version_prefix is not None
         ):
-            self._native_value = f"{self._version_prefix}{self._native_value}"
+            new_native_value = f"{self._version_prefix}{new_native_value}"
+        
+        if (
+            self.entity_description.force_keep_maximum_within_day
+            and self._last_update_state is not None
+            and self._last_update_state.date() == datetime.now().date()
+        ):
+            new_native_value = max(new_native_value, self._native_value)
+        
+        self._last_update_state = datetime.now()
+        self._native_value = new_native_value
 
     async def async_added_to_hass(self) -> None:
         """Call when entity about to be added to hass."""

@@ -28,7 +28,6 @@ class HoymilesDataUpdateCoordinator(DataUpdateCoordinator):
     ) -> None:
         """Initialize the HoymilesCoordinatorEntity."""
         self._dtu = dtu
-        self._entities_added = False
         self._hass = hass
         self._entry = entry
 
@@ -53,14 +52,6 @@ class HoymilesRealDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
         _LOGGER.debug("Hoymiles data coordinator update")
 
         response = await self._dtu.async_get_real_data_new()
-
-        if not self._entities_added:
-            self._hass.async_create_task(
-                self._hass.config_entries.async_forward_entry_setups(
-                    self._entry, PLATFORMS
-                )
-            )
-            self._entities_added = True
 
         if not response:
             _LOGGER.debug(

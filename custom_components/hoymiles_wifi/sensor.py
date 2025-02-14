@@ -828,9 +828,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
 
             if index < len(attribute):
                 if nested_attribute is not None:
-                    new_native_value = getattr(
-                        attribute[index], nested_attribute, None
-                    )
+                    new_native_value = getattr(attribute[index], nested_attribute, None)
                 else:
                     new_native_value = attribute[index]
             else:
@@ -865,14 +863,14 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
             and self._version_prefix is not None
         ):
             new_native_value = f"{self._version_prefix}{new_native_value}"
-        
+
         if (
             self.entity_description.force_keep_maximum_within_day
             and self._last_update_state is not None
             and self._last_update_state.date() == datetime.now().date()
         ):
             new_native_value = max(new_native_value, self._native_value)
-        
+
         self._last_update_state = datetime.now()
         self._native_value = new_native_value
 

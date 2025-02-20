@@ -1,12 +1,16 @@
 {
-  "codeowners": ["@suaveolent"],
+  "codeowners": [
+    "@la-sina"
+  ],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/suaveolent/ha-hoymiles-wifi",
-  "issue_tracker": "https://github.com/suaveolent/ha-hoymiles-wifi/issues",
+  "documentation": "https://github.com/la-sina/ha-hoymiles-wifi",
+  "issue_tracker": "https://github.com/la-sina/ha-hoymiles-wifi/issues",
   "domain": "hoymiles_wifi",
   "iot_class": "local_polling",
   "name": "Hoymiles",
-  "requirements": ["hoymiles-wifi==0.3.4"],
+  "requirements": [
+    "git+https://github.com/la-sina/hoymiles-wifi.git@main"
+  ],
   "version": "0.3.5"
 }

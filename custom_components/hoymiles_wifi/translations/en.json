@@ -189,6 +189,9 @@
       "turn_on" : {
         "name" : "Turn on"
       },
+      "reboot": {
+        "name": "Reboot"
+      },
       "enable_performance_data_mode" : {
         "name" : "Experimental: Enable performance data mode"
       }

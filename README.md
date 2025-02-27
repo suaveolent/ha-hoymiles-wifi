@@ -99,9 +99,9 @@ Configuration is done in the UI.
 
 ## Screenshots
 
-![Integration(/screenshots/integration.png?raw=true)
-![Devices(/screenshots/devices.png?raw=true)
-![Device(/screenshots/device.png?raw=true)
+![Integration](/screenshots/integration.png?raw=true)
+![Devices](/screenshots/devices.png?raw=true)
+![Device](/screenshots/device.png?raw=true)
 
 ## Caution
 

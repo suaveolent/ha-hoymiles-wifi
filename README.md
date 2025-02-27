@@ -97,6 +97,12 @@ Configuration is done in the UI.
 > [!NOTE]
 > Setting the update interval below approximately 32 seconds may disable Hoymiles cloud functionality. To ensure proper communication with Hoymiles servers, keep the update interval at or above this threshold.
 
+## Screenshots
+
+![Integration(/screenshots/integration.png?raw=true)
+![Devices(/screenshots/devices.png?raw=true)
+![Device(/screenshots/device.png?raw=true)
+
 ## Caution
 
 Use this custom component responsibly and be aware of potential risks. There are no guarantees provided, and any misuse or incorrect implementation may result in undesirable outcomes. Ensure that your inverter is not compromised during communication.

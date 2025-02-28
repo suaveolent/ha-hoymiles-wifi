@@ -13,6 +13,7 @@ from hoymiles_wifi.dtu import DTU
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
+    CONF_HYBRID_INVERTERS,
     CONF_INVERTERS,
     CONF_METERS,
     CONF_PORTS,
@@ -117,6 +118,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 three_phase_inverters,
                 ports,
                 meters,
+                hybrid_inverters,
             ) = await async_get_config_entry_data_for_host(host)
         except CannotConnect:
             _LOGGER.error(
@@ -130,6 +132,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new[CONF_THREE_PHASE_INVERTERS] = three_phase_inverters
         new[CONF_PORTS] = ports
         new[CONF_METERS] = meters
+        new[CONF_HYBRID_INVERTERS] = hybrid_inverters
 
         hass.config_entries.async_update_entry(
             config_entry, data=new, version=CONFIG_VERSION

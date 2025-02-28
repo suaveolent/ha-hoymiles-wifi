@@ -54,6 +54,12 @@ BUTTONS: tuple[HoymilesButtonEntityDescription, ...] = (
         action="async_turn_on_inverter",
     ),
     HoymilesButtonEntityDescription(
+        key="reboot_inverter_<inverter_serial>",
+        translation_key="reboot",
+        icon="mdi:restart",
+        action="async_reboot_inverter",
+    ),
+    HoymilesButtonEntityDescription(
         key="enable_performance_data_mode",
         translation_key="enable_performance_data_mode",
         is_dtu_sensor=True,

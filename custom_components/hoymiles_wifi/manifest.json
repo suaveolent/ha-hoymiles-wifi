@@ -7,6 +7,6 @@
   "domain": "hoymiles_wifi",
   "iot_class": "local_polling",
   "name": "Hoymiles",
-  "requirements": ["hoymiles-wifi==0.3.4"],
+  "requirements": ["hoymiles-wifi==0.4.0"],
   "version": "0.3.5"
 }

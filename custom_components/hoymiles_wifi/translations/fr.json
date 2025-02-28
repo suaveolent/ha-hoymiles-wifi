@@ -206,6 +206,9 @@
     },
     "meter": {
       "name": "Compteur"
+    },
+    "hybrid_inverter": {
+      "name": "Onduleur hybride"
     }
   }
 }

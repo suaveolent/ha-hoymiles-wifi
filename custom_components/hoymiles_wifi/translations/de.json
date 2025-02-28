@@ -206,6 +206,9 @@
     },
     "meter": {
       "name": "Zähler"
+    },
+    "hybrid_inverter": {
+      "name": "Hybrid-Wechselrichter"
     }
   }
 }

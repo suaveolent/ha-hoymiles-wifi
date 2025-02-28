@@ -173,6 +173,9 @@
     },
     "meter": {
       "name": "Meter"
+    },
+    "hybrid_inverter": {
+      "name": "Hybrid inverter"
     }
   }
 }

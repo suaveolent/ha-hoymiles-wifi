@@ -89,3 +89,22 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
                 "Unable to retrieve app information data. Inverter might be offline."
             )
         return response
+
+
+class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """App Info coordinator for Hoymiles integration."""
+
+    def __init__(self, hass, dtu, entry, update_interval):
+        super().__init__(hass, dtu, entry, update_interval)
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        _LOGGER.debug("Hoymiles energy storage coordinator update")
+
+        response = await self._dtu.async_app_information_data()
+
+        if not response:
+            _LOGGER.debug(
+                "Unable to retrieve app information data. Inverter might be offline."
+            )
+        return response

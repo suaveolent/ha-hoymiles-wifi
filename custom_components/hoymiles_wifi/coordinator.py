@@ -91,6 +91,40 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
         return response
 
 
+class HoymilesGatewayInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """Gateway Info coordinator for Hoymiles integration."""
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        _LOGGER.debug("Hoymiles data coordinator update")
+
+        response = await self._dtu.async_get_gateway_info()
+
+        if not response:
+            _LOGGER.debug(
+                "Unable to retrieve app information data. Inverter might be offline."
+            )
+        return response
+
+
+class HoymilesGatewayNetworkInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """Gateway Network Info coordinator for Hoymiles integration."""
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        _LOGGER.debug("Hoymiles data coordinator update")
+
+        response = await self._dtu.async_get_energy_storage_registry(
+            dtu_serial_number=self._dtu_serial_number,
+        )
+
+        if not response:
+            _LOGGER.debug(
+                "Unable to retrieve app information data. Inverter might be offline."
+            )
+        return response
+
+
 class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
     """Energy Storage Update coordinator for Hoymiles integration."""
 

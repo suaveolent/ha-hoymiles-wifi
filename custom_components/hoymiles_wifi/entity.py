@@ -17,7 +17,9 @@ from hoymiles_wifi.hoymiles import (
 )
 
 from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN
-from .coordinator import HoymilesDataUpdateCoordinator
+from .coordinator import (
+    HoymilesDataUpdateCoordinator,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -80,7 +82,7 @@ class HoymilesEntity(Entity):
             model=device_model,
         )
 
-        if self.entity_description.is_dtu_sensor is False:
+        if not self.entity_description.is_dtu_sensor:
             device_info["via_device"] = (DOMAIN, dtu_serial_number)
 
         self._attr_device_info = device_info

@@ -27,6 +27,7 @@ async def async_get_config_entry_data_for_host(
     ports = []
     meters = []
     hybrid_inverters = []
+    dtu_sn = None
 
     dtu = DTU(host)
 
@@ -79,7 +80,6 @@ async def async_get_config_entry_data_for_host(
                     {
                         "inverter_serial_number": inverter.serial_number,
                         "model_name": inverter.model_name,
-                        "device_type": gateway_info.device_type,
                     }
                     for inverter in registry.inverters
                 ]

@@ -27,11 +27,13 @@ from .const import (
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
     HASS_DTU,
+    HASS_HYBRID_DATA_COORDINATOR,
 )
 from .coordinator import (
     HoymilesAppInfoUpdateCoordinator,
     HoymilesConfigUpdateCoordinator,
     HoymilesRealDataUpdateCoordinator,
+    HoymilesHybridDataUpdateCoordinator,
 )
 from .error import CannotConnect
 from .util import async_get_config_entry_data_for_host
@@ -46,46 +48,73 @@ async def async_setup(hass: HomeAssistant, config: ConfigType):
     return True
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry):
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up this integration using UI."""
 
     hass.data.setdefault(DOMAIN, {})
 
-    hass_data = dict(entry.data)
+    hass_data = dict(config_entry.data)
 
-    host = entry.data.get(CONF_HOST)
-    update_interval = timedelta(seconds=entry.data.get(CONF_UPDATE_INTERVAL))
+    host = config_entry.data.get(CONF_HOST)
+    update_interval = timedelta(seconds=config_entry.data.get(CONF_UPDATE_INTERVAL))
+    single_phase_inverters = config_entry.data[CONF_INVERTERS]
+    three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
+    hybrid_inverters = config_entry.data.get(CONF_HYBRID_INVERTERS, [])
+    meters = config_entry.data.get(CONF_METERS, [])
 
     dtu = DTU(host)
 
     hass_data[HASS_DTU] = dtu
 
-    data_coordinator = HoymilesRealDataUpdateCoordinator(
-        hass, dtu=dtu, entry=entry, update_interval=update_interval
-    )
-    hass_data[HASS_DATA_COORDINATOR] = data_coordinator
+    if single_phase_inverters or three_phase_inverters or meters:
+        data_coordinator = HoymilesRealDataUpdateCoordinator(
+            hass, dtu=dtu, entry=config_entry, update_interval=update_interval
+        )
+        hass_data[HASS_DATA_COORDINATOR] = data_coordinator
 
-    config_update_interval = timedelta(seconds=DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS)
-    config_coordinator = HoymilesConfigUpdateCoordinator(
-        hass, dtu=dtu, entry=entry, update_interval=config_update_interval
-    )
-    hass_data[HASS_CONFIG_COORDINATOR] = config_coordinator
+        config_update_interval = timedelta(
+            seconds=DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS
+        )
+        config_coordinator = HoymilesConfigUpdateCoordinator(
+            hass, dtu=dtu, entry=config_entry, update_interval=config_update_interval
+        )
+        hass_data[HASS_CONFIG_COORDINATOR] = config_coordinator
 
-    app_info_update_interval = timedelta(
-        seconds=DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS
-    )
-    app_info_update_coordinator = HoymilesAppInfoUpdateCoordinator(
-        hass, dtu=dtu, entry=entry, update_interval=app_info_update_interval
-    )
-    hass_data[HASS_APP_INFO_COORDINATOR] = app_info_update_coordinator
+        app_info_update_interval = timedelta(
+            seconds=DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS
+        )
+        app_info_update_coordinator = HoymilesAppInfoUpdateCoordinator(
+            hass, dtu=dtu, entry=config_entry, update_interval=app_info_update_interval
+        )
+        hass_data[HASS_APP_INFO_COORDINATOR] = app_info_update_coordinator
 
-    hass.data[DOMAIN][entry.entry_id] = hass_data
+        hass.data[DOMAIN][config_entry.entry_id] = hass_data
 
-    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+        await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
-    await data_coordinator.async_config_entry_first_refresh()
-    await config_coordinator.async_config_entry_first_refresh()
-    await app_info_update_coordinator.async_config_entry_first_refresh()
+        await data_coordinator.async_config_entry_first_refresh()
+        await config_coordinator.async_config_entry_first_refresh()
+        await app_info_update_coordinator.async_config_entry_first_refresh()
+
+    elif hybrid_inverters:
+        inverter_serial_numbers = [
+            inverter["inverter_serial_number"] for inverter in hybrid_inverters
+        ]
+
+        hybrid_data_coordinator = HoymilesHybridDataUpdateCoordinator(
+            hass,
+            dtu=dtu,
+            entry=config_entry,
+            update_interval=update_interval,
+            dtu_serial_number=config_entry.data[CONF_DTU_SERIAL_NUMBER],
+            inverter_serial_numbers=inverter_serial_numbers,
+        )
+
+        hass_data[HASS_HYBRID_DATA_COORDINATOR] = hybrid_data_coordinator
+        hass.data[DOMAIN][config_entry.entry_id] = hass_data
+
+        await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
+        await hybrid_data_coordinator.async_config_entry_first_refresh()
 
     return True
 

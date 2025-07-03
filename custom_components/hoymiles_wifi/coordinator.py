@@ -23,18 +23,18 @@ class HoymilesDataUpdateCoordinator(DataUpdateCoordinator):
         self,
         hass: homeassistant,
         dtu: DTU,
-        entry: ConfigEntry,
+        config_entry: ConfigEntry,
         update_interval: timedelta,
     ) -> None:
         """Initialize the HoymilesCoordinatorEntity."""
         self._dtu = dtu
         self._hass = hass
-        self._entry = entry
+        self._config_entry = config_entry
 
         _LOGGER.debug(
             "Setup entry with update interval %s. IP: %s",
             update_interval,
-            entry.data.get(CONF_HOST),
+            config_entry.data.get(CONF_HOST),
         )
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
@@ -92,14 +92,33 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
 
 class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
-    """App Info coordinator for Hoymiles integration."""
+    """Energy Storage Update coordinator for Hoymiles integration."""
 
-    def __init__(self, hass, dtu, entry, update_interval):
-        super().__init__(hass, dtu, entry, update_interval)
+    def __init__(
+        self,
+        hass: homeassistant,
+        dtu: DTU,
+        config_entry: ConfigEntry,
+        update_interval: timedelta,
+        dtu_serial_number: int,
+        inverter_serial_numbers: list[int],
+    ) -> None:
+        self._dtu_serial_number = dtu_serial_number
+        self._inverter_serial_numbers = inverter_serial_numbers
+        super().__init__(hass, dtu, config_entry, update_interval)
 
     async def _async_update_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles energy storage coordinator update")
+
+        responses = []
+        for inverter_serial_number in self._inverter_serial_numbers:
+            storage_data = await self._dtu.async_get_energy_storage_data(
+                dtu_serial_number=self._dtu_serial_number,
+                inverter_serial_number=inverter_serial_number,
+            )
+            if storage_data is not None:
+                responses.append(storage_data)
 
         response = await self._dtu.async_app_information_data()
 

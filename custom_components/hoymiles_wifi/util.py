@@ -74,7 +74,7 @@ async def async_get_config_entry_data_for_host(
             )
 
             if registry is not None:
-                dtu_sn = gateway_info.serial_number
+                dtu_sn = str(gateway_info.serial_number)
 
                 hybrid_inverters = [
                     {

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, time, timedelta
 from enum import Enum
 import logging
+import re
 
 from homeassistant.components.sensor import (
     RestoreSensor,
@@ -1209,40 +1210,30 @@ class HoymilesEnergyStorageSensorEntity(HoymilesCoordinatorEntity, RestoreSensor
         """Update the state value of the sensor based on the coordinator data."""
         new_native_value = 0.0
 
-        if self.coordinator is not None and (
-            not hasattr(self.coordinator, "data") or self.coordinator.data is None
+        if (
+            self.coordinator is None
+            or not hasattr(self.coordinator, "data")
+            or self.coordinator.data is None
         ):
-            new_native_value = 0.0
-        elif "[" in self._attribute_name and "]" in self._attribute_name:
-            # Extracting the list index and attribute dynamically
-            attribute_name, index = self._attribute_name.split("[")
-            index = int(index.split("]")[0])
-            nested_attribute = (
-                self._attribute_name.split("].")[1]
-                if "]." in self._attribute_name
-                else None
-            )
+            self._native_value = 0.0
+            return
 
-            attribute = getattr(self.coordinator.data, attribute_name.split("[")[0], [])
-
-            if index < len(attribute):
-                if nested_attribute is not None:
-                    new_native_value = getattr(attribute[index], nested_attribute, None)
+        def resolve_path(obj, path):
+            tokens = re.findall(r"\w+|\[\d+\]", path)
+            for token in tokens:
+                if obj is None:
+                    return None
+                if token.startswith("["):
+                    index = int(token[1:-1])
+                    try:
+                        obj = obj[index]
+                    except (IndexError, TypeError):
+                        return None
                 else:
-                    new_native_value = attribute[index]
-            else:
-                new_native_value = None
-        elif "." in self._attribute_name:
-            attribute_parts = self._attribute_name.split(".")
-            attribute = self.coordinator.data
-            for part in attribute_parts:
-                attribute = getattr(attribute, part, None)
-            new_native_value = attribute
+                    obj = getattr(obj, token, None)
+            return obj
 
-        else:
-            new_native_value = getattr(
-                self.coordinator.data, self._attribute_name, None
-            )
+        new_native_value = resolve_path(self.coordinator.data, self._attribute_name)
 
         if new_native_value is not None and self._conversion_factor is not None:
             new_native_value *= self._conversion_factor
@@ -1273,10 +1264,10 @@ class HoymilesEnergyStorageSensorEntity(HoymilesCoordinatorEntity, RestoreSensor
         self._last_update_state = datetime.now()
         self._native_value = new_native_value
 
-    async def async_added_to_hass(self) -> None:
-        """Call when entity about to be added to hass."""
-        await super().async_added_to_hass()
+        async def async_added_to_hass(self) -> None:
+            """Call when entity about to be added to hass."""
+            await super().async_added_to_hass()
 
-        state = await self.async_get_last_sensor_data()
-        if state:
-            self.last_known_value = state.native_value
+            state = await self.async_get_last_sensor_data()
+            if state:
+                self.last_known_value = state.native_value

@@ -177,6 +177,27 @@
       },
       "power_factor_phase_C": {
         "name": "Facteur de puissance phase C"
+      },
+      "energy_from_pv" : {
+        "name" : "Énergie photovoltaïque"
+      },
+      "state_of_charge": {
+        "name": "État de charge"
+      },
+      "load_frequency": {
+        "name": "Fréquence de charge"
+      },
+      "grid_voltage_phase_A": {
+        "name": "Tension du réseau phase A"
+      },
+      "load_voltage_phase_A": {
+        "name": "Tension de charge phase A"
+      },
+      "inverter_frequency": {
+        "name": "Fréquence de l'onduleur"
+      },
+      "inverter_voltage_phase_A": {
+        "name": "Tension de l'onduleur phase A"
       }
     },
     "button" : {

@@ -594,6 +594,61 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
     ),
+    HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].battery_management.state_of_charge",
+        translation_key="state_of_charge",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].grid.param.frequency",
+        translation_key="grid_frequency",
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].grid.param.phases[0].voltage",
+        translation_key="grid_voltage_phase_A",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].load.param.frequency",
+        translation_key="load_frequency",
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].load.param.phases[0].voltage",
+        translation_key="voltage_phase_Aload_vo",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].inverter.param.frequency",
+        translation_key="inverter_frequency",
+        native_unit_of_measurement=UnitOfFrequency.HERTZ,
+        device_class=SensorDeviceClass.FREQUENCY,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].inverter.param.phases[0].voltage",
+        translation_key="inverter_voltage_phase_A",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
 ]
 
 
@@ -700,10 +755,7 @@ async def async_setup_entry(
             )
             sensors.extend(sensor_entities)
 
-    print(f"here!!! hybrid inverters: {hybrid_inverters}")
-
     if hybrid_inverters:
-        print("here!!!")
         for description in HOYMILES_ENERGY_STORAGE_SENSORS:
             sensor_entities = get_sensors_for_hybrid_inverter_description(
                 config_entry,
@@ -713,7 +765,6 @@ async def async_setup_entry(
                 dtu_serial_number,
                 hybrid_inverters,
             )
-            print(f"added sensor: {sensor_entities}")
             sensors.extend(sensor_entities)
 
     async_add_entities(sensors)

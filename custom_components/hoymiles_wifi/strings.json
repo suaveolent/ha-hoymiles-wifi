@@ -147,6 +147,27 @@
       },
       "power_factor_phase_A": {
         "name": "Power factor phase A"
+      },
+      "energy_from_pv" : {
+        "name" : "Energy from PV"
+      },
+      "state_of_charge": {
+        "name": "State of charge"
+      },
+      "grid_voltage_phase_A": {
+        "name": "Grid voltage phase A"
+      },
+      "load_frequency": {
+        "name": "Load frequency"
+      },
+      "load_voltage_phase_A": {
+        "name": "Load voltage phase A"
+      },
+      "inverter_frequency": {
+        "name": "Inverter frequency"
+      },
+      "inverter_voltage_phase_A": {
+        "name": "Inverter voltage phase A"
       }
     },
     "button" : {

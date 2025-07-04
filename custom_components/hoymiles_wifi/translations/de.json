@@ -177,6 +177,27 @@
       },
       "power_factor_phase_C": {
         "name": "Leistungsfaktor Phase C"
+      },
+      "energy_from_pv" : {
+        "name" : "Energie aus PV"
+      },
+      "state_of_charge": {
+        "name": "Ladezustand"
+      },
+      "load_frequency": {
+        "name": "Lastfrequenz"
+      },
+      "grid_voltage_phase_A": {
+        "name": "Netzspannung Phase A"
+      },
+      "load_voltage_phase_A": {
+        "name": "Lastspannung Phase A"
+      },
+      "inverter_frequency": {
+        "name": "Wechselrichter Frequenz"
+      },
+      "inverter_voltage_phase_A": {
+        "name": "Wechselrichter Spannung Phase A"
       }
     },
     "button": {

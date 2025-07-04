@@ -95,17 +95,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         hass_data[HASS_APP_INFO_COORDINATOR] = app_info_update_coordinator
 
     if hybrid_inverters:
-        inverter_serial_numbers = [
-            inverter["inverter_serial_number"] for inverter in hybrid_inverters
-        ]
-
         energy_storage_data_coordinator = HoymilesEnergyStorageUpdateCoordinator(
             hass=hass,
             dtu=dtu,
             config_entry=config_entry,
             update_interval=update_interval,
             dtu_serial_number=config_entry.data[CONF_DTU_SERIAL_NUMBER],
-            inverter_serial_numbers=inverter_serial_numbers,
+            inverters=hybrid_inverters,
         )
 
         hass_data[HASS_ENERGY_STORAGE_DATA_COORDINATOR] = (

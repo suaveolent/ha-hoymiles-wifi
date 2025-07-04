@@ -59,6 +59,8 @@ class HoymilesEntity(Entity):
 
         dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
 
+        serial_number = str(self.entity_description.serial_number)
+
         if self.entity_description.is_dtu_sensor is True:
             device_translation_key = "dtu"
             device_model = get_dtu_model_name(self.entity_description.serial_number)
@@ -69,16 +71,23 @@ class HoymilesEntity(Entity):
                 )
                 device_translation_key = "meter"
             else:
-                device_model = get_inverter_model_name(
-                    self.entity_description.serial_number
-                )
-                device_translation_key = "inverter"
+                if (
+                    hasattr(self.entity_description, "model_name")
+                    and self.entity_description.model_name
+                ):
+                    device_model = self.entity_description.model_name
+                    device_translation_key = "hybrid_inverter"
+                else:
+                    device_model = get_inverter_model_name(
+                        self.entity_description.serial_number
+                    )
+                    device_translation_key = "inverter"
 
         device_info = DeviceInfo(
-            identifiers={(DOMAIN, self.entity_description.serial_number)},
+            identifiers={(DOMAIN, serial_number)},
             translation_key=device_translation_key,
             manufacturer="Hoymiles",
-            serial_number=self.entity_description.serial_number.upper(),
+            serial_number=serial_number.upper(),
             model=device_model,
         )
 

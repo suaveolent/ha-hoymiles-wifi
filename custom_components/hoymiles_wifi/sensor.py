@@ -32,6 +32,7 @@ from hoymiles_wifi.hoymiles import DTUType, get_dtu_model_type
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
+    CONF_HYBRID_INVERTERS,
     CONF_METERS,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
@@ -85,8 +86,11 @@ class HoymilesEnergyStorageSensorEntityDescription(
 ):
     """Describes Hoymiles energy storage data sensor entity."""
 
+    model_name: str = None
     conversion_factor: float = None
     reset_at_midnight: bool = False
+    version_translation_function: str = None
+    version_prefix: str = None
     assume_state: bool = False
     force_keep_maximum_within_day: bool = False
 
@@ -608,7 +612,7 @@ async def async_setup_entry(
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
     single_phase_inverters = config_entry.data[CONF_INVERTERS]
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
-    hybrid_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
+    hybrid_inverters = config_entry.data.get(CONF_HYBRID_INVERTERS, [])
     meters = config_entry.data.get(CONF_METERS, [])
     inverters = single_phase_inverters + three_phase_inverters
     ports = config_entry.data[CONF_PORTS]
@@ -696,17 +700,20 @@ async def async_setup_entry(
             )
             sensors.extend(sensor_entities)
 
+    print(f"here!!! hybrid inverters: {hybrid_inverters}")
+
     if hybrid_inverters:
+        print("here!!!")
         for description in HOYMILES_ENERGY_STORAGE_SENSORS:
-            sensor_entities = get_sensors_for_description(
+            sensor_entities = get_sensors_for_hybrid_inverter_description(
                 config_entry,
                 description,
                 energy_storage_data_coordinator,
                 HoymilesEnergyStorageSensorEntity,
                 dtu_serial_number,
                 hybrid_inverters,
-                [],
             )
+            print(f"added sensor: {sensor_entities}")
             sensors.extend(sensor_entities)
 
     async_add_entities(sensors)
@@ -781,6 +788,40 @@ def get_sensors_for_description(
             )
             sensor = class_name(config_entry, updated_description, coordinator)
             sensors.append(sensor)
+
+    return sensors
+
+
+def get_sensors_for_hybrid_inverter_description(
+    config_entry: ConfigEntry,
+    description: SensorEntityDescription,
+    coordinator: HoymilesCoordinatorEntity,
+    class_name: SensorEntity,
+    dtu_serial_number: str,
+    inverters: list,
+) -> list[SensorEntity]:
+    """Get sensors for the given description."""
+
+    sensors = []
+
+    if "<inverter_count>" in description.key:
+        for index, inverter in enumerate(inverters):
+            new_key = description.key.replace("<inverter_count>", str(index))
+            updated_description = dataclasses.replace(
+                description,
+                key=new_key,
+                serial_number=inverter["inverter_serial_number"],
+                model_name=inverter["model_name"],
+            )
+            sensor = class_name(config_entry, updated_description, coordinator)
+            sensors.append(sensor)
+
+    else:
+        updated_description = dataclasses.replace(
+            description, serial_number=dtu_serial_number
+        )
+        sensor = class_name(config_entry, updated_description, coordinator)
+        sensors.append(sensor)
 
     return sensors
 

@@ -135,10 +135,10 @@ class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
         config_entry: ConfigEntry,
         update_interval: timedelta,
         dtu_serial_number: int,
-        inverter_serial_numbers: list[int],
+        inverters: list[int],
     ) -> None:
         self._dtu_serial_number = dtu_serial_number
-        self._inverter_serial_numbers = inverter_serial_numbers
+        self._inverters = inverters
         super().__init__(hass, dtu, config_entry, update_interval)
 
     async def _async_update_data(self):
@@ -146,10 +146,10 @@ class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
         _LOGGER.debug("Hoymiles energy storage coordinator update")
 
         responses = []
-        for inverter_serial_number in self._inverter_serial_numbers:
+        for inverter in self._inverters:
             storage_data = await self._dtu.async_get_energy_storage_data(
                 dtu_serial_number=int(self._dtu_serial_number),
-                inverter_serial_number=inverter_serial_number,
+                inverter_serial_number=inverter["inverter_serial_number"],
             )
             if storage_data is not None:
                 responses.append(storage_data)

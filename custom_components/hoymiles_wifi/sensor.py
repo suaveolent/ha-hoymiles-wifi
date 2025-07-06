@@ -665,7 +665,7 @@ async def async_setup_entry(
     config_coordinator = hass_data.get(HASS_CONFIG_COORDINATOR, None)
     app_info_coordinator = hass_data.get(HASS_APP_INFO_COORDINATOR, None)
     energy_storage_data_coordinator = hass_data.get(
-        [HASS_ENERGY_STORAGE_DATA_COORDINATOR], None
+        HASS_ENERGY_STORAGE_DATA_COORDINATOR, None
     )
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
     single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])

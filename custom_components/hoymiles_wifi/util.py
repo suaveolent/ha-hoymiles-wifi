@@ -66,7 +66,9 @@ async def async_get_config_entry_data_for_host(
             for meter_data in real_data.meter_data
         ]
     else:
+        logging.error("RealDataNew is None. Trying get_gateway_info()!")
         gateway_info = await dtu.async_get_gateway_info()
+        logging.error(f"GatewayInfo call done. Result: {gateway_info}")
 
         if gateway_info is not None:
             registry = await dtu.async_get_energy_storage_registry(
@@ -90,7 +92,7 @@ async def async_get_config_entry_data_for_host(
                 raise CannotConnect
         else:
             logging.error(
-                "RealData new and Gatewayinfo and is None. Cannot connect to DTU or invalid response received!"
+                "RealDataNew and GatewayInfo is None. Cannot connect to DTU or invalid response received!"
             )
         raise CannotConnect
 

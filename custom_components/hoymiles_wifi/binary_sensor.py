@@ -52,9 +52,9 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensor platform."""
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    data_coordinator = hass_data.get([HASS_DATA_COORDINATOR], None)
+    data_coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
-    single_phase_inverters = config_entry.data.get([CONF_INVERTERS], [])
+    single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
 
     hass_data = hass.data[DOMAIN][config_entry.entry_id]

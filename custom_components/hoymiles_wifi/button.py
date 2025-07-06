@@ -77,7 +77,7 @@ async def async_setup_entry(
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
     dtu = hass_data[HASS_DTU]
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
-    single_phase_inverters = config_entry.data.get([CONF_INVERTERS], [])
+    single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
     inverters = single_phase_inverters + three_phase_inverters
 

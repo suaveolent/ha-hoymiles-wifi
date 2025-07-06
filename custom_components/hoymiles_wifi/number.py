@@ -72,8 +72,8 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Hoymiles number entities."""
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    config_coordinator = hass_data.get([HASS_CONFIG_COORDINATOR], None)
-    single_phase_inverters = config_entry.data.get([CONF_INVERTERS], [])
+    config_coordinator = hass_data.get(HASS_CONFIG_COORDINATOR, None)
+    single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
 

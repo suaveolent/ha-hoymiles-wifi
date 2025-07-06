@@ -661,14 +661,14 @@ async def async_setup_entry(
     """Set up sensor platform."""
 
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    data_coordinator = hass_data.get([HASS_DATA_COORDINATOR], None)
-    config_coordinator = hass_data.get([HASS_CONFIG_COORDINATOR], None)
-    app_info_coordinator = hass_data.get([HASS_APP_INFO_COORDINATOR], None)
+    data_coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
+    config_coordinator = hass_data.get(HASS_CONFIG_COORDINATOR, None)
+    app_info_coordinator = hass_data.get(HASS_APP_INFO_COORDINATOR, None)
     energy_storage_data_coordinator = hass_data.get(
         [HASS_ENERGY_STORAGE_DATA_COORDINATOR], None
     )
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
-    single_phase_inverters = config_entry.data.get([CONF_INVERTERS], [])
+    single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
     hybrid_inverters = config_entry.data.get(CONF_HYBRID_INVERTERS, [])
     meters = config_entry.data.get(CONF_METERS, [])

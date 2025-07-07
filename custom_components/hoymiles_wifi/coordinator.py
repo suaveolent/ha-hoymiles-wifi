@@ -154,10 +154,8 @@ class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
             if storage_data is not None:
                 responses.append(storage_data)
 
-        response = await self._dtu.async_app_information_data()
-
-        if not response:
+        if not responses:
             _LOGGER.debug(
-                "Unable to retrieve app information data. Inverter might be offline."
+                "Unable to retrieve energy storage data. Inverter might be offline."
             )
-        return response
+        return responses

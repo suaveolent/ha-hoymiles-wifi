@@ -54,25 +54,22 @@ async def async_setup_entry(
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
     data_coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
-    single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
-    three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
 
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
 
-    if single_phase_inverters or three_phase_inverters:
-        sensors = []
+    sensors = []
 
-        for description in BINARY_SENSORS:
-            updated_description = dataclasses.replace(
-                description, serial_number=dtu_serial_number
+    for description in BINARY_SENSORS:
+        updated_description = dataclasses.replace(
+            description, serial_number=dtu_serial_number
+        )
+        sensors.append(
+            HoymilesInverterSensorEntity(
+                config_entry, updated_description, data_coordinator
             )
-            sensors.append(
-                HoymilesInverterSensorEntity(
-                    config_entry, updated_description, data_coordinator
-                )
-            )
+        )
 
-        async_add_entities(sensors)
+    async_add_entities(sensors)
 
 
 class HoymilesInverterSensorEntity(HoymilesCoordinatorEntity, BinarySensorEntity):

@@ -592,7 +592,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].production.energy_to_load",
         translation_key="energy_to_load",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         conversion_factor=0.1,
@@ -600,7 +600,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].production.energy_to_battery",
         translation_key="energy_to_battery",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         conversion_factor=0.1,
@@ -608,7 +608,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].consumption.energy_from_pv",
         translation_key="energy_from_pv",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         conversion_factor=0.1,
@@ -616,7 +616,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].consumption.energy_from_battery",
         translation_key="energy_from_battery",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         conversion_factor=0.1,
@@ -624,7 +624,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].consumption.energy_from_grid",
         translation_key="energy_from_grid",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         conversion_factor=0.1,
@@ -748,7 +748,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].battery_management.energy_charged",
         translation_key="energy_charged",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         conversion_factor=0.1,
@@ -756,7 +756,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].battery_management.energy_discharged",
         translation_key="energy_discharged",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         conversion_factor=0.1,

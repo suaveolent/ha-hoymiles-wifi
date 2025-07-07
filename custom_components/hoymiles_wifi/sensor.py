@@ -1233,6 +1233,9 @@ class HoymilesEnergyStorageSensorEntity(HoymilesCoordinatorEntity, RestoreSensor
                         return None
                 else:
                     obj = getattr(obj, token, None)
+            logging.error("Found the following tokens: %s", tokens)
+            logging.error("Found the following object: %s", obj)
+            logging.error("Using object: %s", obj)
             return obj
 
         new_native_value = resolve_path(self.coordinator.data, self._attribute_name)

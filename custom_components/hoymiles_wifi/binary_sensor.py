@@ -19,8 +19,7 @@ from .const import (
     CONF_DTU_SERIAL_NUMBER,
     DOMAIN,
     HASS_DATA_COORDINATOR,
-    CONF_INVERTERS,
-    CONF_THREE_PHASE_INVERTERS,
+    HASS_ENERGY_STORAGE_DATA_COORDINATOR,
 )
 from .entity import HoymilesCoordinatorEntity, HoymilesEntityDescription
 
@@ -52,7 +51,10 @@ async def async_setup_entry(
 ) -> None:
     """Set up sensor platform."""
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    data_coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
+    coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
+    if coordinator is None:
+        coordinator = hass_data.get(HASS_ENERGY_STORAGE_DATA_COORDINATOR, None)
+
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
 
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
@@ -64,9 +66,7 @@ async def async_setup_entry(
             description, serial_number=dtu_serial_number
         )
         sensors.append(
-            HoymilesInverterSensorEntity(
-                config_entry, updated_description, data_coordinator
-            )
+            HoymilesInverterSensorEntity(config_entry, updated_description, coordinator)
         )
 
     async_add_entities(sensors)

@@ -178,26 +178,164 @@
       "power_factor_phase_C": {
         "name": "Leistungsfaktor Phase C"
       },
+      "energy_to_load" : {
+        "name" : "Energie zu Last"
+      },
+      "energy_to_battery" : {
+        "name" : "Energie zu Batterie"
+      },
       "energy_from_pv" : {
         "name" : "Energie aus PV"
+      },
+      "energy_from_battery" : {
+        "name" : "Energie aus Batterie"
+      },
+      "energy_from_grid" : {
+        "name" : "Energie aus Netz"
+      },
+      "pv_panel_voltage": {
+        "name": "PV panel {port_number} voltage"
+      },
+      "pv_panel_current": {
+        "name": "PV panel {port_number} current"
+      },
+      "pv_panel_power": {
+        "name": "PV panel {port_number} power"
+      },
+      "pv_panel_energy": {
+        "name": "PV panel {port_number} energy"
       },
       "state_of_charge": {
         "name": "Ladezustand"
       },
+      "state_of_health": {
+        "name": "Gesundheitszustand"
+      },
+      "battery_voltage": {
+        "name": "Batteriespannung"
+      },
+      "internal_charge_mode": {
+        "name": "Interner Lademodus"
+      },
+      "internal_discharge_mode": {
+        "name": "Interner Entlademodus"
+      },
+      "cell_voltage_high": {
+        "name": "Maximale Zellenspannung "
+      },
+      "cell_voltage_low": {
+        "name": "Minimale Zellenspannung"
+      },
+      "temp_high_charge": {
+        "name": "Maximale Ladetemperatur"
+      },
+      "temp_low_charge": {
+        "name": "Minimale Ladetemperatur"
+      },
+      "temp_high_module": {
+        "name": "Maximale Modultemperatur"
+      },
+      "temp_low_module": {
+        "name": "Minimale Modultemperatur"
+      },
+      "energy_charged": {
+        "name": "Geladene Energie"
+      },
+      "energy_discharged": {
+        "name": "Entladene Energie"
+      },
+      "voltage_charge_high": {
+        "name": "Maximale Ladespannung"
+      },
+      "voltage_charge_low": {
+        "name": "Minimale Ladespannung"
+      },
+      "voltage_module_high": {
+        "name": "Maximale Modulspannung"
+      },
+      "voltage_module_low": {
+        "name": "Minimale Modulspannung"
+      },
+      "grid_status": {
+        "name": "Netzstatus"
+      },
+      "grid_power_factor_deviation": {
+        "name": "Leistungsfaktorabweichung"
+      },
+      "grid_voltage_phase": {
+        "name": "Netzspannung Phase {phase}"
+      },
+      "grid_current_phase": {
+        "name": "Netzstrom Phase {phase}"
+      },
+      "grid_reactive_power_phase": {
+        "name": "Blindleistung Phase {phase}"
+      },
+      "grid_power_factor_phase": {
+        "name": "Leistungsfaktor Phase {phase}"
+      },
+      "grid_energy_frequency_phase": {
+        "name": "Energie-Frequenz Phase {phase}"
+      },
+      "grid_energy_consumed_phase": {
+        "name": "Verbrauchte Energie Phase {phase}"
+      },
+      "load_status": {
+        "name": "Laststatus"
+      },
       "load_frequency": {
         "name": "Lastfrequenz"
       },
-      "grid_voltage_phase_A": {
-        "name": "Netzspannung Phase A"
+      "load_voltage_phase": {
+        "name": "Lastspannung Phase {phase}"
       },
-      "load_voltage_phase_A": {
-        "name": "Lastspannung Phase A"
+      "load_active_power_phase": {
+        "name": "Wirkleistung Phase {phase}"
+      },
+      "load_energy_consumed_phase": {
+        "name": "Verbrauchte Energie Phase {phase}"
+      },
+      "inverter_status": {
+        "name": "Wechselrichterstatus"
       },
       "inverter_frequency": {
-        "name": "Wechselrichter Frequenz"
+        "name": "Wechselrichterfrequenz"
       },
-      "inverter_voltage_phase_A": {
-        "name": "Wechselrichter Spannung Phase A"
+      "inverter_isolation_resistance": {
+        "name": "Isolationswiderstand des Wechselrichters"
+      },
+      "inverter_leakage_current": {
+        "name": "Ableitstrom des Wechselrichters"
+      },
+      "inverter_drm_signal": {
+        "name": "Wechselrichter-DRM-Signal"
+      },
+      "inverter_voltage_phase": {
+        "name": "Wechselrichterspannung Phase {phase}"
+      },
+      "inverter_current_phase": {
+        "name": "Wechselrichterstrom Phase {phase}"
+      },
+      "inverter_active_power_phase": {
+        "name": "Wechselrichterwirkleistung Phase {phase}"
+      },
+      "inverter_reactive_power_phase": {
+        "name": "Wechselrichterblindleistung Phase {phase}"
+      },
+      "inverter_dc_current_phase": {
+        "name": "DC-Strom Wechselrichter Phase {phase}"
+      },
+      "inverter_dc_voltage_phase": {
+        "name": "DC-Spannung Wechselrichter Phase {phase}"
+      },
+      "inverter_eps_voltage_phase": {
+        "name": "EPS-Spannung Wechselrichter Phase {phase}"
+      },
+      "inverter_eps_current_phase": {
+        "name": "EPS-Strom Wechselrichter Phase {phase}"
+      },
+      "inverter_eps_power_phase": {
+        "name": "EPS-Leistung Wechselrichter Phase {phase}"
       }
     },
     "button": {

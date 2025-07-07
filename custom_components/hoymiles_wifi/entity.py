@@ -40,6 +40,7 @@ class HoymilesEntityDescription(EntityDescription):
     serial_number: str = None
     port_number: int = None
     supported_dtu_types: list[DTUType] = None
+    phase: str = None
 
 
 class HoymilesEntity(Entity):
@@ -53,9 +54,13 @@ class HoymilesEntity(Entity):
         self.entity_description = description
         self._config_entry = config_entry
         self._attr_unique_id = f"hoymiles_{config_entry.entry_id}_{description.key}"
-        self._attr_translation_placeholders = {
-            "port_number": f"{description.port_number}"
-        }
+
+        if description.port_number:
+            self._attr_translation_placeholders = {
+                "port_number": f"{description.port_number}"
+            }
+        if description.phase:
+            self._attr_translation_placeholders = {"phase": f"{description.phase}"}
 
         dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
 

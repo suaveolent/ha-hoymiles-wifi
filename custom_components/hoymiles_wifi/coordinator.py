@@ -9,6 +9,8 @@ from homeassistant.const import CONF_HOST, Platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from hoymiles_wifi.dtu import DTU
 
+from hoymiles_wifi.protobuf import ESData_pb2
+
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -146,6 +148,7 @@ class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
         _LOGGER.debug("Hoymiles energy storage coordinator update")
 
         responses = []
+
         for inverter in self._inverters:
             storage_data = await self._dtu.async_get_energy_storage_data(
                 dtu_serial_number=int(self._dtu_serial_number),

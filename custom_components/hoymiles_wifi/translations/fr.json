@@ -178,27 +178,165 @@
       "power_factor_phase_C": {
         "name": "Facteur de puissance phase C"
       },
+      "energy_to_load" : {
+        "name" : "Énergie à charger"
+      },
+      "energy_to_battery" : {
+        "name" : "Énergie à la batterie"
+      },
       "energy_from_pv" : {
-        "name" : "Énergie photovoltaïque"
+        "name" : "Énergie provenant de PV"
+      },
+      "energy_from_battery" : {
+        "name" : "Énergie provenant de la batterie"
+      },
+      "energy_from_grid" : {
+        "name" : "Énergie provenant du réseau"
+      },
+      "pv_panel_voltage": {
+        "name": "Tension du panneau PV {port_number}"
+      },
+      "pv_panel_current": {
+        "name": "Courant du panneau PV {port_number}"
+      },
+      "pv_panel_power": {
+        "name": "Puissance du panneau PV {port_number}"
+      },
+      "pv_panel_energy": {
+        "name": "Énergie du panneau PV {port_number}"
       },
       "state_of_charge": {
         "name": "État de charge"
       },
+      "state_of_health": {
+        "name": "État de santé"
+      },
+      "battery_voltage": {
+        "name": "Tension de la batterie"
+      },
+      "internal_charge_mode": {
+        "name": "Mode de charge interne"
+      },
+      "internal_discharge_mode": {
+        "name": "Mode de décharge interne"
+      },
+      "cell_voltage_high": {
+        "name": "Tension maximale des cellules"
+      },
+      "cell_voltage_low": {
+        "name": "Tension minimale des cellules"
+      },
+      "temp_high_charge": {
+        "name": "Température maximale de charge"
+      },
+      "temp_low_charge": {
+        "name": "Température minimale de charge"
+      },
+      "temp_high_module": {
+        "name": "Température maximale du module"
+      },
+      "temp_low_module": {
+        "name": "Température minimale du module"
+      },
+      "energy_charged": {
+        "name": "Énergie chargée"
+      },
+      "energy_discharged": {
+        "name": "Énergie déchargée"
+      },
+      "voltage_charge_high": {
+        "name": "Tension de charge maximale"
+      },
+      "voltage_charge_low": {
+        "name": "Tension de charge minimale"
+      },
+      "voltage_module_high": {
+        "name": "Tension maximale du module"
+      },
+      "voltage_module_low": {
+        "name": "Tension minimale du module"
+      },
+      "grid_status": {
+        "name": "État du réseau"
+      },
+      "grid_power_factor_deviation": {
+        "name": "Écart du facteur de puissance"
+      },
+      "grid_voltage_phase": {
+        "name": "Tension réseau phase {phase}"
+      },
+      "grid_current_phase": {
+        "name": "Courant réseau phase {phase}"
+      },
+      "grid_reactive_power_phase": {
+        "name": "Puissance réactive phase {phase}"
+      },
+      "grid_power_factor_phase": {
+        "name": "Facteur de puissance phase {phase}"
+      },
+      "grid_energy_frequency_phase": {
+        "name": "Fréquence énergie phase {phase}"
+      },
+      "grid_energy_consumed_phase": {
+        "name": "Énergie consommée phase {phase}"
+      },
+      "load_status": {
+        "name": "État de la charge"
+      },
       "load_frequency": {
-        "name": "Fréquence de charge"
+        "name": "Fréquence de la charge"
       },
-      "grid_voltage_phase_A": {
-        "name": "Tension du réseau phase A"
+      "load_voltage_phase": {
+        "name": "Tension charge phase {phase}"
       },
-      "load_voltage_phase_A": {
-        "name": "Tension de charge phase A"
+      "load_active_power_phase": {
+        "name": "Puissance active phase {phase}"
       },
-      "inverter_frequency": {
-        "name": "Fréquence de l'onduleur"
+      "load_energy_consumed_phase": {
+        "name": "Énergie consommée phase {phase}"
       },
-      "inverter_voltage_phase_A": {
-        "name": "Tension de l'onduleur phase A"
-      }
+      "inverter_status": {
+          "name": "État de l'onduleur"
+        },
+        "inverter_frequency": {
+          "name": "Fréquence de l'onduleur"
+        },
+        "inverter_isolation_resistance": {
+          "name": "Résistance d'isolement de l'onduleur"
+        },
+        "inverter_leakage_current": {
+          "name": "Courant de fuite de l'onduleur"
+        },
+        "inverter_drm_signal": {
+          "name": "Signal DRM de l'onduleur"
+        },
+        "inverter_voltage_phase": {
+          "name": "Tension de l'onduleur phase {phase}"
+        },
+        "inverter_current_phase": {
+          "name": "Courant de l'onduleur phase {phase}"
+        },
+        "inverter_active_power_phase": {
+          "name": "Puissance active onduleur phase {phase}"
+        },
+        "inverter_reactive_power_phase": {
+          "name": "Puissance réactive onduleur phase {phase}"
+        },
+        "inverter_dc_current_phase": {
+          "name": "Courant DC onduleur phase {phase}"
+        },
+        "inverter_dc_voltage_phase": {
+          "name": "Tension DC onduleur phase {phase}"
+        },
+        "inverter_eps_voltage_phase": {
+          "name": "Tension EPS onduleur phase {phase}"
+        },
+        "inverter_eps_current_phase": {
+          "name": "Courant EPS onduleur phase {phase}"
+        },
+        "inverter_eps_power_phase": {
+          "name": "Puissance EPS onduleur phase {phase}"
+        }
     },
     "button" : {
       "restart" : {

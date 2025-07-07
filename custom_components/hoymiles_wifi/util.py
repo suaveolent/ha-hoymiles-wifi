@@ -66,16 +66,16 @@ async def async_get_config_entry_data_for_host(
             for meter_data in real_data.meter_data
         ]
     else:
-        logging.error("RealDataNew is None. Trying get_gateway_info()!")
+        logging.debug("RealDataNew is None. Trying get_gateway_info()!")
         gateway_info = await dtu.async_get_gateway_info()
-        logging.error(f"GatewayInfo call done. Result: {gateway_info}")
+        logging.debug(f"GatewayInfo call done. Result: {gateway_info}")
 
         if gateway_info:
-            logging.error("Trying get energy storage registry call.")
+            logging.debug("Trying get energy storage registry call.")
             registry = await dtu.async_get_energy_storage_registry(
                 dtu_serial_number=gateway_info.serial_number
             )
-            logging.error(f"Get energy storage registry call done. Result: {registry}")
+            logging.debug(f"Get energy storage registry call done. Result: {registry}")
 
             if registry:
                 dtu_sn = str(gateway_info.serial_number)
@@ -87,7 +87,7 @@ async def async_get_config_entry_data_for_host(
                     }
                     for inverter in registry.inverters
                 ]
-                logging.error(f"Hybrid inverters: {hybrid_inverters}")
+                logging.debug(f"Hybrid inverters: {hybrid_inverters}")
             else:
                 logging.error(
                     "Energy storage registry is None. Cannot connect to DTU or invalid response received!"

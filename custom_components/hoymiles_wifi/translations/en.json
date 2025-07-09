@@ -241,6 +241,9 @@
       "grid_reactive_power_phase": {
         "name": "Grid reactive power phase {phase}"
       },
+      "grid_active_power_phase": {
+        "name": "Grid active power phase {phase}"
+      },
       "grid_power_factor_phase": {
         "name": "Grid power factor phase {phase}"
       },

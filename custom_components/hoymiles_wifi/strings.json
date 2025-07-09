@@ -241,6 +241,9 @@
       "grid_reactive_power_phase": {
         "name": "Grid reactive power phase {phase}"
       },
+      "grid_active_power_phase": {
+        "name": "Grid active power phase {phase}"
+      },
       "grid_power_factor_phase": {
         "name": "Grid power factor phase {phase}"
       },
@@ -306,7 +309,40 @@
       },
       "inverter_eps_power_phase": {
         "name": "Inverter EPS power phase {phase}"
-      }
+      },
+      "pv_inverter_status": {
+        "name": "PV-Inverter status"
+      },
+      "pv_inverter_frequency": {
+        "name": "PV-Inverter frequency"
+      },
+      "pv_inverter_voltage_phase": {
+        "name": "PV-Inverter voltage phase {phase}"
+      },
+      "pv_inverter_current_phase": {
+        "name": "PV-Inverter current phase {phase}"
+      },
+      "pv_inverter_active_power_phase": {
+        "name": "PV-Inverter active power phase {phase}"
+      },
+      "pv_inverter_reactive_power_phase": {
+        "name": "PV-Inverter reactive power phase {phase}"
+      },
+      "pv_inverter_energy_phase": {
+        "name": "PV-Inverter energy phase {phase}"
+      },
+      "pv_to_load": {
+        "name": "Power PV to load"
+      },
+      "battery_to_load": {
+        "name": "Power battery to load"
+      },
+      "grid_to_load": {
+        "name": "Power grid to load"
+      },
+      "pv_to_battery": {
+        "name": "Power PV to battery"
+      },
     },
     "button" : {
       "restart" : {

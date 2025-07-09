@@ -271,6 +271,9 @@
       "grid_reactive_power_phase": {
         "name": "Puissance réactive phase {phase}"
       },
+      "grid_active_power_phase": {
+        "name": "Puissance active du réseau phase {phase}"
+      },
       "grid_power_factor_phase": {
         "name": "Facteur de puissance phase {phase}"
       },
@@ -296,47 +299,80 @@
         "name": "Énergie consommée phase {phase}"
       },
       "inverter_status": {
-          "name": "État de l'onduleur"
-        },
-        "inverter_frequency": {
-          "name": "Fréquence de l'onduleur"
-        },
-        "inverter_isolation_resistance": {
-          "name": "Résistance d'isolement de l'onduleur"
-        },
-        "inverter_leakage_current": {
-          "name": "Courant de fuite de l'onduleur"
-        },
-        "inverter_drm_signal": {
-          "name": "Signal DRM de l'onduleur"
-        },
-        "inverter_voltage_phase": {
-          "name": "Tension de l'onduleur phase {phase}"
-        },
-        "inverter_current_phase": {
-          "name": "Courant de l'onduleur phase {phase}"
-        },
-        "inverter_active_power_phase": {
-          "name": "Puissance active onduleur phase {phase}"
-        },
-        "inverter_reactive_power_phase": {
-          "name": "Puissance réactive onduleur phase {phase}"
-        },
-        "inverter_dc_current_phase": {
-          "name": "Courant DC onduleur phase {phase}"
-        },
-        "inverter_dc_voltage_phase": {
-          "name": "Tension DC onduleur phase {phase}"
-        },
-        "inverter_eps_voltage_phase": {
-          "name": "Tension EPS onduleur phase {phase}"
-        },
-        "inverter_eps_current_phase": {
-          "name": "Courant EPS onduleur phase {phase}"
-        },
-        "inverter_eps_power_phase": {
-          "name": "Puissance EPS onduleur phase {phase}"
-        }
+        "name": "État de l'onduleur"
+      },
+      "inverter_frequency": {
+         "name": "Fréquence de l'onduleur"
+      },
+      "inverter_isolation_resistance": {
+        "name": "Résistance d'isolement de l'onduleur"
+       },
+      "inverter_leakage_current": {
+        "name": "Courant de fuite de l'onduleur"
+      },
+      "inverter_drm_signal": {
+        "name": "Signal DRM de l'onduleur"
+      },
+      "inverter_voltage_phase": {
+        "name": "Tension de l'onduleur phase {phase}"
+      },
+      "inverter_current_phase": {
+        "name": "Courant de l'onduleur phase {phase}"
+      },
+      "inverter_active_power_phase": {
+        "name": "Puissance active onduleur phase {phase}"
+      },
+      "inverter_reactive_power_phase": {
+        "name": "Puissance réactive onduleur phase {phase}"
+      },
+      "inverter_dc_current_phase": {
+         "name": "Courant DC onduleur phase {phase}"
+      },
+      "inverter_dc_voltage_phase": {
+         "name": "Tension DC onduleur phase {phase}"
+      },
+      "inverter_eps_voltage_phase": {
+         "name": "Tension EPS onduleur phase {phase}"
+       },
+      "inverter_eps_current_phase": {
+         "name": "Courant EPS onduleur phase {phase}"
+      },
+      "inverter_eps_power_phase": {
+         "name": "Puissance EPS onduleur phase {phase}"
+      },
+      "pv_inverter_status": {
+        "name": "État de l'onduleur PV"
+      },
+      "pv_inverter_frequency": {
+        "name": "Fréquence de l'onduleur PV"
+      },
+      "pv_inverter_voltage_phase": {
+        "name": "Tension de phase de l'onduleur PV {phase}"
+      },
+      "pv_inverter_current_phase": {
+        "name": "Courant de phase de l'onduleur PV {phase}"
+      },
+      "pv_inverter_active_power_phase": {
+        "name": "Puissance active de phase de l'onduleur PV {phase}"
+      },
+      "pv_inverter_reactive_power_phase": {
+        "name": "Puissance réactive de phase de l'onduleur PV {phase}"
+      },
+      "pv_inverter_energy_phase": {
+        "name": "Énergie de phase de l'onduleur PV {phase}"
+      },
+      "pv_to_load": {
+        "name": "Puissance PV vers charge"
+      },
+      "battery_to_load": {
+        "name": "Puissance batterie vers charge"
+      },
+      "grid_to_load": {
+        "name": "Puissance réseau vers charge"
+      },
+      "pv_to_battery": {
+        "name": "Puissance PV vers batterie"
+      }
     },
     "button" : {
       "restart" : {

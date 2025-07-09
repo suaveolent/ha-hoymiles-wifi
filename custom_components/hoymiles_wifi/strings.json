@@ -342,7 +342,7 @@
       },
       "pv_to_battery": {
         "name": "Power PV to battery"
-      },
+      }
     },
     "button" : {
       "restart" : {

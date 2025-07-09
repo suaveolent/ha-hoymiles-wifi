@@ -271,6 +271,9 @@
       "grid_reactive_power_phase": {
         "name": "Blindleistung Phase {phase}"
       },
+      "grid_active_power_phase": {
+        "name": "Wirkleistung Phase {phase}"
+      },
       "grid_power_factor_phase": {
         "name": "Leistungsfaktor Phase {phase}"
       },
@@ -336,6 +339,39 @@
       },
       "inverter_eps_power_phase": {
         "name": "EPS-Leistung Wechselrichter Phase {phase}"
+      },
+      "pv_inverter_status": {
+        "name": "PV-Wechselrichterstatus"
+      },
+      "pv_inverter_frequency": {
+        "name": "PV-Wechselrichterfrequenz"
+      },
+      "pv_inverter_voltage_phase": {
+        "name": "PV-Wechselrichter Spannung Phase {phase}"
+      },
+      "pv_inverter_current_phase": {
+        "name": "PV-Wechselrichterstrom Phase {phase}"
+      },
+      "pv_inverter_active_power_phase": {
+        "name": "PV-Wechselrichter Wirkleistung Phase {phase}"
+      },
+      "pv_inverter_reactive_power_phase": {
+        "name": "PV-Wechselrichter Blindleistung Phase {phase}"
+      },
+      "pv_inverter_energy_phase": {
+        "name": "PV-Wechselrichter Energie Phase {phase}"
+      },
+      "pv_to_load": {
+        "name": "Leistung PV zu Last"
+      },
+      "battery_to_load": {
+        "name": "Leistung Batterie zu Last"
+      },
+      "grid_to_load": {
+        "name": "Leistung Netz zu Last"
+      },
+      "pv_to_battery": {
+        "name": "Leistung PV zu Batterie"
       }
     },
     "button": {

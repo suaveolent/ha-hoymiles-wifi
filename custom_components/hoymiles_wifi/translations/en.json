@@ -5,7 +5,7 @@
         "title": "Hoymiles DTU connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
-          "host": "[%key:common::config_flow::data::host%]",
+          "host": "Host",
           "update_interval": "Update Interval (seconds)"
         }
       },
@@ -13,16 +13,16 @@
         "title": "Hoymiles DTU connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
-          "host": "[%key:common::config_flow::data::host%]",
+          "host": "Host",
           "update_interval": "Update Interval (seconds)"
         }
       }
     },
     "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
+      "cannot_connect": "Failed to connect."
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "Already configured."
     }
   },
   "entity": {

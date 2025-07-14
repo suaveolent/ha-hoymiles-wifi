@@ -1,6 +1,7 @@
 """Utils for hoymiles-wifi."""
 
 from typing import Union
+import asyncio
 import logging
 
 from hoymiles_wifi.dtu import DTU
@@ -31,9 +32,12 @@ async def async_get_config_entry_data_for_host(
 
     dtu = DTU(host)
 
+    logging.debug("Trying get_real_data_new()!")
     real_data = await dtu.async_get_real_data_new()
+    logging.debug(f"RealDataNew call done. Result: {real_data}")
 
     if real_data:
+        
         dtu_sn = real_data.device_serial_number
 
         single_phase_inverters = [
@@ -66,7 +70,8 @@ async def async_get_config_entry_data_for_host(
             for meter_data in real_data.meter_data
         ]
     else:
-        logging.debug("RealDataNew is None. Trying get_gateway_info()!")
+        logging.debug("RealDataNew is None. Sleeping for 5s before trying get_gateway_info()!")
+        await asyncio.sleep(5)
         gateway_info = await dtu.async_get_gateway_info()
         logging.debug(f"GatewayInfo call done. Result: {gateway_info}")
 

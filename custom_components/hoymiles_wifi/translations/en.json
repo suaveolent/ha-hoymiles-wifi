@@ -342,6 +342,9 @@
       },
       "pv_to_battery": {
         "name": "Power PV to battery"
+      },
+      "battery_to_grid": {
+        "name": "Power battery to grid"
       }
     },
     "button" : {

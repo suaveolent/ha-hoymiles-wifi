@@ -372,6 +372,12 @@
       },
       "pv_to_battery": {
         "name": "Leistung PV zu Batterie"
+      },
+      "pv_to_grid": {
+        "name": "Leistung PV zu Netz"
+      },
+      "battery_to_grid": {
+        "name": "Leistung Batterie zu Netz"
       }
     },
     "button": {

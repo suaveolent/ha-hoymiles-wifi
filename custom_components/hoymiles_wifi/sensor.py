@@ -1052,6 +1052,20 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].power_flow.pv_to_battery",
+        translation_key="pv_to_battery",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].power_flow.pv_to_grid",
+        translation_key="pv_to_grid",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].power_flow.battery_to_load",
         translation_key="battery_to_load",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -1066,8 +1080,8 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
-        key="[<inverter_count>].power_flow.pv_to_battery",
-        translation_key="pv_to_battery",
+        key="[<inverter_count>].power_flow.battery_to_grid",
+        translation_key="battery_to_grid",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,

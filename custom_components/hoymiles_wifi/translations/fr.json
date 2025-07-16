@@ -372,6 +372,12 @@
       },
       "pv_to_battery": {
         "name": "Puissance PV vers batterie"
+      },
+      "pv_to_grid": {
+        "name": "Puissance PV vers réseau"
+      },
+      "battery_to_grid": {
+        "name": "Puissance batterie vers réseau"
       }
     },
     "button" : {

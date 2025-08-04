@@ -98,14 +98,12 @@ class HoymilesGatewayInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Update data via library."""
-        _LOGGER.debug("Hoymiles data coordinator update")
+        _LOGGER.debug("Hoymiles gateway info coordinator update")
 
         response = await self._dtu.async_get_gateway_info()
 
         if not response:
-            _LOGGER.debug(
-                "Unable to retrieve app information data. Inverter might be offline."
-            )
+            _LOGGER.debug("Unable to retrieve gateway info. Inverter might be offline.")
         return response
 
 
@@ -114,15 +112,15 @@ class HoymilesGatewayNetworkInfoUpdateCoordinator(HoymilesDataUpdateCoordinator)
 
     async def _async_update_data(self):
         """Update data via library."""
-        _LOGGER.debug("Hoymiles data coordinator update")
+        _LOGGER.debug("Hoymiles network info coordinator update")
 
-        response = await self._dtu.async_get_energy_storage_registry(
-            dtu_serial_number=self._dtu_serial_number,
+        response = await self._dtu.async_get_gateway_network_info(
+            dtu_serial_number=int(self._dtu_serial_number)
         )
 
         if not response:
             _LOGGER.debug(
-                "Unable to retrieve app information data. Inverter might be offline."
+                "Unable to retrieve network information. Inverter might be offline."
             )
         return response
 

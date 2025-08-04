@@ -20,6 +20,8 @@ from .const import (
     CONF_THREE_PHASE_INVERTERS,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
+    CONF_IS_ENCRYPTED,
+    CONF_ENC_RAND,
     DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS,
     DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
@@ -61,8 +63,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
     hybrid_inverters = config_entry.data.get(CONF_HYBRID_INVERTERS, [])
     meters = config_entry.data.get(CONF_METERS, [])
+    is_encrypted = config_entry.data.get(CONF_IS_ENCRYPTED, False)
+    enc_rand = config_entry.data.get(CONF_ENC_RAND, None)
 
-    dtu = DTU(host)
+    if is_encrypted:
+        dtu = DTU(host, is_encrypted=is_encrypted, enc_rand=enc_rand)
+    else:
+        dtu = DTU(host)
 
     hass_data[HASS_DTU] = dtu
 
@@ -150,6 +157,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
                 ports,
                 meters,
                 hybrid_inverters,
+                is_encrypted,
+                enc_rand,
             ) = await async_get_config_entry_data_for_host(host)
         except CannotConnect:
             _LOGGER.error(
@@ -164,6 +173,8 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry) ->
         new[CONF_PORTS] = ports
         new[CONF_METERS] = meters
         new[CONF_HYBRID_INVERTERS] = hybrid_inverters
+        new[CONF_IS_ENCRYPTED] = is_encrypted
+        new[CONF_ENC_RAND] = enc_rand
 
         hass.config_entries.async_update_entry(
             config_entry, data=new, version=CONFIG_VERSION

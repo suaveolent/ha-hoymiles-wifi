@@ -4,7 +4,7 @@ DOMAIN = "hoymiles_wifi"
 NAME = "Hoymiles"
 DOMAIN = "hoymiles_wifi"
 DOMAIN_DATA = f"{DOMAIN}_data"
-CONFIG_VERSION = 4
+CONFIG_VERSION = 5
 
 ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"
 
@@ -15,6 +15,8 @@ CONF_THREE_PHASE_INVERTERS = "three_phase_inverters"
 CONF_HYBRID_INVERTERS = "hybrid_inverters"
 CONF_PORTS = "ports"
 CONF_METERS = "meters"
+CONF_IS_ENCRYPTED = "is_encrypted"
+CONF_ENC_RAND = "enc_rand"
 
 DEFAULT_UPDATE_INTERVAL_SECONDS = 35
 MIN_UPDATE_INTERVAL_SECONDS = 1

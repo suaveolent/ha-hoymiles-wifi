@@ -18,6 +18,8 @@ from .const import (
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
     CONF_UPDATE_INTERVAL,
+    CONF_IS_ENCRYPTED,
+    CONF_ENC_RAND,
     CONFIG_VERSION,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
@@ -67,6 +69,8 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     ports,
                     meters,
                     hybrid_inverters,
+                    is_encrypted,
+                    enc_rand,
                 ) = await async_get_config_entry_data_for_host(host)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -85,6 +89,8 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                         CONF_PORTS: ports,
                         CONF_METERS: meters,
                         CONF_HYBRID_INVERTERS: hybrid_inverters,
+                        CONF_IS_ENCRYPTED: is_encrypted,
+                        CONF_ENC_RAND: enc_rand,
                     },
                 )
 
@@ -116,6 +122,8 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     ports,
                     meters,
                     hybrid_inverters,
+                    is_encrypted,
+                    enc_rand,
                 ) = await async_get_config_entry_data_for_host(host)
             except CannotConnect:
                 errors["base"] = "cannot_connect"
@@ -133,6 +141,8 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     CONF_PORTS: ports,
                     CONF_METERS: meters,
                     CONF_HYBRID_INVERTERS: hybrid_inverters,
+                    CONF_IS_ENCRYPTED: is_encrypted,
+                    CONF_ENC_RAND: enc_rand,
                 }
 
                 self.hass.config_entries.async_update_entry(

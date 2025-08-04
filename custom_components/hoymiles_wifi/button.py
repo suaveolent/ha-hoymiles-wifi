@@ -77,28 +77,32 @@ async def async_setup_entry(
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
     dtu = hass_data[HASS_DTU]
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
-    single_phase_inverters = config_entry.data[CONF_INVERTERS]
+    single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
     inverters = single_phase_inverters + three_phase_inverters
 
-    buttons = []
-    for description in BUTTONS:
-        if description.is_dtu_sensor is True:
-            updated_description = dataclasses.replace(
-                description, serial_number=dtu_serial_number
-            )
-            buttons.append(HoymilesButtonEntity(config_entry, updated_description, dtu))
-        else:
-            for inverter_serial in inverters:
-                new_key = description.key.replace("<inverter_serial>", inverter_serial)
+    if inverters:
+        buttons = []
+        for description in BUTTONS:
+            if description.is_dtu_sensor is True:
                 updated_description = dataclasses.replace(
-                    description, key=new_key, serial_number=inverter_serial
+                    description, serial_number=dtu_serial_number
                 )
                 buttons.append(
                     HoymilesButtonEntity(config_entry, updated_description, dtu)
                 )
-
-    async_add_entities(buttons)
+            else:
+                for inverter_serial in inverters:
+                    new_key = description.key.replace(
+                        "<inverter_serial>", inverter_serial
+                    )
+                    updated_description = dataclasses.replace(
+                        description, key=new_key, serial_number=inverter_serial
+                    )
+                    buttons.append(
+                        HoymilesButtonEntity(config_entry, updated_description, dtu)
+                    )
+        async_add_entities(buttons)
 
 
 class HoymilesButtonEntity(HoymilesEntity, ButtonEntity):

@@ -1,4 +1,5 @@
 """Contains binary sensor entities for Hoymiles WiFi integration."""
+
 import dataclasses
 from dataclasses import dataclass
 import logging
@@ -14,7 +15,12 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from hoymiles_wifi.dtu import NetworkState
 
-from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN, HASS_DATA_COORDINATOR
+from .const import (
+    CONF_DTU_SERIAL_NUMBER,
+    DOMAIN,
+    HASS_DATA_COORDINATOR,
+    HASS_ENERGY_STORAGE_DATA_COORDINATOR,
+)
 from .entity import HoymilesCoordinatorEntity, HoymilesEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,13 +46,18 @@ BINARY_SENSORS = (
 
 async def async_setup_entry(
     hass: HomeAssistant,
-    entry: ConfigEntry,
+    config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up sensor platform."""
-    hass_data = hass.data[DOMAIN][entry.entry_id]
-    data_coordinator = hass_data[HASS_DATA_COORDINATOR]
-    dtu_serial_number = entry.data[CONF_DTU_SERIAL_NUMBER]
+    hass_data = hass.data[DOMAIN][config_entry.entry_id]
+    coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
+    if coordinator is None:
+        coordinator = hass_data.get(HASS_ENERGY_STORAGE_DATA_COORDINATOR, None)
+
+    dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
+
+    hass_data = hass.data[DOMAIN][config_entry.entry_id]
 
     sensors = []
 
@@ -55,7 +66,7 @@ async def async_setup_entry(
             description, serial_number=dtu_serial_number
         )
         sensors.append(
-            HoymilesInverterSensorEntity(entry, updated_description, data_coordinator)
+            HoymilesInverterSensorEntity(config_entry, updated_description, coordinator)
         )
 
     async_add_entities(sensors)

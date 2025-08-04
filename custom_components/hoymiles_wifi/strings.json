@@ -6,7 +6,7 @@
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
           "host": "[%key:common::config_flow::data::host%]",
-          "update_interval": "Update Interval (seconds)",
+          "update_interval": "Update Interval (seconds)"
         }
       },
       "reconfigure": {
@@ -14,7 +14,7 @@
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
           "host": "[%key:common::config_flow::data::host%]",
-          "update_interval": "Update Interval (seconds)",
+          "update_interval": "Update Interval (seconds)"
         }
       }
     },
@@ -147,6 +147,204 @@
       },
       "power_factor_phase_A": {
         "name": "Power factor phase A"
+      },
+      "energy_to_load" : {
+        "name" : "Energy to load"
+      },
+      "energy_to_battery" : {
+        "name" : "Energy to battery"
+      },
+      "energy_from_pv" : {
+        "name" : "Energy from PV"
+      },
+      "energy_from_battery" : {
+        "name" : "Energy from battery"
+      },
+      "energy_from_grid" : {
+        "name" : "Energy from grid"
+      },
+      "pv_panel_voltage": {
+        "name": "PV panel {port_number} voltage"
+      },
+      "pv_panel_current": {
+        "name": "PV panel {port_number} current"
+      },
+      "pv_panel_power": {
+        "name": "PV panel {port_number} power"
+      },
+      "pv_panel_energy": {
+        "name": "PV panel {port_number} energy"
+      },
+      "state_of_charge": {
+        "name": "State of charge"
+      },
+      "state_of_health": {
+        "name": "State of health"
+      },
+      "battery_voltage": {
+        "name": "Battery voltage"
+      },
+      "internal_charge_mode": {
+        "name": "Internal charge mode"
+      },
+      "internal_discharge_mode": {
+        "name": "Internal discharge mode"
+      },
+      "cell_voltage_high": {
+        "name": "Cell voltage high"
+      },
+      "cell_voltage_low": {
+        "name": "Cell voltage low"
+      },
+      "temp_high_charge": {
+        "name": "Temperature high (charge)"
+      },
+      "temp_low_charge": {
+        "name": "Temperature low (charge)"
+      },
+      "temp_high_module": {
+        "name": "Module temperature high"
+      },
+      "temp_low_module": {
+        "name": "Module temperature low"
+      },
+      "energy_charged": {
+        "name": "Energy charged"
+      },
+      "energy_discharged": {
+        "name": "Energy discharged"
+      },
+      "voltage_charge_high": {
+        "name": "Voltage charge high"
+      },
+      "voltage_charge_low": {
+        "name": "Voltage charge low"
+      },
+      "voltage_module_high": {
+        "name": "Module voltage high"
+      },
+      "voltage_module_low": {
+        "name": "Module voltage low"
+      },
+      "grid_status": {
+        "name": "Grid status"
+      },
+      "grid_power_factor_deviation": {
+        "name": "Power factor deviation"
+      },
+      "grid_voltage_phase": {
+        "name": "Grid voltage phase {phase}"
+      },
+      "grid_current_phase": {
+        "name": "Grid current phase {phase}"
+      },
+      "grid_reactive_power_phase": {
+        "name": "Grid reactive power phase {phase}"
+      },
+      "grid_active_power_phase": {
+        "name": "Grid active power phase {phase}"
+      },
+      "grid_power_factor_phase": {
+        "name": "Grid power factor phase {phase}"
+      },
+      "grid_energy_frequency_phase": {
+        "name": "Grid energy frequency phase {phase}"
+      },
+      "grid_energy_consumed_phase": {
+        "name": "Grid energy consumed phase {phase}"
+      },
+      "load_status": {
+        "name": "Load status"
+      },
+      "load_frequency": {
+        "name": "Load frequency"
+      },
+      "load_voltage_phase": {
+        "name": "Load voltage phase {phase}"
+      },
+      "load_active_power_phase": {
+        "name": "Load active power phase {phase}"
+      },
+      "load_energy_consumed_phase": {
+        "name": "Load energy consumed phase {phase}"
+      },
+      "inverter_status": {
+        "name": "Inverter status"
+      },
+      "inverter_frequency": {
+        "name": "Inverter frequency"
+      },
+      "inverter_isolation_resistance": {
+        "name": "Inverter isolation resistance"
+      },
+      "inverter_leakage_current": {
+        "name": "Inverter leakage current"
+      },
+      "inverter_drm_signal": {
+        "name": "Inverter DRM signal"
+      },
+      "inverter_voltage_phase": {
+        "name": "Inverter voltage phase {phase}"
+      },
+      "inverter_current_phase": {
+        "name": "Inverter current phase {phase}"
+      },
+      "inverter_active_power_phase": {
+        "name": "Inverter active power phase {phase}"
+      },
+      "inverter_reactive_power_phase": {
+        "name": "Inverter reactive power phase {phase}"
+      },
+      "inverter_dc_current_phase": {
+        "name": "Inverter DC current phase {phase}"
+      },
+      "inverter_dc_voltage_phase": {
+        "name": "Inverter DC voltage phase {phase}"
+      },
+      "inverter_eps_voltage_phase": {
+        "name": "Inverter EPS voltage phase {phase}"
+      },
+      "inverter_eps_current_phase": {
+        "name": "Inverter EPS current phase {phase}"
+      },
+      "inverter_eps_power_phase": {
+        "name": "Inverter EPS power phase {phase}"
+      },
+      "pv_inverter_status": {
+        "name": "PV-Inverter status"
+      },
+      "pv_inverter_frequency": {
+        "name": "PV-Inverter frequency"
+      },
+      "pv_inverter_voltage_phase": {
+        "name": "PV-Inverter voltage phase {phase}"
+      },
+      "pv_inverter_current_phase": {
+        "name": "PV-Inverter current phase {phase}"
+      },
+      "pv_inverter_active_power_phase": {
+        "name": "PV-Inverter active power phase {phase}"
+      },
+      "pv_inverter_reactive_power_phase": {
+        "name": "PV-Inverter reactive power phase {phase}"
+      },
+      "pv_inverter_energy_phase": {
+        "name": "PV-Inverter energy phase {phase}"
+      },
+      "pv_to_load": {
+        "name": "Power PV to load"
+      },
+      "battery_to_load": {
+        "name": "Power battery to load"
+      },
+      "grid_to_load": {
+        "name": "Power grid to load"
+      },
+      "pv_to_battery": {
+        "name": "Power PV to battery"
+      },
+      "pv_to_grid": {
+        "name": "Power PV to grid"
       }
     },
     "button" : {
@@ -173,6 +371,9 @@
     },
     "meter": {
       "name": "Meter"
+    },
+    "hybrid_inverter": {
+      "name": "Hybrid inverter"
     }
   }
 }

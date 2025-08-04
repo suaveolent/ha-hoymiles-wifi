@@ -9,6 +9,8 @@ from homeassistant.const import CONF_HOST, Platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from hoymiles_wifi.dtu import DTU
 
+from hoymiles_wifi.protobuf import ESData_pb2
+
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -23,18 +25,18 @@ class HoymilesDataUpdateCoordinator(DataUpdateCoordinator):
         self,
         hass: homeassistant,
         dtu: DTU,
-        entry: ConfigEntry,
+        config_entry: ConfigEntry,
         update_interval: timedelta,
     ) -> None:
         """Initialize the HoymilesCoordinatorEntity."""
         self._dtu = dtu
         self._hass = hass
-        self._entry = entry
+        self._config_entry = config_entry
 
         _LOGGER.debug(
             "Setup entry with update interval %s. IP: %s",
             update_interval,
-            entry.data.get(CONF_HOST),
+            config_entry.data.get(CONF_HOST),
         )
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=update_interval)
@@ -89,3 +91,72 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
                 "Unable to retrieve app information data. Inverter might be offline."
             )
         return response
+
+
+class HoymilesGatewayInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """Gateway Info coordinator for Hoymiles integration."""
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        _LOGGER.debug("Hoymiles gateway info coordinator update")
+
+        response = await self._dtu.async_get_gateway_info()
+
+        if not response:
+            _LOGGER.debug("Unable to retrieve gateway info. Inverter might be offline.")
+        return response
+
+
+class HoymilesGatewayNetworkInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """Gateway Network Info coordinator for Hoymiles integration."""
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        _LOGGER.debug("Hoymiles network info coordinator update")
+
+        response = await self._dtu.async_get_gateway_network_info(
+            dtu_serial_number=int(self._dtu_serial_number)
+        )
+
+        if not response:
+            _LOGGER.debug(
+                "Unable to retrieve network information. Inverter might be offline."
+            )
+        return response
+
+
+class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """Energy Storage Update coordinator for Hoymiles integration."""
+
+    def __init__(
+        self,
+        hass: homeassistant,
+        dtu: DTU,
+        config_entry: ConfigEntry,
+        update_interval: timedelta,
+        dtu_serial_number: int,
+        inverters: list[int],
+    ) -> None:
+        self._dtu_serial_number = dtu_serial_number
+        self._inverters = inverters
+        super().__init__(hass, dtu, config_entry, update_interval)
+
+    async def _async_update_data(self):
+        """Update data via library."""
+        _LOGGER.debug("Hoymiles energy storage coordinator update")
+
+        responses = []
+
+        for inverter in self._inverters:
+            storage_data = await self._dtu.async_get_energy_storage_data(
+                dtu_serial_number=int(self._dtu_serial_number),
+                inverter_serial_number=inverter["inverter_serial_number"],
+            )
+            if storage_data is not None:
+                responses.append(storage_data)
+
+        if not responses:
+            _LOGGER.debug(
+                "Unable to retrieve energy storage data. Inverter might be offline."
+            )
+        return responses

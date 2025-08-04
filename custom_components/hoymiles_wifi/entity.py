@@ -17,7 +17,9 @@ from hoymiles_wifi.hoymiles import (
 )
 
 from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN
-from .coordinator import HoymilesDataUpdateCoordinator
+from .coordinator import (
+    HoymilesDataUpdateCoordinator,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,6 +40,7 @@ class HoymilesEntityDescription(EntityDescription):
     serial_number: str = None
     port_number: int = None
     supported_dtu_types: list[DTUType] = None
+    phase: str = None
 
 
 class HoymilesEntity(Entity):
@@ -51,11 +54,17 @@ class HoymilesEntity(Entity):
         self.entity_description = description
         self._config_entry = config_entry
         self._attr_unique_id = f"hoymiles_{config_entry.entry_id}_{description.key}"
-        self._attr_translation_placeholders = {
-            "port_number": f"{description.port_number}"
-        }
+
+        if description.port_number:
+            self._attr_translation_placeholders = {
+                "port_number": f"{description.port_number}"
+            }
+        if description.phase:
+            self._attr_translation_placeholders = {"phase": f"{description.phase}"}
 
         dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
+
+        serial_number = str(self.entity_description.serial_number)
 
         if self.entity_description.is_dtu_sensor is True:
             device_translation_key = "dtu"
@@ -67,20 +76,27 @@ class HoymilesEntity(Entity):
                 )
                 device_translation_key = "meter"
             else:
-                device_model = get_inverter_model_name(
-                    self.entity_description.serial_number
-                )
-                device_translation_key = "inverter"
+                if (
+                    hasattr(self.entity_description, "model_name")
+                    and self.entity_description.model_name
+                ):
+                    device_model = self.entity_description.model_name
+                    device_translation_key = "hybrid_inverter"
+                else:
+                    device_model = get_inverter_model_name(
+                        self.entity_description.serial_number
+                    )
+                    device_translation_key = "inverter"
 
         device_info = DeviceInfo(
-            identifiers={(DOMAIN, self.entity_description.serial_number)},
+            identifiers={(DOMAIN, serial_number)},
             translation_key=device_translation_key,
             manufacturer="Hoymiles",
-            serial_number=self.entity_description.serial_number.upper(),
+            serial_number=serial_number.upper(),
             model=device_model,
         )
 
-        if self.entity_description.is_dtu_sensor is False:
+        if not self.entity_description.is_dtu_sensor:
             device_info["via_device"] = (DOMAIN, dtu_serial_number)
 
         self._attr_device_info = device_info

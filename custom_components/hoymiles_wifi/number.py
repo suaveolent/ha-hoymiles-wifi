@@ -18,6 +18,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
+    CONF_THREE_PHASE_INVERTERS,
     DOMAIN,
     HASS_CONFIG_COORDINATOR,
 )
@@ -71,22 +72,24 @@ async def async_setup_entry(
 ) -> None:
     """Set up the Hoymiles number entities."""
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    config_coordinator = hass_data[HASS_CONFIG_COORDINATOR]
+    config_coordinator = hass_data.get(HASS_CONFIG_COORDINATOR, None)
+    single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
+    three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
 
-    sensors = []
-    for description in CONFIG_CONTROL_ENTITIES:
-        if description.is_dtu_sensor is True:
-            updated_description = dataclasses.replace(
-                description, serial_number=dtu_serial_number
-            )
-            sensors.append(
-                HoymilesNumberEntity(
-                    config_entry, updated_description, config_coordinator
+    if single_phase_inverters or three_phase_inverters:
+        sensors = []
+        for description in CONFIG_CONTROL_ENTITIES:
+            if description.is_dtu_sensor is True:
+                updated_description = dataclasses.replace(
+                    description, serial_number=dtu_serial_number
                 )
-            )
-
-    async_add_entities(sensors)
+                sensors.append(
+                    HoymilesNumberEntity(
+                        config_entry, updated_description, config_coordinator
+                    )
+                )
+        async_add_entities(sensors)
 
 
 class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):

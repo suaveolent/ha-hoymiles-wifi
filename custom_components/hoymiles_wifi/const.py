@@ -4,7 +4,7 @@ DOMAIN = "hoymiles_wifi"
 NAME = "Hoymiles"
 DOMAIN = "hoymiles_wifi"
 DOMAIN_DATA = f"{DOMAIN}_data"
-CONFIG_VERSION = 3
+CONFIG_VERSION = 4
 
 ISSUE_URL = "https://github.com/suaveolent/ha-hoymiles-wifi/issues"
 
@@ -12,6 +12,7 @@ CONF_UPDATE_INTERVAL = "update_interval"
 CONF_DTU_SERIAL_NUMBER = "dtu_serial_number"
 CONF_INVERTERS = "inverters"
 CONF_THREE_PHASE_INVERTERS = "three_phase_inverters"
+CONF_HYBRID_INVERTERS = "hybrid_inverters"
 CONF_PORTS = "ports"
 CONF_METERS = "meters"
 
@@ -25,6 +26,7 @@ DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS = 60 * 60 * 2
 HASS_DATA_COORDINATOR = "data_coordinator"
 HASS_CONFIG_COORDINATOR = "config_coordinator"
 HASS_APP_INFO_COORDINATOR = "app_info_coordinator"
+HASS_ENERGY_STORAGE_DATA_COORDINATOR = "energy_stroage_data_coordinator"
 HASS_DTU = "dtu"
 HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER = "unsub_options_update_listener"
 

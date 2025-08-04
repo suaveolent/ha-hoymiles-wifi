@@ -45,7 +45,7 @@ async def async_get_config_entry_data_for_host(
             logging.debug("DTU is encrypted.")
             is_encrypted = True
             enc_rand = app_information_data.dtu_info.enc_rand.hex()
-            dtu = DTU(host, is_encrypted=is_encrypted, enc_rand=enc_rand)
+            dtu = DTU(host, is_encrypted=is_encrypted, enc_rand=bytes.fromhex(enc_rand))
             await asyncio.sleep(2)
 
     logging.debug("Trying get_real_data_new()!")

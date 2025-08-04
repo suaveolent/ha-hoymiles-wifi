@@ -67,7 +67,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     enc_rand = config_entry.data.get(CONF_ENC_RAND, None)
 
     if is_encrypted:
-        dtu = DTU(host, is_encrypted=is_encrypted, enc_rand=enc_rand)
+        dtu = DTU(host, is_encrypted=is_encrypted, enc_rand=bytes.fromhex(enc_rand))
     else:
         dtu = DTU(host)
 

@@ -7,6 +7,8 @@ import logging
 from hoymiles_wifi.dtu import DTU
 from hoymiles_wifi.hoymiles import generate_inverter_serial_number
 
+from hoymiles_wifi.const import IS_ENCRYPTED_BIT_INDEX
+
 from .error import CannotConnect
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,6 +22,8 @@ async def async_get_config_entry_data_for_host(
     list[dict[str, Union[str, int]]],
     list[dict[str, Union[str, int]]],
     list[dict[str, Union[str, int]]],
+    bool,
+    str,
 ]:
     """Get data for config entry from host."""
 
@@ -29,15 +33,26 @@ async def async_get_config_entry_data_for_host(
     meters = []
     hybrid_inverters = []
     dtu_sn = None
+    is_encrypted = False
+    enc_rand = ""
 
     dtu = DTU(host)
+
+    app_information_data = await dtu.async_app_information_data()
+
+    if app_information_data and app_information_data.dtu_info.dfs:
+        if (app_information_data.dtu_info.dfs >> IS_ENCRYPTED_BIT_INDEX) & 1:
+            logging.debug("DTU is encrypted.")
+            is_encrypted = True
+            enc_rand = app_information_data.dtu_info.enc_rand.hex()
+            dtu = DTU(host, is_encrypted=is_encrypted, enc_rand=bytes.fromhex(enc_rand))
+            await asyncio.sleep(2)
 
     logging.debug("Trying get_real_data_new()!")
     real_data = await dtu.async_get_real_data_new()
     logging.debug(f"RealDataNew call done. Result: {real_data}")
 
     if real_data:
-        
         dtu_sn = real_data.device_serial_number
 
         single_phase_inverters = [
@@ -70,7 +85,9 @@ async def async_get_config_entry_data_for_host(
             for meter_data in real_data.meter_data
         ]
     else:
-        logging.debug("RealDataNew is None. Sleeping for 5s before trying get_gateway_info()!")
+        logging.debug(
+            "RealDataNew is None. Sleeping for 5s before trying get_gateway_info()!"
+        )
         await asyncio.sleep(5)
         gateway_info = await dtu.async_get_gateway_info()
         logging.debug(f"GatewayInfo call done. Result: {gateway_info}")
@@ -111,4 +128,6 @@ async def async_get_config_entry_data_for_host(
         ports,
         meters,
         hybrid_inverters,
+        is_encrypted,
+        enc_rand,
     )

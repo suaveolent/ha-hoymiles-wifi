@@ -55,7 +55,7 @@ BUTTONS: tuple[HoymilesButtonEntityDescription, ...] = (
     ),
     HoymilesButtonEntityDescription(
         key="reboot_inverter_<inverter_serial>",
-        translation_key="reboot",
+        translation_key="restart",
         icon="mdi:restart",
         action="async_reboot_inverter",
     ),

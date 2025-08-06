@@ -37,11 +37,14 @@
       }
     },
     "sensor": {
-      "ac_power": {
+      "ac_active_power": {
         "name": "AC-Leistung"
       },
       "ac_daily_energy": {
         "name": "AC-Tagesenergie"
+      },
+      "ac_reactive_power": {
+        "name": "AC-Blindleistung"
       },
       "grid_voltage": {
         "name": "Netzspannung"

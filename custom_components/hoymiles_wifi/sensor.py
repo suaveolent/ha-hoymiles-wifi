@@ -109,6 +109,25 @@ class HoymilesDiagnosticEntityDescription(
 
 HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
+        key="dtu_power",
+        translation_key="ac_active_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+        is_dtu_sensor=True,
+        supported_dtu_types=[
+            DTUType.DTU_G100,
+            DTUType.DTU_W100,
+            DTUType.DTU_LITE_S,
+            DTUType.DTU_LITE,
+            DTUType.DTU_PRO,
+            DTUType.DTU_PRO_S,
+            DTUType.DTUBI,
+            DTUType.DTU_W_LITE,
+        ],
+    ),
+    HoymilesSensorEntityDescription(
         key="dtu_daily_energy",
         translation_key="ac_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,

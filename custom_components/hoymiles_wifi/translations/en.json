@@ -61,6 +61,9 @@
       "inverter_temperature": {
         "name": "Temperature"
       },
+      "inverter_warning_number": {
+        "name": "Warning number"
+      },
       "port_dc_voltage": {
         "name": "Port {port_number} DC voltage"
       },

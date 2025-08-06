@@ -185,6 +185,10 @@ HOYMILES_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
+        key="sgs_data[<inverter_count>].warning_number",
+        translation_key="inverter_warning_number",
+    ),
+    HoymilesSensorEntityDescription(
         key="tgs_data[<inverter_count>].active_power",
         translation_key="ac_active_power",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -295,6 +299,10 @@ HOYMILES_SENSORS = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].warning_number",
+        translation_key="inverter_warning_number",
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].voltage",

@@ -61,6 +61,9 @@
       "inverter_temperature": {
         "name": "Température de l'onduleur"
       },
+      "inverter_warning_number": {
+        "name": "Numéro d'avertissement"
+      },
       "port_dc_voltage": {
         "name": "Tension DC du port {port_number}"
       },

@@ -46,6 +46,9 @@
       "grid_voltage": {
         "name": "Grid voltage"
       },
+      "ac_current": {
+        "name": "AC current" 
+      },
       "grid_frequency": {
         "name": "Grid frequency"
       },

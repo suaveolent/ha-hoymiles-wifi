@@ -145,6 +145,14 @@ HOYMILES_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
+        key="sgs_data[<inverter_count>].current",
+        translation_key="ac_current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
+    ),
+    HoymilesSensorEntityDescription(
         key="sgs_data[<inverter_count>].frequency",
         translation_key="grid_frequency",
         native_unit_of_measurement=UnitOfFrequency.HERTZ,

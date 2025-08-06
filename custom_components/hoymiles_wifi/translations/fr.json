@@ -46,6 +46,9 @@
       "grid_voltage": {
         "name": "Tension du réseau"
       },
+      "ac_current": {
+        "name": "Courant AC" 
+      },
       "grid_frequency": {
         "name": "Fréquence du réseau"
       },

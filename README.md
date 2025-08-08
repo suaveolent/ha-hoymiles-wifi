@@ -14,6 +14,7 @@ The custom component was successfully tested with:
 
 - Hoymiles HMS-400W-1T
 - Hoymiles HMS-800W-2T
+- Hoymiles HMS-1000W-2T
 - Hoymiles HMS-2000DW-4T
 - Hoymiles DTU-WLite
 - Hoymiles DTU-Pro (S)

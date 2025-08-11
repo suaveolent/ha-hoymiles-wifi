@@ -8,8 +8,8 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from hoymiles_wifi.dtu import DTU
+from .util import is_encrypted_dtu, async_check_and_update_enc_rand
 
-from hoymiles_wifi.protobuf import ESData_pb2
 
 from .const import DOMAIN
 
@@ -85,6 +85,12 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
         _LOGGER.debug("Hoymiles data coordinator update")
 
         response = await self._dtu.async_app_information_data()
+
+        if response and response.dtu_info.dfs:
+            if is_encrypted_dtu(response.dtu_info.dfs):
+                await async_check_and_update_enc_rand(
+                    self._hass, self._config_entry, response.dtu_info.enc_rand.hex()
+                )
 
         if not response:
             _LOGGER.debug(

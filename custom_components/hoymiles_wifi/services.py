@@ -9,7 +9,9 @@ from homeassistant.helpers.device_registry import async_get as async_get_dev_reg
 from hoymiles_wifi.utils import parse_time_periods_input, parse_time_settings_input
 
 
-async def async_register_services(hass: HomeAssistant, dtu: DTU):
+async def async_register_services(
+    hass: HomeAssistant, dtu: DTU, dtu_serial_number: str
+):
     """Register all services for this integration."""
 
     async def async_handle_set_bms_mode(call: ServiceCall):

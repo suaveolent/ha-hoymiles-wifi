@@ -89,7 +89,10 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
         if response and response.dtu_info.dfs:
             if is_encrypted_dtu(response.dtu_info.dfs):
                 await async_check_and_update_enc_rand(
-                    self._hass, self._config_entry, response.dtu_info.enc_rand.hex()
+                    self._hass,
+                    self._config_entry,
+                    self._dtu,
+                    response.dtu_info.enc_rand.hex(),
                 )
 
         if not response:

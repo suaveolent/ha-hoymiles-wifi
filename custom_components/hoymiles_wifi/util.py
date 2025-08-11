@@ -143,17 +143,17 @@ def is_encrypted_dtu(dfs: int) -> bool:
 
 
 async def async_check_and_update_enc_rand(
-    hass: HomeAssistant, config_entry: ConfigEntry, enc_rand: str
+    hass: HomeAssistant, config_entry: ConfigEntry, dtu: DTU, enc_rand: str
 ) -> None:
     """Check and update the enc_rand if necessary."""
     enc_rand_old = config_entry.data.get(CONF_ENC_RAND, None)
 
     if enc_rand_old is None or enc_rand_old != enc_rand:
         _LOGGER.debug(
-            "Updating enc_rand in config entry %s from %s to %s",
-            config_entry.entry_id,
+            "Updating enc_rand in config entry and DTU from %s to %s",
             enc_rand_old,
             enc_rand,
         )
+        dtu.enc_rand = bytes.fromhex(enc_rand)
         new_data = {**config_entry.data, CONF_ENC_RAND: enc_rand}
         await hass.config_entries.async_update_entry(config_entry, data=new_data)

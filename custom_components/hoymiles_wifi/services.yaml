@@ -1,0 +1,52 @@
+set_bms_mode:
+  name: Set BMS Working Mode
+  description: Sets the working mode of the Hoymiles hybrid inverter.
+  target:
+    device:
+      integration: hoymiles_wifi
+  fields:
+    mode:
+      required: true
+      selector:
+        select:
+          options:
+            - SELF_USE
+            - ECONOMIC
+            - BACKUP_POWER
+            - PURE_OFF_GRID
+            - FORCED_CHARGING
+            - FORCED_DISCHARGE
+            - PEAK_SHAVING
+            - TIME_OF_USE
+    rev_soc:
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
+    max_power:
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+    peak_soc:
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+    peak_meter_power:
+      required: false
+      selector:
+        number:
+          min: 0
+          max: 100
+    time_settings:
+      required: false
+      selector:
+        text:
+    time_periods:
+      required: false
+      selector:
+        text:

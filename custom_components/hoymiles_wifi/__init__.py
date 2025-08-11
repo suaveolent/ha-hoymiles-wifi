@@ -11,6 +11,8 @@ from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.typing import ConfigType
 from hoymiles_wifi.dtu import DTU
 
+from .services import async_set_bms_mode
+
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
     CONF_HYBRID_INVERTERS,
@@ -124,6 +126,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         await app_info_update_coordinator.async_config_entry_first_refresh()
     if hybrid_inverters:
         await energy_storage_data_coordinator.async_config_entry_first_refresh()
+        print("Energy storage coordinator first refresh done")
+        hass.services.async_register(
+            DOMAIN,
+            "set_bms_mode",
+            async_set_bms_mode,
+        )
+        print("Service set_bms_mode registered")
 
     return True
 

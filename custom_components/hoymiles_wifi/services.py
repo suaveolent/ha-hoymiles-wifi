@@ -5,63 +5,79 @@ from hoymiles_wifi.hoymiles import BMSWorkingMode
 
 from custom_components.hoymiles_wifi.const import HASS_DTU, DOMAIN
 from homeassistant.helpers.device_registry import async_get as async_get_dev_reg
-from homeassistant.helpers.entity_registry import async_get as async_get_ent_reg
+
+from hoymiles_wifi.utils import parse_time_periods_input, parse_time_settings_input
 
 
-async def async_set_bms_mode(hass: HomeAssistant, call: ServiceCall):
-    dtu: DTU = hass.data[DOMAIN][HASS_DTU]
+async def async_register_services(hass: HomeAssistant, dtu: DTU):
+    """Register all services for this integration."""
 
-    device_ids = call.target.device_id
-    if not device_ids:
-        raise ValueError("No target devices selected.")
+    async def async_handle_set_bms_mode(call: ServiceCall):
+        device_ids = call.target.device_id
+        if not device_ids:
+            raise ValueError("No target devices selected.")
 
-    dev_reg = async_get_dev_reg(hass)
-    ent_reg = async_get_ent_reg(hass)
+        device_registry = async_get_dev_reg(hass)
 
-    for device_id in device_ids:
-        related_entities = [
-            ent
-            for ent in ent_reg.entities.values()
-            if ent.device_id == device_id and ent.domain == "sensor"
-        ]
+        serial = None
 
-    serial = None
+        # Access device_id from the service call's target
+        for device_id in call.data.get("device_id", []):
+            device = device_registry.async_get(device_id)
+            if device:
+                hass.logger.info(f"Device: {device.name} ({device.id})")
 
-    for ent in related_entities:
-        state = hass.states.get(ent.entity_id)
-        if state and "inverter_serial_number" in state.attributes:
-            serial = state.attributes["inverter_serial_number"]
-            break
+        if not serial:
+            raise ValueError(f"No serial number found for device {device_id}")
 
-    if not serial:
-        raise ValueError(f"No serial number found for device {device_id}")
+        mode_str = call.data["mode"]
+        bms_working_mode = BMSWorkingMode[mode_str.upper()]
+        rev_soc = call.data.get("rev_soc")
+        max_power = call.data.get("max_power")
+        peak_soc = call.data.get("peak_soc")
+        peak_meter_power = call.data.get("peak_meter_power")
+        time_settings_str = call.data.get("time_settings")
+        time_periods_str = call.data.get("time_periods")
 
-    mode_str = call.data["mode"]
-    mode = BMSWorkingMode[mode_str.upper()]  # converts to Enum
-    rev_soc = call.data["rev_soc"]
-    max_power = call.data.get("max_power")
-    peak_soc = call.data.get("peak_soc")
-    peak_meter_power = call.data.get("peak_meter_power")
-    time_settings = call.data.get("time_settings")
-    time_periods = call.data.get("time_periods")
+        time_settings = None
+        time_periods = None
 
-    # Construct kwargs based on mode
-    kwargs = {
-        "bms_working_mode": mode,
-        "inverter_serial_number": serial,
-        "rev_soc": rev_soc,
-    }
+        if rev_soc is None:
+            raise ValueError("No reserve SOC provided!")
 
-    # Add conditional params
-    if mode in [5, 6] and max_power is not None:
-        kwargs["max_power"] = max_power
-    elif mode == 7:
-        kwargs["peak_soc"] = peak_soc
-        kwargs["peak_meter_power"] = peak_meter_power
-    elif mode == 2 and time_settings:
-        kwargs["time_settings"] = time_settings
-    elif mode == 8 and time_periods:
-        kwargs["time_periods"] = time_periods
+        if bms_working_mode == BMSWorkingMode.ECONOMIC:
+            time_settings = parse_time_settings_input(time_settings_str)
+            if not time_settings:
+                raise ValueError("Invalid time settings!")
 
-    # Call the library function
-    await dtu.async_set_energy_storage_working_mode(**kwargs)
+        elif bms_working_mode in (
+            BMSWorkingMode.FORCED_CHARGING,
+            BMSWorkingMode.FORCED_DISCHARGE,
+        ):
+            if max_power is None:
+                raise ValueError("No max power provided!")
+
+        elif bms_working_mode == BMSWorkingMode.PEAK_SHAVING:
+            if peak_soc is None:
+                raise ValueError("No peak SOC provided!")
+            if peak_meter_power is None:
+                raise ValueError("No peak meter power provided!")
+
+        elif bms_working_mode == BMSWorkingMode.TIME_OF_USE:
+            time_periods = parse_time_periods_input(time_periods_str)
+            if not time_periods:
+                raise ValueError("Invalid time periods!")
+
+        # === Call the actual API ===
+
+        await dtu.async_set_energy_storage_working_mode(
+            dtu_serial_number=gateway_info.serial_number,
+            inverter_serial_number=serial,
+            bms_working_mode=bms_working_mode,
+            rev_soc=rev_soc,
+            time_settings=time_settings,
+            max_power=max_power,
+            peak_soc=peak_soc,
+            peak_meter_power=peak_meter_power,
+            time_periods=time_periods,
+        )

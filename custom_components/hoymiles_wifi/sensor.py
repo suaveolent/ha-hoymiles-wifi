@@ -109,6 +109,25 @@ class HoymilesDiagnosticEntityDescription(
 
 HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
+        key="dtu_power",
+        translation_key="ac_active_power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+        is_dtu_sensor=True,
+        supported_dtu_types=[
+            DTUType.DTU_G100,
+            DTUType.DTU_W100,
+            DTUType.DTU_LITE_S,
+            DTUType.DTU_LITE,
+            DTUType.DTU_PRO,
+            DTUType.DTU_PRO_S,
+            DTUType.DTUBI,
+            DTUType.DTU_W_LITE,
+        ],
+    ),
+    HoymilesSensorEntityDescription(
         key="dtu_daily_energy",
         translation_key="ac_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
@@ -130,9 +149,17 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="sgs_data[<inverter_count>].active_power",
-        translation_key="ac_power",
+        translation_key="ac_active_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="sgs_data[<inverter_count>].reactive_power",
+        translation_key="ac_reactive_power",
+        native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
+        device_class=SensorDeviceClass.REACTIVE_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
     ),
@@ -143,6 +170,14 @@ HOYMILES_SENSORS = [
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="sgs_data[<inverter_count>].current",
+        translation_key="ac_current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.01,
     ),
     HoymilesSensorEntityDescription(
         key="sgs_data[<inverter_count>].frequency",
@@ -169,10 +204,22 @@ HOYMILES_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesSensorEntityDescription(
+        key="sgs_data[<inverter_count>].warning_number",
+        translation_key="inverter_warning_number",
+    ),
+    HoymilesSensorEntityDescription(
         key="tgs_data[<inverter_count>].active_power",
-        translation_key="ac_power",
+        translation_key="ac_active_power",
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].reactive_power",
+        translation_key="ac_reactive_power",
+        native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
+        device_class=SensorDeviceClass.REACTIVE_POWER,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
     ),
@@ -271,6 +318,10 @@ HOYMILES_SENSORS = [
         device_class=SensorDeviceClass.TEMPERATURE,
         state_class=SensorStateClass.MEASUREMENT,
         conversion_factor=0.1,
+    ),
+    HoymilesSensorEntityDescription(
+        key="tgs_data[<inverter_count>].warning_number",
+        translation_key="inverter_warning_number",
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].voltage",

@@ -37,14 +37,20 @@
       }
     },
     "sensor": {
-      "ac_power": {
+      "ac_active_power": {
         "name": "AC-Leistung"
       },
       "ac_daily_energy": {
         "name": "AC-Tagesenergie"
       },
+      "ac_reactive_power": {
+        "name": "AC-Blindleistung"
+      },
       "grid_voltage": {
         "name": "Netzspannung"
+      },
+      "ac_current": {
+        "name": "AC-Strom" 
       },
       "grid_frequency": {
         "name": "Netzfrequenz"
@@ -54,6 +60,9 @@
       },
       "inverter_temperature": {
         "name": "Temperatur"
+      },
+      "inverter_warning_number": {
+        "name": "Warnnummer"
       },
       "port_dc_voltage": {
         "name": "Port {port_number} DC-Spannung"
@@ -178,20 +187,20 @@
       "power_factor_phase_C": {
         "name": "Leistungsfaktor Phase C"
       },
-      "energy_to_load" : {
-        "name" : "Energie zu Last"
+      "energy_to_load": {
+        "name": "Energie zu Last"
       },
-      "energy_to_battery" : {
-        "name" : "Energie zu Batterie"
+      "energy_to_battery": {
+        "name": "Energie zu Batterie"
       },
-      "energy_from_pv" : {
-        "name" : "Energie aus PV"
+      "energy_from_pv": {
+        "name": "Energie aus PV"
       },
-      "energy_from_battery" : {
-        "name" : "Energie aus Batterie"
+      "energy_from_battery": {
+        "name": "Energie aus Batterie"
       },
-      "energy_from_grid" : {
-        "name" : "Energie aus Netz"
+      "energy_from_grid": {
+        "name": "Energie aus Netz"
       },
       "pv_panel_voltage": {
         "name": "PV panel {port_number} voltage"
@@ -390,15 +399,12 @@
       "turn_on": {
         "name": "Einschalten"
       },
-      "reboot": {
-        "name": "Neustart"
-      },
-      "enable_performance_data_mode" : {
-        "name" : "Experimentell: Leistungsdatenmodus aktivieren"
+      "enable_performance_data_mode": {
+        "name": "Experimentell: Leistungsdatenmodus aktivieren"
       }
     }
   },
-    "device": {
+  "device": {
     "inverter": {
       "name": "Wechselrichter"
     },

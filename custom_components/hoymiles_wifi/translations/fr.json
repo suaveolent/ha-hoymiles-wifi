@@ -31,20 +31,26 @@
         "name": "DTU"
       }
     },
-    "number" : {
+    "number": {
       "limit_power_mypower": {
         "name": "Limite de puissance"
       }
     },
     "sensor": {
-      "ac_power": {
+      "ac_active_power": {
         "name": "Puissance AC"
       },
       "ac_daily_energy": {
         "name": "Énergie quotidienne AC"
       },
+      "ac_reactive_power": {
+        "name": "Puissance réactive AC"
+      },
       "grid_voltage": {
         "name": "Tension du réseau"
+      },
+      "ac_current": {
+        "name": "Courant AC" 
       },
       "grid_frequency": {
         "name": "Fréquence du réseau"
@@ -54,6 +60,9 @@
       },
       "inverter_temperature": {
         "name": "Température de l'onduleur"
+      },
+      "inverter_warning_number": {
+        "name": "Numéro d'avertissement"
       },
       "port_dc_voltage": {
         "name": "Tension DC du port {port_number}"
@@ -97,10 +106,10 @@
       "pv_sw_version": {
         "name": "Version SW"
       },
-      "pv_hw_version" : {
+      "pv_hw_version": {
         "name": "Version HW"
       },
-      "signal_strength" : {
+      "signal_strength": {
         "name": "Force du signal"
       },
       "voltage_phase_A": {
@@ -178,20 +187,20 @@
       "power_factor_phase_C": {
         "name": "Facteur de puissance phase C"
       },
-      "energy_to_load" : {
-        "name" : "Énergie à charger"
+      "energy_to_load": {
+        "name": "Énergie à charger"
       },
-      "energy_to_battery" : {
-        "name" : "Énergie à la batterie"
+      "energy_to_battery": {
+        "name": "Énergie à la batterie"
       },
-      "energy_from_pv" : {
-        "name" : "Énergie provenant de PV"
+      "energy_from_pv": {
+        "name": "Énergie provenant de PV"
       },
-      "energy_from_battery" : {
-        "name" : "Énergie provenant de la batterie"
+      "energy_from_battery": {
+        "name": "Énergie provenant de la batterie"
       },
-      "energy_from_grid" : {
-        "name" : "Énergie provenant du réseau"
+      "energy_from_grid": {
+        "name": "Énergie provenant du réseau"
       },
       "pv_panel_voltage": {
         "name": "Tension du panneau PV {port_number}"
@@ -380,21 +389,18 @@
         "name": "Puissance batterie vers réseau"
       }
     },
-    "button" : {
-      "restart" : {
-        "name" : "Redémarrer"
-      },
-      "turn_off" : {
-        "name" : "Éteindre"
-      },
-      "turn_on" : {
-        "name" : "Allumer"
-      },
-      "reboot": {
+    "button": {
+      "restart": {
         "name": "Redémarrer"
       },
-      "enable_performance_data_mode" : {
-        "name" : "Expérimental: Activer le mode de données de performance"
+      "turn_off": {
+        "name": "Éteindre"
+      },
+      "turn_on": {
+        "name": "Allumer"
+      },
+      "enable_performance_data_mode": {
+        "name": "Expérimental: Activer le mode de données de performance"
       }
     }
   },

@@ -6,10 +6,14 @@ import logging
 
 from hoymiles_wifi.dtu import DTU
 from hoymiles_wifi.hoymiles import generate_inverter_serial_number
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 
 from hoymiles_wifi.const import IS_ENCRYPTED_BIT_INDEX
 
 from .error import CannotConnect
+
+from .const import CONF_ENC_RAND
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,7 +45,7 @@ async def async_get_config_entry_data_for_host(
     app_information_data = await dtu.async_app_information_data()
 
     if app_information_data and app_information_data.dtu_info.dfs:
-        if (app_information_data.dtu_info.dfs >> IS_ENCRYPTED_BIT_INDEX) & 1:
+        if is_encrypted_dtu(app_information_data.dtu_info.dfs):
             logging.debug("DTU is encrypted.")
             is_encrypted = True
             enc_rand = app_information_data.dtu_info.enc_rand.hex()
@@ -131,3 +135,25 @@ async def async_get_config_entry_data_for_host(
         is_encrypted,
         enc_rand,
     )
+
+
+def is_encrypted_dtu(dfs: int) -> bool:
+    """Check if the DTU is encrypted."""
+    return (dfs >> IS_ENCRYPTED_BIT_INDEX) & 1
+
+
+async def async_check_and_update_enc_rand(
+    hass: HomeAssistant, config_entry: ConfigEntry, dtu: DTU, enc_rand: str
+) -> None:
+    """Check and update the enc_rand if necessary."""
+    enc_rand_old = config_entry.data.get(CONF_ENC_RAND, None)
+
+    if enc_rand_old is None or enc_rand_old != enc_rand:
+        _LOGGER.debug(
+            "Updating enc_rand in config entry and DTU from %s to %s",
+            enc_rand_old,
+            enc_rand,
+        )
+        dtu.enc_rand = bytes.fromhex(enc_rand)
+        new_data = {**config_entry.data, CONF_ENC_RAND: enc_rand}
+        await hass.config_entries.async_update_entry(config_entry, data=new_data)

@@ -657,6 +657,14 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         conversion_factor=0.1,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
+        key="[<inverter_count>].production.energy_to_grid",
+        translation_key="energy_to_grid",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        conversion_factor=0.1,
+    ),
+    HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].consumption.energy_from_pv",
         translation_key="energy_from_pv",
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,

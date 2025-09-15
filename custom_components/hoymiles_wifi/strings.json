@@ -193,6 +193,9 @@
       "energy_to_battery": {
         "name": "Energy to battery"
       },
+      "energy_to_grid": {
+        "name": "Energy to grid"
+      },
       "energy_from_pv": {
         "name": "Energy from PV"
       },

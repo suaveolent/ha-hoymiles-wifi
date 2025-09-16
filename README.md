@@ -18,6 +18,7 @@ The custom component was successfully tested with:
 - Hoymiles HMS-2000DW-4T
 - Hoymiles DTU-WLite
 - Hoymiles DTU-Pro (S)
+- Hoymiles HAS-5.0LV-EUG1
 - Hoymiles HYS-4.6LV-EUG1
 - Hoymiles HYT-5.0HV-EUG1
 - Solenso H-1000 (not tested for command, only to get data)

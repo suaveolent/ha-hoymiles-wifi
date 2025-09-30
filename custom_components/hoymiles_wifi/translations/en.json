@@ -420,5 +420,41 @@
     "hybrid_inverter": {
       "name": "Hybrid inverter"
     }
+  },
+  "services": {
+    "set_bms_mode": {
+      "name": "Set BMS mode",
+      "description": "Set the BMS mode of the connected battery.",
+      "fields": {
+        "bms_mode": {
+          "name": "BMS mode",
+          "description": "The BMS working mode to set. Possible values are: Self-Consumption Mode, Economy Mode, Backup Mode, Off-Grid Mode, Force Charge Mode, Force Discharge Mode, Peak Shaving Mode, Time of Use Mode"
+        },
+        "rev_soc": {
+          "name": "Reserved SOC",
+          "description": "The reserved state of charge (SOC) to set (in %)."
+        },
+        "max_power": {
+          "name": "Max Power",
+          "description": "The maximum charge/discharge power to set (in %)."
+        },
+        "peak_soc": {
+          "name": "Peak SOC",
+          "description": "The peak state of charge (SOC) to set (in %)."
+        },
+        "peak_meter_power": {
+          "name": "Peak Meter Power",
+          "description": "The peak meter power to set (in %)."
+        },
+        "time_settings": {
+          "name": "Time Settings",
+          "description": "Configure time-of-use settings. Format: START,END (date in DD.MM). For each date range, define exactly two time ranges separated by ';'. Each time range includes WEEKDAYS (comma-separated, 1=Mon,...,7=Sun) and 3 tariff blocks: PEAK, OFF_PEAK, PARTIAL_PEAK. Each block: START-END-IN_PRICE-OUT_PRICE. Separate blocks with ','. Separate multiple date ranges with '||'.\nExample:\n01.01-31.03:1,2,3=06:00-10:00-0.20-0.10,00:00-06:00-0.10-0.05,10:00-18:00-0.15-0.08;4,5=07:00-11:00-0.22-0.11,00:00-07:00-0.08-0.04,11:00-17:00-0.14-0.07"
+        },
+        "time_periods": {
+          "name": "Time Periods",
+          "description": "Define time periods for time-of-use mode. Example:\\nn06:00-08:00-50-90|18:00-20:00-40-20"
+        }
+      } 
+    }
   }
 }

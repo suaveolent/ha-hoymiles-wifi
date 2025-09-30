@@ -5,7 +5,7 @@
         "title": "Hoymiles DTU connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
-          "host": "[%key:common::config_flow::data::host%]",
+          "host": "Host",
           "update_interval": "Update Interval (seconds)"
         }
       },
@@ -13,16 +13,16 @@
         "title": "Hoymiles DTU connection",
         "description": "If you need help with the configuration have a look here: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
-          "host": "[%key:common::config_flow::data::host%]",
+          "host": "Host",
           "update_interval": "Update Interval (seconds)"
         }
       }
     },
     "error": {
-      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
+      "cannot_connect": "Failed to connect."
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "Already configured."
     }
   },
   "entity": {
@@ -31,26 +31,20 @@
         "name": "DTU"
       }
     },
-    "number": {
+    "number" : {
       "limit_power_mypower": {
         "name": "Power limit"
       }
     },
     "sensor": {
-      "ac_active_power": {
+      "ac_power": {
         "name": "AC power"
       },
       "ac_daily_energy": {
         "name": "AC daily energy"
       },
-      "ac_reactive_power": {
-        "name": "AC reactive power"
-      },
       "grid_voltage": {
         "name": "Grid voltage"
-      },
-      "ac_current": {
-        "name": "AC current" 
       },
       "grid_frequency": {
         "name": "Grid frequency"
@@ -60,9 +54,6 @@
       },
       "inverter_temperature": {
         "name": "Temperature"
-      },
-      "inverter_warning_number": {
-        "name": "Warning number"
       },
       "port_dc_voltage": {
         "name": "Port {port_number} DC voltage"
@@ -106,10 +97,10 @@
       "pv_sw_version": {
         "name": "SW version"
       },
-      "pv_hw_version": {
+      "pv_hw_version" : {
         "name": "HW version"
       },
-      "signal_strength": {
+      "signal_strength" : {
         "name": "Signal strength"
       },
       "voltage_phase_A": {
@@ -136,12 +127,6 @@
       "phase_A_power": {
         "name": "Phase A power"
       },
-      "phase_B_power": {
-        "name": "Phase B power"
-      },
-      "phase_C_power": {
-        "name": "Phase C power"
-      },
       "power_factor_total": {
         "name": "Power factor total"
       },
@@ -151,59 +136,32 @@
       "energy_phase_A": {
         "name": "Energy phase A"
       },
-      "energy_phase_B": {
-        "name": "Energy phase B"
-      },
-      "energy_phase_C": {
-        "name": "Energy phase C"
-      },
       "energy_total_consumed": {
         "name": "Energy total consumed"
       },
       "energy_phase_A_consumed": {
         "name": "Energy phase A consumed"
       },
-      "energy_phase_B_consumed": {
-        "name": "Energy phase B consumed"
-      },
-      "energy_phase_C_consumed": {
-        "name": "Energy phase C consumed"
-      },
       "current_phase_A": {
         "name": "Current phase A"
-      },
-      "current_phase_B": {
-        "name": "Current phase B"
-      },
-      "current_phase_C": {
-        "name": "Current phase C"
       },
       "power_factor_phase_A": {
         "name": "Power factor phase A"
       },
-      "power_factor_phase_B": {
-        "name": "Power factor phase B"
+      "energy_to_load" : {
+        "name" : "Energy to load"
       },
-      "power_factor_phase_C": {
-        "name": "Power factor phase C"
+      "energy_to_battery" : {
+        "name" : "Energy to battery"
       },
-      "energy_to_load": {
-        "name": "Energy to load"
+      "energy_from_pv" : {
+        "name" : "Energy from PV"
       },
-      "energy_to_battery": {
-        "name": "Energy to battery"
+      "energy_from_battery" : {
+        "name" : "Energy from battery"
       },
-      "energy_to_grid": {
-        "name": "Energy to grid"
-      },
-      "energy_from_pv": {
-        "name": "Energy from PV"
-      },
-      "energy_from_battery": {
-        "name": "Energy from battery"
-      },
-      "energy_from_grid": {
-        "name": "Energy from grid"
+      "energy_from_grid" : {
+        "name" : "Energy from grid"
       },
       "pv_panel_voltage": {
         "name": "PV panel {port_number} voltage"
@@ -385,25 +343,22 @@
       "pv_to_battery": {
         "name": "Power PV to battery"
       },
-      "pv_to_grid": {
-        "name": "Power PV to grid"
-      },
       "battery_to_grid": {
         "name": "Power battery to grid"
       }
     },
-    "button": {
-      "restart": {
-        "name": "Restart"
+    "button" : {
+      "restart" : {
+        "name" : "Restart"
       },
-      "turn_off": {
-        "name": "Turn off"
+      "turn_off" : {
+        "name" : "Turn off"
       },
-      "turn_on": {
-        "name": "Turn on"
+      "turn_on" : {
+        "name" : "Turn on"
       },
-      "enable_performance_data_mode": {
-        "name": "Experimental: Enable performance data mode"
+      "enable_performance_data_mode" : {
+        "name" : "Experimental: Enable performance data mode"
       }
     }
   },
@@ -448,11 +403,11 @@
         },
         "time_settings": {
           "name": "Time Settings",
-          "description": "Configure time-of-use settings. Format: START,END (date in DD.MM). For each date range, define exactly two time ranges separated by ';'. Each time range includes WEEKDAYS (comma-separated, 1=Mon,...,7=Sun) and 3 tariff blocks: PEAK, OFF_PEAK, PARTIAL_PEAK. Each block: START-END-IN_PRICE-OUT_PRICE. Separate blocks with ','. Separate multiple date ranges with '||'.\nExample:\n01.01-31.03:1,2,3=06:00-10:00-0.20-0.10,00:00-06:00-0.10-0.05,10:00-18:00-0.15-0.08;4,5=07:00-11:00-0.22-0.11,00:00-07:00-0.08-0.04,11:00-17:00-0.14-0.07"
+          "description": "Configure time-of-use settings. Example:\n\n01.01-31.03:1,2,3=06:00-10:00-0.20-0.10,00:00-06:00-0.10-0.05,10:00-18:00-0.15-0.08;4,5=07:00-11:00-0.22-0.11,00:00-07:00-0.08-0.04,11:00-17:00-0.14-0.07"
         },
         "time_periods": {
           "name": "Time Periods",
-          "description": "Define time periods for time-of-use mode. Format: CHARGE_FROM-CHARGE_TO-CHARGE_PWR-MAX_SOC|DISCHARGE_FROM-DISCHARGE_TO-DISCHARGE_PWR-MIN_SOC||... All values are required. Use '||' to separate multiple time periods. Power and SOC values must be 0–100.\nExample:\n06:00-08:00-50-90|18:00-20:00-40-20"
+          "description": "Define time periods for time-of-use mode. Example:\\nn06:00-08:00-50-90|18:00-20:00-40-20"
         }
       } 
     }

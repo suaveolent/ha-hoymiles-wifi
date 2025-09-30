@@ -5,7 +5,7 @@ set_bms_mode:
     device:
       integration: hoymiles_wifi
   fields:
-    mode:
+    bms_mode:
       required: true
       selector:
         select:
@@ -24,24 +24,28 @@ set_bms_mode:
         number:
           min: 0
           max: 100
+          unit_of_measurement: "%"
     max_power:
       required: false
       selector:
         number:
           min: 0
           max: 100
+          unit_of_measurement: "%"
     peak_soc:
       required: false
       selector:
         number:
           min: 0
           max: 100
+          unit_of_measurement: "%"
     peak_meter_power:
       required: false
       selector:
         number:
           min: 0
           max: 100
+          unit_of_measurement: "%"
     time_settings:
       required: false
       selector:

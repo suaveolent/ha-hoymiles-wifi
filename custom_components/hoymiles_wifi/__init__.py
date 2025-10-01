@@ -1,17 +1,17 @@
 """Platform for retrieving values of a Hoymiles inverter."""
 
-import asyncio
 from datetime import timedelta
 import logging
+import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.service import SupportsResponse
 from hoymiles_wifi.dtu import DTU
-
-from .services import async_handle_set_bms_mode
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
@@ -40,11 +40,36 @@ from .coordinator import (
     HoymilesEnergyStorageUpdateCoordinator,
 )
 from .error import CannotConnect
+from .services import async_handle_set_bms_mode
 from .util import async_get_config_entry_data_for_host
 
 _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR, Platform.BUTTON]
+
+SET_BMS_SCHEMA = vol.Schema(
+    {
+        vol.Required("bms_mode"): vol.In(
+            (
+                "self_use",
+                "economic",
+                "backup_power",
+                "pure_off_grid",
+                "forced_charging",
+                "forced_discharge",
+                "peak_shaving",
+                "time_of_use",
+            )
+        ),
+        vol.Required("rev_soc"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+        vol.Optional("max_power"): vol.All(vol.Coerce(int), vol.Range(min=0)),
+        vol.Optional("peak_soc"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+        vol.Optional("peak_meter_power"): vol.All(vol.Coerce(int), vol.Range(min=0)),
+        vol.Optional("time_settings"): str,
+        vol.Optional("time_periods"): str,
+        vol.Optional("device_id"): cv.ensure_list,
+    }
+)
 
 
 async def async_setup(hass: HomeAssistant, config: ConfigType):
@@ -117,6 +142,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             energy_storage_data_coordinator
         )
 
+    _LOGGER.error(f"  hass_data: {hass_data}")  # --- IGNORE ---
+    _LOGGER.error(f"  config_entry_id: {config_entry.entry_id}")
+
     hass.data[DOMAIN][config_entry.entry_id] = hass_data
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
@@ -126,11 +154,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         await app_info_update_coordinator.async_config_entry_first_refresh()
     if hybrid_inverters:
         await energy_storage_data_coordinator.async_config_entry_first_refresh()
-        print("Energy storage coordinator first refresh done")
         hass.services.async_register(
-            DOMAIN,
-            "set_bms_mode",
-            async_handle_set_bms_mode,
+            domain=DOMAIN,
+            service="set_bms_mode",
+            service_func=async_handle_set_bms_mode,
+            schema=SET_BMS_SCHEMA,
+            supports_response=SupportsResponse.NONE,
         )
         print("Service set_bms_mode registered")
 

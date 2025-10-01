@@ -420,5 +420,55 @@
     "hybrid_inverter": {
       "name": "Onduleur hybride"
     }
+  },
+  "services": {
+    "set_bms_mode": {
+      "name": "Définir le mode BMS",
+      "description": "Définir le mode BMS de la batterie connectée.",
+      "fields": {
+        "bms_mode": {
+          "name": "Mode BMS",
+          "description": "Le mode de fonctionnement BMS à définir. Valeurs possibles : 'self_use', 'economic', 'backup_power', 'pure_off_grid', 'forced_charging', 'forced_discharge', 'peak_shaving', 'time_of_use'"
+        },
+        "rev_soc": {
+          "name": "SOC réservé",
+          "description": "L’état de charge (SOC) réservé à définir (en %)."
+        },
+        "max_power": {
+          "name": "Puissance maximale",
+          "description": "La puissance maximale de charge/décharge à définir (en %)."
+        },
+        "peak_soc": {
+          "name": "SOC de pointe",
+          "description": "L’état de charge (SOC) de pointe à définir (en %)."
+        },
+        "peak_meter_power": {
+          "name": "Puissance de pointe du compteur",
+          "description": "La puissance de pointe du compteur à définir (en %)."
+        },
+        "time_settings": {
+          "name": "Paramètres temporels",
+          "description": "Configurer les paramètres liés au mode heures d’utilisation."
+        },
+        "time_periods": {
+          "name": "Périodes horaires",
+          "description": "Définir les périodes pour le mode heures d’utilisation."
+        }
+      }
+    }
+  },
+  "selector": {
+    "bms_mode_type": {
+      "options": {
+        "self_use": "Mode autoconsommation",
+        "economic": "Mode économique",
+        "backup_power": "Mode secours",
+        "pure_off_grid": "Mode hors réseau",
+        "forced_charging": "Mode charge forcée",
+        "forced_discharge": "Mode décharge forcée",
+        "peak_shaving": "Mode écrêtage de pointe",
+        "time_of_use": "Mode heures d’utilisation"
+      }
+    }
   }
 }

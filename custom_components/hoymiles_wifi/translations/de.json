@@ -420,5 +420,55 @@
     "hybrid_inverter": {
       "name": "Hybrid-Wechselrichter"
     }
+  },
+  "services": {
+    "set_bms_mode": {
+      "name": "BMS-Modus einstellen",
+      "description": "Den BMS-Modus der angeschlossenen Batterie einstellen.",
+      "fields": {
+        "bms_mode": {
+          "name": "BMS-Modus",
+          "description": "Der einzustellende BMS-Arbeitsmodus. Mögliche Werte sind: 'self_use', 'economic', 'backup_power', 'pure_off_grid', 'forced_charging', 'forced_discharge', 'peak_shaving', 'time_of_use'"
+        },
+        "rev_soc": {
+          "name": "Reservierter SOC",
+          "description": "Der einzustellende reservierte Ladezustand (SOC) in %."
+        },
+        "max_power": {
+          "name": "Maximale Leistung",
+          "description": "Die einzustellende maximale Lade-/Entladeleistung in %."
+        },
+        "peak_soc": {
+          "name": "Spitzen-SOC",
+          "description": "Der einzustellende Spitzen-Ladezustand (SOC) in %."
+        },
+        "peak_meter_power": {
+          "name": "Spitzenzählerleistung",
+          "description": "Die einzustellende Spitzenzählerleistung in %."
+        },
+        "time_settings": {
+          "name": "Zeiteinstellungen",
+          "description": "Zeiteinstellungen für den Nutzungszeitmodus konfigurieren."
+        },
+        "time_periods": {
+          "name": "Zeitabschnitte",
+          "description": "Zeitabschnitte für den Nutzungszeitmodus festlegen."
+        }
+      }
+    }
+  },
+  "selector": {
+    "bms_mode_type": {
+      "options": {
+        "self_use": "Eigenverbrauchsmodus",
+        "economic": "Sparmodus",
+        "backup_power": "Notstrommodus",
+        "pure_off_grid": "Inselbetriebsmodus",
+        "forced_charging": "Erzwungener Ladebetrieb",
+        "forced_discharge": "Erzwungener Entladebetrieb",
+        "peak_shaving": "Lastspitzenkappungsmodus",
+        "time_of_use": "Nutzungszeitmodus"
+      }
+    }
   }
 }

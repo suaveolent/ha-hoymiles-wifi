@@ -440,7 +440,7 @@
         },
         "peak_soc": {
           "name": "Peak SOC",
-          "description": "The peak state of charge (SOC) to set (in %)."
+          "description": "The peak state of charge (SOC) to set (in W)."
         },
         "peak_meter_power": {
           "name": "Peak Meter Power",

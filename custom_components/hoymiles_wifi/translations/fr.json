@@ -444,7 +444,7 @@
         },
         "peak_meter_power": {
           "name": "Puissance de pointe du compteur",
-          "description": "La puissance de pointe du compteur à définir (en %)."
+          "description": "La puissance de pointe du compteur à définir (en W)."
         },
         "time_settings": {
           "name": "Paramètres temporels",

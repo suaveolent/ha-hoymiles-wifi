@@ -444,7 +444,7 @@
         },
         "peak_meter_power": {
           "name": "Spitzenzählerleistung",
-          "description": "Die einzustellende Spitzenzählerleistung in %."
+          "description": "Die einzustellende Spitzenzählerleistung in W."
         },
         "time_settings": {
           "name": "Zeiteinstellungen",

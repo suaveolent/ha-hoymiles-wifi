@@ -51,7 +51,7 @@ set_bms_mode:
         number:
           min: 0
           max: 100
-          unit_of_measurement: "%"
+          unit_of_measurement: "W"
     time_settings:
       required: false
       example: "01.01-31.03:1,2,3=06:00-10:00-0.20-0.10,00:00-06:00-0.10-0.05,10:00-18:00-0.15-0.08;4,5=07:00-11:00-0.22-0.11,00:00-07:00-0.08-0.04,11:00-17:00-0.14-0.07"

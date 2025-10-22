@@ -1,6 +1,6 @@
 # Hoymiles for Home Assistant
 
-This custom component integrates Hoymiles DTUs, HMS-XXXXW microinverters and and hybrid inverters into Home Assistant, providing live inverter data.
+This custom component integrates Hoymiles DTUs, HMS-XXXXW microinverters and hybrid inverters into Home Assistant, providing live inverter data.
 It uses the [hoymiles-wifi](https://github.com/suaveolent/hoymiles-wifi) Python library to communicate directly with the devices over your local network — no cloud connection required.
 
 > [!NOTE]

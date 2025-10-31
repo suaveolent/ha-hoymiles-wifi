@@ -142,9 +142,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             energy_storage_data_coordinator
         )
 
-    _LOGGER.error(f"  hass_data: {hass_data}")  # --- IGNORE ---
-    _LOGGER.error(f"  config_entry_id: {config_entry.entry_id}")
-
     hass.data[DOMAIN][config_entry.entry_id] = hass_data
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 

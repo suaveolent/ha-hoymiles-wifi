@@ -50,7 +50,6 @@ set_bms_mode:
       selector:
         number:
           min: 0
-          max: 100
           unit_of_measurement: "W"
     time_settings:
       required: false

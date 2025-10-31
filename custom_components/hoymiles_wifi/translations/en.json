@@ -420,5 +420,55 @@
     "hybrid_inverter": {
       "name": "Hybrid inverter"
     }
+  },
+  "services": {
+    "set_bms_mode": {
+      "name": "Set BMS mode",
+      "description": "Set the BMS mode of the connected battery.",
+      "fields": {
+        "bms_mode": {
+          "name": "BMS mode",
+          "description": "The BMS working mode to set. Possible values are: 'self_use', 'economic', 'backup_power', 'pure_off_grid', 'forced_charging', 'forced_discharge', 'peak_shaving', 'time_of_use'"
+        },
+        "rev_soc": {
+          "name": "Reserved SOC",
+          "description": "The reserved state of charge (SOC) to set (in %)."
+        },
+        "max_power": {
+          "name": "Max Power",
+          "description": "The maximum charge/discharge power to set (in %)."
+        },
+        "peak_soc": {
+          "name": "Peak SOC",
+          "description": "The peak state of charge (SOC) to set (in W)."
+        },
+        "peak_meter_power": {
+          "name": "Peak Meter Power",
+          "description": "The peak meter power to set (in %)."
+        },
+        "time_settings": {
+          "name": "Time Settings",
+          "description": "Configure time-of-use settings."
+        },
+        "time_periods": {
+          "name": "Time Periods",
+          "description": "Define time periods for time-of-use mode."
+        }
+      }
+    }
+  },
+  "selector": {
+    "bms_mode_type": {
+      "options": {
+        "self_use": "Self-Consumption Mode",
+        "economic": "Economy Mode",
+        "backup_power": "Backup Mode",
+        "pure_off_grid": "Off-Grid Mode",
+        "forced_charging": "Force Charge Mode",
+        "forced_discharge": "Force Discharge Mode",
+        "peak_shaving": "Peak Shaving Mode",
+        "time_of_use": "Time of Use Mode"
+      }
+    }
   }
 }

@@ -17,13 +17,16 @@ from .const import (
     CONF_METERS,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
+    CONF_TIMEOUT,
     CONF_UPDATE_INTERVAL,
     CONF_IS_ENCRYPTED,
     CONF_ENC_RAND,
     CONFIG_VERSION,
+    DEFAULT_TIMEOUT_SECONDS,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
     MIN_UPDATE_INTERVAL_SECONDS,
+    MIN_TIMEOUT_SECONDS,
 )
 from .error import CannotConnect
 from .util import async_get_config_entry_data_for_host
@@ -39,6 +42,13 @@ DATA_SCHEMA = vol.Schema(
         ): vol.All(
             vol.Coerce(int),
             vol.Range(min=timedelta(seconds=MIN_UPDATE_INTERVAL_SECONDS).seconds),
+        ),
+        vol.Optional(
+            CONF_TIMEOUT,
+            default=timedelta(seconds=DEFAULT_TIMEOUT_SECONDS).seconds,
+        ): vol.All(
+            vol.Coerce(int),
+            vol.Range(min=timedelta(seconds=MIN_TIMEOUT_SECONDS).seconds),
         ),
     }
 )
@@ -60,6 +70,7 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             update_interval = user_input.get(
                 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS
             )
+            timeout = user_input.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS)
 
             try:
                 (
@@ -91,6 +102,7 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                         CONF_HYBRID_INVERTERS: hybrid_inverters,
                         CONF_IS_ENCRYPTED: is_encrypted,
                         CONF_ENC_RAND: enc_rand,
+                        CONF_TIMEOUT: timeout,
                     },
                 )
 
@@ -113,6 +125,8 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             update_interval = user_input.get(
                 CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS
             )
+
+            timeout = user_input.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS)
 
             try:
                 (
@@ -143,6 +157,7 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     CONF_HYBRID_INVERTERS: hybrid_inverters,
                     CONF_IS_ENCRYPTED: is_encrypted,
                     CONF_ENC_RAND: enc_rand,
+                    CONF_TIMEOUT: timeout,
                 }
 
                 self.hass.config_entries.async_update_entry(
@@ -167,6 +182,13 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                         vol.Range(
                             min=timedelta(seconds=MIN_UPDATE_INTERVAL_SECONDS).seconds
                         ),
+                    ),
+                    vol.Optional(
+                        CONF_TIMEOUT,
+                        default=entry.data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS),
+                    ): vol.All(
+                        vol.Coerce(int),
+                        vol.Range(min=timedelta(seconds=MIN_TIMEOUT_SECONDS).seconds),
                     ),
                 }
             ),

@@ -6,7 +6,8 @@
         "description": "Wenn Sie Hilfe bei der Konfiguration benötigen, schauen Sie hier vorbei: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
           "host": "Host",
-          "update_interval": "Aktualisierungsintervall (Sekunden)"
+          "update_interval": "Aktualisierungsintervall (Sekunden)",
+          "timeout": "Timeout (Sekunden)"
         }
       },
       "reconfigure": {
@@ -14,7 +15,8 @@
         "description": "Wenn Sie Hilfe bei der Konfiguration benötigen, schauen Sie hier vorbei: https://github.com/suaveolent/ha-hoymiles-wifi",
         "data": {
           "host": "Host",
-          "update_interval": "Aktualisierungsintervall (Sekunden)"
+          "update_interval": "Aktualisierungsintervall (Sekunden)",
+          "timeout": "Timeout (Sekunden)"
         }
       }
     },

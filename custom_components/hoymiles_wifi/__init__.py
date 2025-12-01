@@ -161,7 +161,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             schema=SET_BMS_SCHEMA,
             supports_response=SupportsResponse.NONE,
         )
-        print("Service set_bms_mode registered")
+        _LOGGER.debug("Service set_bms_mode registered")
 
     return True
 

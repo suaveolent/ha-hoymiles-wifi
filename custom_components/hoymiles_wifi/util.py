@@ -13,7 +13,7 @@ from hoymiles_wifi.const import IS_ENCRYPTED_BIT_INDEX
 
 from .error import CannotConnect
 
-from .const import CONF_ENC_RAND
+from .const import CONF_ENC_RAND, DEFAULT_TIMEOUT_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ async def async_get_config_entry_data_for_host(
     is_encrypted = False
     enc_rand = ""
 
-    dtu = DTU(host)
+    dtu = DTU(host, timeout=DEFAULT_TIMEOUT_SECONDS)
 
     app_information_data = await dtu.async_app_information_data()
 
@@ -49,7 +49,12 @@ async def async_get_config_entry_data_for_host(
             logging.debug("DTU is encrypted.")
             is_encrypted = True
             enc_rand = app_information_data.dtu_info.enc_rand.hex()
-            dtu = DTU(host, is_encrypted=is_encrypted, enc_rand=bytes.fromhex(enc_rand))
+            dtu = DTU(
+                host,
+                is_encrypted=is_encrypted,
+                enc_rand=bytes.fromhex(enc_rand),
+                timeout=DEFAULT_TIMEOUT_SECONDS,
+            )
             await asyncio.sleep(2)
 
     logging.debug("Trying get_real_data_new()!")

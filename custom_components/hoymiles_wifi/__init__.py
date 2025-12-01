@@ -20,12 +20,14 @@ from .const import (
     CONF_METERS,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
+    CONF_TIMEOUT,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
     CONF_IS_ENCRYPTED,
     CONF_ENC_RAND,
     DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS,
     DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS,
+    DEFAULT_TIMEOUT_SECONDS,
     DOMAIN,
     HASS_APP_INFO_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
@@ -92,11 +94,17 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     meters = config_entry.data.get(CONF_METERS, [])
     is_encrypted = config_entry.data.get(CONF_IS_ENCRYPTED, False)
     enc_rand = config_entry.data.get(CONF_ENC_RAND, None)
+    timeout = config_entry.data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS)
 
     if is_encrypted:
-        dtu = DTU(host, is_encrypted=is_encrypted, enc_rand=bytes.fromhex(enc_rand))
+        dtu = DTU(
+            host,
+            is_encrypted=is_encrypted,
+            enc_rand=bytes.fromhex(enc_rand),
+            timeout=timeout,
+        )
     else:
-        dtu = DTU(host)
+        dtu = DTU(host, timeout=timeout)
 
     hass_data[HASS_DTU] = dtu
 

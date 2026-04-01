@@ -772,7 +772,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.001,
+        conversion_factor=0.01,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].battery_management.temp_high_charge",
@@ -876,7 +876,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.001,
+        conversion_factor=0.01,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].grid.phases[<phase_count>].active_power",
@@ -1020,7 +1020,6 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.1,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].inverter.phases[<phase_count>].dc_voltage",

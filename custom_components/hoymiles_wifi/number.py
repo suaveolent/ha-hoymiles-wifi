@@ -1,5 +1,6 @@
 """Support for Hoymiles number sensors."""
 
+import asyncio
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum
@@ -21,6 +22,7 @@ from .const import (
     CONF_THREE_PHASE_INVERTERS,
     DOMAIN,
     HASS_CONFIG_COORDINATOR,
+    HASS_DATA_COORDINATOR,
 )
 from .entity import HoymilesCoordinatorEntity, HoymilesEntityDescription
 
@@ -73,6 +75,7 @@ async def async_setup_entry(
     """Set up the Hoymiles number entities."""
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
     config_coordinator = hass_data.get(HASS_CONFIG_COORDINATOR, None)
+    data_coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
     single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
@@ -86,7 +89,7 @@ async def async_setup_entry(
                 )
                 sensors.append(
                     HoymilesNumberEntity(
-                        config_entry, updated_description, config_coordinator
+                        config_entry, updated_description, config_coordinator, data_coordinator
                     )
                 )
         async_add_entities(sensors)
@@ -100,9 +103,11 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         config_entry: ConfigEntry,
         description: HoymilesNumberSensorEntityDescription,
         coordinator: HoymilesCoordinatorEntity,
+        data_coordinator: HoymilesCoordinatorEntity = None,
     ) -> None:
         """Initialize the HoymilesNumberEntity."""
         super().__init__(config_entry, description, coordinator)
+        self._data_coordinator = data_coordinator
         self._attribute_name = description.key
         self._conversion_factor = description.conversion_factor
         self._set_action = description.set_action
@@ -147,15 +152,41 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         self._assumed_state = True
         self._native_value = value
 
+
+    async def async_added_to_hass(self) -> None:
+        """Register updates from the data coordinator as well."""
+        await super().async_added_to_hass()
+        if self._data_coordinator is not None:
+            self.async_on_remove(
+                self._data_coordinator.async_add_listener(
+                    self._handle_coordinator_update
+                )
+            )
+
+        async def _delayed_config_refresh():
+            await asyncio.sleep(15)  # Wait for integration and DTU to settle
+            await self.coordinator.async_request_refresh()
+
+        self.hass.async_create_task(_delayed_config_refresh())
+
     def update_state_value(self):
         """Update the state value of the entity."""
 
-        # For the moment, we can only retrive the power limit
+        # Try to get value from config coordinator
         self._native_value = getattr(
             self.coordinator.data,
             self._attribute_name,
             None,
         )
+
+        # Fallback to data coordinator if config value is not available or defaults to 0
+        if (self._native_value is None or self._native_value == 0) and self._data_coordinator is not None and self._data_coordinator.data is not None:
+            if self._attribute_name == "limit_power_mypower":
+                data = self._data_coordinator.data
+                if hasattr(data, "sgs_data") and data.sgs_data and len(data.sgs_data) > 0:
+                    self._native_value = getattr(data.sgs_data[0], "power_limit", None)
+                elif hasattr(data, "tgs_data") and data.tgs_data and len(data.tgs_data) > 0:
+                    self._native_value = getattr(data.tgs_data[0], "power_limit", None)
 
         self._assumed_state = False
 

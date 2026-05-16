@@ -7,6 +7,11 @@ from enum import Enum
 import logging
 import re
 
+from hoymiles_wifi.hoymiles import (
+    get_dtu_model_name,
+    get_inverter_model_name,
+)
+
 from homeassistant.components.sensor import (
     RestoreSensor,
     SensorDeviceClass,
@@ -46,6 +51,8 @@ from .const import (
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
     HASS_ENERGY_STORAGE_DATA_COORDINATOR,
+    HASS_NETWORK_INFO_COORDINATOR,
+    HASS_ALARM_LIST_COORDINATOR,
 )
 from .entity import (
     HoymilesCoordinatorEntity,
@@ -147,7 +154,14 @@ HOYMILES_SENSORS = [
             DTUType.DTU_W_LITE,
         ],
     ),
-    HoymilesSensorEntityDescription(
+        HoymilesSensorEntityDescription(
+        key="sgs_data[<inverter_count>].power_limit",
+        translation_key="power_limit",
+        native_unit_of_measurement=PERCENTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
+    ),
+HoymilesSensorEntityDescription(
         key="sgs_data[<inverter_count>].active_power",
         translation_key="ac_active_power",
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -637,6 +651,22 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         icon="mdi:wifi",
         is_dtu_sensor=True,
     ),
+    HoymilesSensorEntityDescription(
+        key="dtu_model",
+        translation_key="dtu_model",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information-outline",
+        is_dtu_sensor=True,
+    ),
+)
+
+INVERTER_DIAGNOSTIC_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
+    HoymilesSensorEntityDescription(
+        key="sgs_data[<inverter_count>].model_name",
+        translation_key="inverter_model",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:information-outline",
+    ),
 )
 
 HOYMILES_ENERGY_STORAGE_SENSORS = [
@@ -772,7 +802,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         native_unit_of_measurement=UnitOfElectricPotential.VOLT,
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.01,
+        conversion_factor=0.001,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].battery_management.temp_high_charge",
@@ -876,7 +906,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
-        conversion_factor=0.01,
+        conversion_factor=0.001,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].grid.phases[<phase_count>].active_power",
@@ -1020,6 +1050,7 @@ HOYMILES_ENERGY_STORAGE_SENSORS = [
         native_unit_of_measurement=UnitOfElectricCurrent.MILLIAMPERE,
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
+        conversion_factor=0.1,
     ),
     HoymilesEnergyStorageSensorEntityDescription(
         key="[<inverter_count>].inverter.phases[<phase_count>].dc_voltage",
@@ -1156,12 +1187,14 @@ async def async_setup_entry(
     """Set up sensor platform."""
 
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
-    data_coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
-    config_coordinator = hass_data.get(HASS_CONFIG_COORDINATOR, None)
-    app_info_coordinator = hass_data.get(HASS_APP_INFO_COORDINATOR, None)
+    data_coordinator = hass_data.get(HASS_DATA_COORDINATOR)
+    config_coordinator = hass_data.get(HASS_CONFIG_COORDINATOR)
+    app_info_coordinator = hass_data.get(HASS_APP_INFO_COORDINATOR)
     energy_storage_data_coordinator = hass_data.get(
-        HASS_ENERGY_STORAGE_DATA_COORDINATOR, None
+        HASS_ENERGY_STORAGE_DATA_COORDINATOR
     )
+    network_info_coordinator = hass_data.get(HASS_NETWORK_INFO_COORDINATOR)
+    alarm_list_coordinator = hass_data.get(HASS_ALARM_LIST_COORDINATOR)
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
     single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
@@ -1247,6 +1280,20 @@ async def async_setup_entry(
                 description,
                 app_info_coordinator,
                 HoymilesDataSensorEntity,
+                dtu_serial_number,
+                inverters,
+                ports,
+            )
+            sensors.extend(sensor_entities)
+
+        
+
+        for description in INVERTER_DIAGNOSTIC_SENSORS:
+            sensor_entities = get_sensors_for_description(
+                config_entry,
+                description,
+                data_coordinator,
+                HoymilesInverterDiagnosticSensorEntity,
                 dtu_serial_number,
                 inverters,
                 ports,
@@ -1502,9 +1549,12 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
             new_native_value = attribute
 
         else:
-            new_native_value = getattr(
-                self.coordinator.data, self._attribute_name, None
-            )
+            if self._attribute_name == "dtu_model":
+                new_native_value = get_dtu_model_name(self.entity_description.serial_number)
+            else:
+                new_native_value = getattr(
+                    self.coordinator.data, self._attribute_name, None
+                )
 
         if new_native_value is not None and self._conversion_factor is not None:
             new_native_value *= self._conversion_factor
@@ -1542,6 +1592,59 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
         state = await self.async_get_last_sensor_data()
         if state:
             self.last_known_value = state.native_value
+
+
+class HoymilesInverterDiagnosticSensorEntity(HoymilesDataSensorEntity):
+    """Represents a diagnostic sensor entity for an inverter."""
+
+    def update_state_value(self) -> None:
+        """Update the state from the coordinator data."""
+        super().update_state_value()
+        
+        attributes = self.extra_state_attributes
+        path_parts = self._attribute_name.split(".")
+        if len(path_parts) > 1:
+            prop = path_parts[1]
+            if prop == "model_name":
+                self._native_value = attributes.get("model_name")
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        attributes = {}
+        if self.coordinator.data:
+            # Safely resolve path to the inverter data
+            path_parts = self._attribute_name.split(".")
+            if len(path_parts) > 1:
+                inverter_path = path_parts[0]
+                inverter_data = self._resolve_path(self.coordinator.data, inverter_path)
+                if inverter_data:
+                    attributes["online"] = getattr(inverter_data, "is_online", True)
+                    # Use get_inverter_model_name if model_name is not already resolved or provided
+                    serial_number = getattr(inverter_data, "serial_number", None)
+                    if serial_number:
+                        if isinstance(serial_number, int):
+                            serial_number = hex(serial_number)[2:]
+                        attributes["model_name"] = get_inverter_model_name(serial_number)
+        return attributes
+
+    def _resolve_path(self, obj, path):
+        tokens = re.findall(r"\w+|\[\d+\]", path)
+        for token in tokens:
+            if obj is None:
+                return None
+            if token.startswith("["):
+                index = int(token[1:-1])
+                try:
+                    obj = obj[index]
+                except (IndexError, TypeError):
+                    return None
+            else:
+                obj = getattr(obj, token, None)
+        return obj
+
+
+
 
 
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):

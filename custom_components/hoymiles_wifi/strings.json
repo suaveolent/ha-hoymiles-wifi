@@ -52,7 +52,7 @@
         "name": "Grid voltage"
       },
       "ac_current": {
-        "name": "AC current" 
+        "name": "AC current"
       },
       "grid_frequency": {
         "name": "Grid frequency"
@@ -270,12 +270,6 @@
       "voltage_module_low": {
         "name": "Module voltage low"
       },
-      "grid_status": {
-        "name": "Grid status"
-      },
-      "grid_power_factor_deviation": {
-        "name": "Power factor deviation"
-      },
       "grid_voltage_phase": {
         "name": "Grid voltage phase {phase}"
       },
@@ -392,6 +386,15 @@
       },
       "battery_to_grid": {
         "name": "Power battery to grid"
+      },
+      "dtu_model": {
+        "name": "Model"
+      },
+      "inverter_model": {
+        "name": "Model"
+      },
+      "power_limit": {
+        "name": "Power limit"
       }
     },
     "button": {

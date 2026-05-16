@@ -1,5 +1,6 @@
 """Platform for retrieving values of a Hoymiles inverter."""
 
+import asyncio
 from datetime import timedelta
 import logging
 import voluptuous as vol
@@ -34,12 +35,16 @@ from .const import (
     HASS_DATA_COORDINATOR,
     HASS_DTU,
     HASS_ENERGY_STORAGE_DATA_COORDINATOR,
+    HASS_NETWORK_INFO_COORDINATOR,
+    HASS_ALARM_LIST_COORDINATOR,
 )
 from .coordinator import (
     HoymilesAppInfoUpdateCoordinator,
     HoymilesConfigUpdateCoordinator,
     HoymilesRealDataUpdateCoordinator,
     HoymilesEnergyStorageUpdateCoordinator,
+    HoymilesNetworkInfoUpdateCoordinator,
+    HoymilesAlarmListUpdateCoordinator,
 )
 from .error import CannotConnect
 from .services import async_handle_set_bms_mode
@@ -154,12 +159,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     _LOGGER.debug(f"  config_entry_id: {config_entry.entry_id}")
 
     hass.data[DOMAIN][config_entry.entry_id] = hass_data
-    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     if single_phase_inverters or three_phase_inverters or meters:
+        await app_info_update_coordinator.async_config_entry_first_refresh()
         await data_coordinator.async_config_entry_first_refresh()
         await config_coordinator.async_config_entry_first_refresh()
-        await app_info_update_coordinator.async_config_entry_first_refresh()
     if hybrid_inverters:
         await energy_storage_data_coordinator.async_config_entry_first_refresh()
         hass.services.async_register(
@@ -170,6 +174,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             supports_response=SupportsResponse.NONE,
         )
         _LOGGER.debug("Service set_bms_mode registered")
+
+    await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     return True
 

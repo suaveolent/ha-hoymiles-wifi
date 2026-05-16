@@ -161,4 +161,4 @@ async def async_check_and_update_enc_rand(
         )
         dtu.enc_rand = bytes.fromhex(enc_rand)
         new_data = {**config_entry.data, CONF_ENC_RAND: enc_rand}
-        await hass.config_entries.async_update_entry(config_entry, data=new_data)
+        hass.config_entries.async_update_entry(config_entry, data=new_data)

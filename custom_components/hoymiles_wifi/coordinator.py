@@ -2,16 +2,17 @@
 
 from datetime import timedelta
 import logging
+import time
 
 import homeassistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from hoymiles_wifi.dtu import DTU
-from .util import is_encrypted_dtu, async_check_and_update_enc_rand
+from hoymiles_wifi.dtu import DTU, NetworkState
+from .util import async_sync_encryption_state
 
 
-from .const import DOMAIN
+from .const import DOMAIN, ENCRYPTION_RESYNC_MIN_INTERVAL_SECONDS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -49,17 +50,68 @@ class HoymilesDataUpdateCoordinator(DataUpdateCoordinator):
 class HoymilesRealDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
     """Data coordinator for Hoymiles integration."""
 
+    _last_encryption_resync: float | None = None
+
     async def _async_update_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
         response = await self._dtu.async_get_real_data_new()
 
+        if not response and self._dtu.get_state() is NetworkState.Unknown:
+            # Unknown is the state the library sets when a response arrived but
+            # could not be parsed, which is exactly what a wrong encryption
+            # state looks like. An unreachable DTU is Offline, and a DTU that
+            # answered with an empty payload stays Online, so neither drags us
+            # in here. App info is never encrypted, so it can always report the
+            # current state. Re-sync and retry once before giving up.
+            if await self._async_resync_encryption_state():
+                response = await self._dtu.async_get_real_data_new()
+
         if not response:
             _LOGGER.debug(
                 "Unable to retrieve real data new. Inverter might be offline."
             )
         return response
+
+    async def _async_resync_encryption_state(self) -> bool:
+        """Re-read the DTU's encryption state. Returns True if it changed."""
+        now = time.monotonic()
+        if (
+            self._last_encryption_resync is not None
+            and now - self._last_encryption_resync
+            < ENCRYPTION_RESYNC_MIN_INTERVAL_SECONDS
+        ):
+            # A payload can be unparseable for reasons that re-reading the
+            # encryption state will never fix. Probing on every poll would add a
+            # request per cycle indefinitely, and the library serialises requests
+            # behind a mutex with a 2s floor between them.
+            _LOGGER.debug("Encryption re-sync throttled, skipping")
+            return False
+
+        self._last_encryption_resync = now
+
+        was_encrypted = self._dtu.is_encrypted
+        previous_enc_rand = self._dtu.enc_rand
+
+        app_info = await self._dtu.async_app_information_data()
+        if not app_info:
+            return False
+
+        async_sync_encryption_state(
+            self._hass, self._config_entry, self._dtu, app_info.dtu_info
+        )
+
+        changed = (
+            was_encrypted != self._dtu.is_encrypted
+            or previous_enc_rand != self._dtu.enc_rand
+        )
+        if changed:
+            _LOGGER.info(
+                "DTU encryption state changed (encrypted=%s), retrying real data",
+                self._dtu.is_encrypted,
+            )
+        return changed
 
 
 class HoymilesConfigUpdateCoordinator(HoymilesDataUpdateCoordinator):
@@ -86,14 +138,21 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
         response = await self._dtu.async_app_information_data()
 
-        if response and response.dtu_info.dfs:
-            if is_encrypted_dtu(response.dtu_info.dfs):
-                await async_check_and_update_enc_rand(
-                    self._hass,
-                    self._config_entry,
-                    self._dtu,
-                    response.dtu_info.enc_rand.hex(),
-                )
+        if response:
+            # App info is never encrypted, so this is the one call that still
+            # works after the DTU switches encryption on, and therefore the
+            # place where we detect and persist that switch.
+            #
+            # Deliberately not gated on `dtu_info.dfs` being non-zero: a DTU
+            # that reports dfs == 0 is announcing "no flags set", which includes
+            # encryption being off, and that has to be able to turn a stale
+            # encrypted state back off.
+            async_sync_encryption_state(
+                self._hass,
+                self._config_entry,
+                self._dtu,
+                response.dtu_info,
+            )
 
         if not response:
             _LOGGER.debug(

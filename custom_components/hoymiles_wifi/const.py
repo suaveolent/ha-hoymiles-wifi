@@ -27,6 +27,15 @@ MIN_TIMEOUT_SECONDS = 1
 DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS = 60 * 5
 DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS = 60 * 60 * 2
 
+# Length in bytes of the DTU's encryption random. The cipher derives a fixed
+# AES-128 key from it and asserts on this exact length.
+ENC_RAND_LENGTH = 16
+
+# Floor between two encryption re-probes triggered by an unparseable payload.
+# Without it a DTU that is unreadable for some other reason would add an app
+# info request to every poll.
+ENCRYPTION_RESYNC_MIN_INTERVAL_SECONDS = 60 * 5
+
 
 HASS_DATA_COORDINATOR = "data_coordinator"
 HASS_CONFIG_COORDINATOR = "config_coordinator"

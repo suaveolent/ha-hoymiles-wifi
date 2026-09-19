@@ -29,6 +29,7 @@ from .const import (
     DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS,
     DEFAULT_TIMEOUT_SECONDS,
     DOMAIN,
+    ENC_RAND_LENGTH,
     HASS_APP_INFO_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
@@ -79,6 +80,51 @@ async def async_setup(hass: HomeAssistant, config: ConfigType):
     return True
 
 
+def _decode_stored_enc_rand(
+    host: str, is_encrypted: bool, enc_rand: str | None
+) -> bytes | None:
+    """Decode the stored encryption random, or None if it is not usable.
+
+    Returning None means "build a plaintext DTU". The app info coordinator runs
+    before any other request and will replace an unusable state with whatever the
+    DTU actually reports, so plaintext is a recoverable starting point where a
+    half-configured cipher is not.
+    """
+    if not is_encrypted:
+        return None
+
+    if not enc_rand:
+        _LOGGER.warning(
+            "DTU %s is marked as encrypted but no encryption random is stored. "
+            "Falling back to unencrypted requests until the DTU reports one",
+            host,
+        )
+        return None
+
+    try:
+        decoded = bytes.fromhex(enc_rand)
+    except ValueError:
+        _LOGGER.warning(
+            "DTU %s has a malformed stored encryption random. Falling back to "
+            "unencrypted requests until the DTU reports a usable one",
+            host,
+        )
+        return None
+
+    if len(decoded) != ENC_RAND_LENGTH:
+        _LOGGER.warning(
+            "DTU %s has a stored encryption random of %d bytes, expected %d. "
+            "Falling back to unencrypted requests until the DTU reports a "
+            "usable one",
+            host,
+            len(decoded),
+            ENC_RAND_LENGTH,
+        )
+        return None
+
+    return decoded
+
+
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Set up this integration using UI."""
 
@@ -96,11 +142,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     enc_rand = config_entry.data.get(CONF_ENC_RAND, None)
     timeout = config_entry.data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS)
 
-    if is_encrypted:
+    stored_enc_rand = _decode_stored_enc_rand(host, is_encrypted, enc_rand)
+
+    if stored_enc_rand is not None:
         dtu = DTU(
             host,
-            is_encrypted=is_encrypted,
-            enc_rand=bytes.fromhex(enc_rand),
+            is_encrypted=True,
+            enc_rand=stored_enc_rand,
             timeout=timeout,
         )
     else:
@@ -150,16 +198,22 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             energy_storage_data_coordinator
         )
 
-    _LOGGER.debug(f"  hass_data: {hass_data}")  # --- IGNORE ---
-    _LOGGER.debug(f"  config_entry_id: {config_entry.entry_id}")
+    # Deliberately not logging hass_data itself: it is a copy of the config entry
+    # data and would put the encryption random into the log.
+    _LOGGER.debug("  hass_data keys: %s", sorted(hass_data))
+    _LOGGER.debug("  config_entry_id: %s", config_entry.entry_id)
 
     hass.data[DOMAIN][config_entry.entry_id] = hass_data
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     if single_phase_inverters or three_phase_inverters or meters:
+        # App info first: it is the only request that is never encrypted, so it
+        # resolves the DTU's current encryption state before any other call is
+        # attempted. Without this, a DTU that enabled encryption after a
+        # firmware update would return no data until the next app info poll.
+        await app_info_update_coordinator.async_config_entry_first_refresh()
         await data_coordinator.async_config_entry_first_refresh()
         await config_coordinator.async_config_entry_first_refresh()
-        await app_info_update_coordinator.async_config_entry_first_refresh()
     if hybrid_inverters:
         await energy_storage_data_coordinator.async_config_entry_first_refresh()
         hass.services.async_register(

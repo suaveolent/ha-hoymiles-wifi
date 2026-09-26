@@ -7,11 +7,13 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.service import SupportsResponse
 from hoymiles_wifi.dtu import DTU
+from hoymiles_wifi.hoymiles import get_dtu_model_name
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
@@ -154,6 +156,17 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     _LOGGER.debug(f"  config_entry_id: {config_entry.entry_id}")
 
     hass.data[DOMAIN][config_entry.entry_id] = hass_data
+
+    # Register the DTU before platforms register devices connected through it.
+    dtu_serial_number = str(config_entry.data[CONF_DTU_SERIAL_NUMBER])
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=config_entry.entry_id,
+        identifiers={(DOMAIN, dtu_serial_number)},
+        translation_key="dtu",
+        manufacturer="Hoymiles",
+        serial_number=dtu_serial_number.upper(),
+        model=get_dtu_model_name(dtu_serial_number),
+    )
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     if single_phase_inverters or three_phase_inverters or meters:

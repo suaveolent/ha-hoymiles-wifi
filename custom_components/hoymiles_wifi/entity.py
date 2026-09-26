@@ -6,6 +6,7 @@ import logging
 from enum import Enum
 
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -62,8 +63,6 @@ class HoymilesEntity(Entity):
         if description.phase:
             self._attr_translation_placeholders = {"phase": f"{description.phase}"}
 
-        dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
-
         serial_number = str(self.entity_description.serial_number)
 
         if self.entity_description.is_dtu_sensor is True:
@@ -96,10 +95,24 @@ class HoymilesEntity(Entity):
             model=device_model,
         )
 
-        if not self.entity_description.is_dtu_sensor:
-            device_info["via_device"] = (DOMAIN, dtu_serial_number)
-
         self._attr_device_info = device_info
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Link connected devices to the DTU owned by this config entry."""
+        device_info = self._attr_device_info.copy()
+        if not self.entity_description.is_dtu_sensor:
+            identifier = (
+                DOMAIN, str(self._config_entry.data[CONF_DTU_SERIAL_NUMBER])
+            )
+            if hasattr(dr, "async_get_device_id_by_identifier"):
+                device_info["via_device_id"] = dr.async_get_device_id_by_identifier(
+                    self.hass, identifier, config_entry_id=self._config_entry.entry_id
+                )
+            else:
+                # Compatibility with Home Assistant before the 2026.8 registry API.
+                device_info["via_device"] = identifier
+        return device_info
 
 
 class HoymilesCoordinatorEntity(CoordinatorEntity, HoymilesEntity):

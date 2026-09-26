@@ -1,6 +1,5 @@
 """Unit tests for the Hoymiles config flow."""
 
-from json import JSONDecodeError
 from unittest.mock import patch
 
 import pytest
@@ -12,6 +11,13 @@ from custom_components.hoymiles_wifi.const import (
     CONF_INVERTERS,
     CONF_PORTS,
     CONF_DTU_SERIAL_NUMBER,
+    CONF_ENC_RAND,
+    CONF_HYBRID_INVERTERS,
+    CONF_IS_ENCRYPTED,
+    CONF_METERS,
+    CONF_THREE_PHASE_INVERTERS,
+    CONF_TIMEOUT,
+    DEFAULT_TIMEOUT_SECONDS,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
 )
 from custom_components.hoymiles_wifi.error import CannotConnect
@@ -20,9 +26,8 @@ from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
 
-from pytest_homeassistant_custom_component.common import MockConfigEntry
-
 from hoymiles_wifi.protobuf import (
+    APPInfomationData_pb2,
     RealDataNew_pb2,
 )
 
@@ -41,11 +46,29 @@ MOCK_DATA_RESULT = {
     CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_SECONDS,
     CONF_INVERTERS: [],
     CONF_PORTS: [],
+    CONF_THREE_PHASE_INVERTERS: [],
+    CONF_METERS: [],
+    CONF_HYBRID_INVERTERS: [],
+    CONF_IS_ENCRYPTED: False,
+    CONF_ENC_RAND: "",
+    CONF_TIMEOUT: DEFAULT_TIMEOUT_SECONDS,
 }
 
 
 MOCK_DATA_REAL_DATA_NEW = RealDataNew_pb2.RealDataNewReqDTO()
 MOCK_DATA_REAL_DATA_NEW.device_serial_number = DTU_TEST_SERIAL_NUMBER
+
+
+@pytest.fixture(autouse=True)
+def mock_app_information_data():
+    """Use a plaintext DTU response without contacting a real device."""
+    response = APPInfomationData_pb2.APPInfoDataReqDTO()
+    response.dtu_info.dfs = 0
+    with patch(
+        "hoymiles_wifi.dtu.DTU.async_app_information_data",
+        return_value=response,
+    ):
+        yield
 
 
 async def test_form_valid_input(hass: HomeAssistant) -> None:
@@ -71,7 +94,7 @@ async def test_form_valid_input(hass: HomeAssistant) -> None:
             result["flow_id"],
             MOCK_DATA_STEP,
         )
-    await hass.async_block_till_done()
+        await hass.async_block_till_done()
 
     assert result2["type"] == FlowResultType.CREATE_ENTRY
     assert result2["title"] == MOCK_DATA_STEP[CONF_HOST]
@@ -127,7 +150,7 @@ async def test_flow_user_init_data_error_and_recover(
             MOCK_DATA_STEP,
         )
 
-    await hass.async_block_till_done()
+        await hass.async_block_till_done()
 
     assert result3["type"] == FlowResultType.CREATE_ENTRY
     assert result3["title"] == MOCK_DATA_STEP[CONF_HOST]

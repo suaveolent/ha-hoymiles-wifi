@@ -157,9 +157,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     if single_phase_inverters or three_phase_inverters or meters:
+        await app_info_update_coordinator.async_config_entry_first_refresh()
         await data_coordinator.async_config_entry_first_refresh()
         await config_coordinator.async_config_entry_first_refresh()
-        await app_info_update_coordinator.async_config_entry_first_refresh()
     if hybrid_inverters:
         await energy_storage_data_coordinator.async_config_entry_first_refresh()
         hass.services.async_register(

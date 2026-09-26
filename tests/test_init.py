@@ -4,12 +4,14 @@ from unittest.mock import patch
 
 import pytest
 from homeassistant.const import CONF_HOST
+from homeassistant.helpers import device_registry as dr
 from homeassistant.setup import async_setup_component
 from hoymiles_wifi.dtu import DTU
 from hoymiles_wifi.protobuf import APPInfomationData_pb2, GetConfig_pb2, RealDataNew_pb2
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hoymiles_wifi.const import (
+    CONF_DTU_SERIAL_NUMBER,
     CONF_ENC_RAND,
     CONF_INVERTERS,
     CONF_IS_ENCRYPTED,
@@ -35,6 +37,7 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
         version=CONFIG_VERSION,
         data={
             CONF_HOST: "dtu.local",
+            CONF_DTU_SERIAL_NUMBER: "4143A01B0514",
             CONF_UPDATE_INTERVAL: 35,
             CONF_INVERTERS: ["112345678901"],
             CONF_IS_ENCRYPTED: False,
@@ -44,6 +47,18 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
     entry.add_to_hass(hass)
     requests = []
     app_info_modes = []
+    dtu_device_ids = []
+
+    async def forward_platforms(config_entry, platforms):
+        """The parent must exist before any platform starts adding entities."""
+        device = dr.async_get(hass).async_get_device_by_identifier(
+            (DOMAIN, config_entry.data[CONF_DTU_SERIAL_NUMBER]),
+            config_entry.entry_id,
+        )
+        assert device is not None
+        assert device.via_device_id is None
+        assert device.manufacturer == "Hoymiles"
+        dtu_device_ids.append(device.id)
 
     async def app_info(dtu):
         requests.append("app_info")
@@ -71,7 +86,9 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
         patch.object(DTU, "async_app_information_data", autospec=True, side_effect=app_info),
         patch.object(DTU, "async_get_real_data_new", autospec=True, side_effect=real_data),
         patch.object(DTU, "async_get_config", autospec=True, side_effect=config_data),
-        patch.object(hass.config_entries, "async_forward_entry_setups"),
+        patch.object(
+            hass.config_entries, "async_forward_entry_setups", side_effect=forward_platforms
+        ),
         patch.object(hass.config_entries, "async_unload_platforms", return_value=True),
     ):
         assert await hass.config_entries.async_setup(entry.entry_id)
@@ -83,5 +100,7 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
         assert await hass.config_entries.async_reload(entry.entry_id)
         assert requests == ["app_info", "real_data", "config"]
         assert app_info_modes == [False, encrypted]
+        assert len(dtu_device_ids) == 2
+        assert dtu_device_ids[0] == dtu_device_ids[1]
 
         assert await hass.config_entries.async_unload(entry.entry_id)

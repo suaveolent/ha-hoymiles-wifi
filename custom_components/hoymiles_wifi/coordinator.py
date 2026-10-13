@@ -2,17 +2,19 @@
 
 from datetime import timedelta
 import logging
+from time import monotonic
 
 import homeassistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from hoymiles_wifi.dtu import DTU
 
 from .const import DOMAIN
 from .util import async_check_and_update_enc_rand, is_encrypted_dtu
 
 _LOGGER = logging.getLogger(__name__)
+LIVE_DATA_GRACE_SECONDS = 180
 
 PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.BINARY_SENSOR, Platform.BUTTON]
 
@@ -45,10 +47,52 @@ class HoymilesDataUpdateCoordinator(DataUpdateCoordinator):
         return self._dtu
 
 
-class HoymilesRealDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
-    """Data coordinator for Hoymiles integration."""
+class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
+    """Keep live readings through brief outages, then report unavailability."""
+
+    _last_successful_fetch: float | None = None
+    data_is_stale = False
 
     async def _async_update_data(self):
+        """Apply one grace period, measured from the last successful fetch."""
+        try:
+            response = await self._async_fetch_data()
+        except (OSError, TimeoutError) as err:
+            _LOGGER.debug("Live data request failed: %s", err)
+            response = None
+
+        if response is not None:
+            self._last_successful_fetch = monotonic()
+            self.data_is_stale = False
+            return response
+
+        self.data_is_stale = True
+        if self._can_reuse_last_response():
+            _LOGGER.debug(
+                "DTU %s did not respond; reusing live data within the %s-second grace period",
+                self._config_entry.data.get(CONF_HOST),
+                LIVE_DATA_GRACE_SECONDS,
+            )
+            return self.data
+        raise UpdateFailed("Unable to retrieve live data from DTU")
+
+    def _can_reuse_last_response(self) -> bool:
+        """Check whether cached data is still within the outage grace period."""
+        return (
+            self.data is not None
+            and self._last_successful_fetch is not None
+            and monotonic() - self._last_successful_fetch < LIVE_DATA_GRACE_SECONDS
+        )
+
+    async def _async_fetch_data(self):
+        """Fetch a response, returning None when communication fails."""
+        raise NotImplementedError
+
+
+class HoymilesRealDataUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
+    """Data coordinator for Hoymiles integration."""
+
+    async def _async_fetch_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
@@ -136,7 +180,7 @@ class HoymilesGatewayNetworkInfoUpdateCoordinator(HoymilesDataUpdateCoordinator)
         return response
 
 
-class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
+class HoymilesEnergyStorageUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
     """Energy Storage Update coordinator for Hoymiles integration."""
 
     def __init__(
@@ -153,7 +197,7 @@ class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
         self._inverters = inverters
         super().__init__(hass, dtu, config_entry, update_interval)
 
-    async def _async_update_data(self):
+    async def _async_fetch_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles energy storage coordinator update")
 
@@ -164,11 +208,16 @@ class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
                 dtu_serial_number=int(self._dtu_serial_number),
                 inverter_serial_number=inverter["inverter_serial_number"],
             )
-            if storage_data is not None:
-                responses.append(storage_data)
+            if storage_data is None:
+                _LOGGER.debug(
+                    "No response from inverter %s; retaining its position with missing data",
+                    inverter["inverter_serial_number"],
+                )
+            responses.append(storage_data)
 
-        if not responses:
+        if not any(response is not None for response in responses):
             _LOGGER.debug(
                 "Unable to retrieve energy storage data. Inverter might be offline."
             )
+            return None
         return responses

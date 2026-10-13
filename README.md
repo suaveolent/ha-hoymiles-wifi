@@ -98,21 +98,24 @@ Configuration is done in the UI.
 > [!NOTE]
 > To find the IP address or hostname of your inverter/DTU, you can either access your router’s web interface to view connected devices, or use a network scanning tool (such as Fing or Angry IP Scanner) to identify the device on your local network.
 
-2. `Update interval (seconds)`: This defines how frequently the system will request data from the inverter or DTU. Enter the desired time in seconds.
+2. `Cloud upload pause duration (seconds)`: Briefly pauses polling every five minutes to give the DTU time to upload to the Hoymiles cloud. Accepts **0–120 seconds**, with a default of **0 (disabled)**. Set a positive duration if local polling interferes with cloud updates.
+
+> [!NOTE]
+> Each pause starts ten seconds before a five-minute mark on Home Assistant's clock. For example, **30 seconds** pauses polling from **12:04:50** to **12:05:20**, then from **12:09:50** to **12:10:20**, repeating every five minutes. Polling resumes on its next scheduled update after the pause.
+
+3. `Update interval (seconds)`: This defines how frequently the system will request data from the inverter or DTU. Enter the desired time in seconds.
 
 > [!NOTE]
 > Setting the update interval below approximately 32 seconds (120 seconds for newer firmware versions) may disable Hoymiles cloud functionality. To ensure proper communication with Hoymiles servers, keep the update interval at or above this threshold.
+
+4. `Timeout (seconds)`: How long each connection or response wait may take before the request fails. The default is **10 seconds**, with a minimum of **1 second**. Increase it if your DTU responds slowly. This does not change the polling interval.
 
 ### Power limits
 
 - **Persistent power limit** sets a percentage and remains stored after an inverter restart.
 - **Temporary power limit** sets watts on supported HMS-W devices with firmware V01.01.01 or newer. It accepts 0.1–3276.7 W in steps of 0.1 W, uses the runtime command, and resets to the persistent limit after an inverter restart.
 
-The temporary control shows the acknowledged target as assumed until live data
-echoes the matching watt value. It starts unknown after an integration reload,
-because the same echo field can represent either percent or watts. Sending a
-persistent limit clears the temporary readback. Commands sent by another app are
-not tracked, so their echo units cannot be determined reliably. Temporary limits
+Commands sent by another app are not tracked, so their echo units cannot be determined reliably. Temporary limits
 are not restored or automatically reapplied.
 
 ## Screenshots

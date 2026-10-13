@@ -7,6 +7,7 @@
         "data": {
           "host": "Hôte",
           "update_interval": "Intervalle de mise à jour (secondes)",
+          "cloud_pause": "Durée de la pause pour envoi au cloud (secondes)",
           "timeout": "Délai d'attente (secondes)"
         }
       },
@@ -16,6 +17,7 @@
         "data": {
           "host": "Hôte",
           "update_interval": "Intervalle de mise à jour (secondes)",
+          "cloud_pause": "Durée de la pause pour envoi au cloud (secondes)",
           "timeout": "Délai d'attente (secondes)"
         }
       }

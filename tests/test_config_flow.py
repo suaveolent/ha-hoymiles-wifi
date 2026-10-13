@@ -10,6 +10,7 @@ from hoymiles_wifi.protobuf import APPInfomationData_pb2, RealDataNew_pb2
 import pytest
 
 from custom_components.hoymiles_wifi.const import (
+    CONF_CLOUD_PAUSE,
     CONF_DTU_SERIAL_NUMBER,
     CONF_ENC_RAND,
     CONF_HYBRID_INVERTERS,
@@ -36,6 +37,7 @@ MOCK_DATA_STEP = {
 }
 
 MOCK_DATA_RESULT = {
+    CONF_CLOUD_PAUSE: 0,
     CONF_HOST: DTU_TEST_HOST,
     CONF_DTU_SERIAL_NUMBER: DTU_TEST_SERIAL_NUMBER,
     CONF_UPDATE_INTERVAL: DEFAULT_UPDATE_INTERVAL_SECONDS,
@@ -66,7 +68,8 @@ def mock_app_information_data():
         yield
 
 
-async def test_form_valid_input(hass: HomeAssistant) -> None:
+@pytest.mark.parametrize("cloud_pause", [0, 1, 30, 120])
+async def test_form_valid_input(hass: HomeAssistant, cloud_pause) -> None:
     """Test handling valid user input."""
 
     result = await hass.config_entries.flow.async_init(
@@ -87,13 +90,19 @@ async def test_form_valid_input(hass: HomeAssistant) -> None:
     ):
         result2 = await hass.config_entries.flow.async_configure(
             result["flow_id"],
-            MOCK_DATA_STEP,
+            {
+                **MOCK_DATA_STEP,
+                CONF_CLOUD_PAUSE: cloud_pause,
+            },
         )
         await hass.async_block_till_done()
 
     assert result2["type"] == FlowResultType.CREATE_ENTRY
     assert result2["title"] == MOCK_DATA_STEP[CONF_HOST]
-    assert result2["data"] == MOCK_DATA_RESULT
+    assert result2["data"] == {
+        **MOCK_DATA_RESULT,
+        CONF_CLOUD_PAUSE: cloud_pause,
+    }
     assert len(mock_setup_entry.mock_calls) == 1
     assert len(mock_async_get_real_data_new.mock_calls) == 1
 

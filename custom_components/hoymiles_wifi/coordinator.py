@@ -8,6 +8,7 @@ import homeassistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import dt as dt_util
 from hoymiles_wifi.const import (
     MAX_TEMPORARY_POWER_LIMIT_WATTS,
     MIN_TEMPORARY_POWER_LIMIT_WATTS,
@@ -15,7 +16,7 @@ from hoymiles_wifi.const import (
 from hoymiles_wifi.dtu import DTU
 from hoymiles_wifi.hoymiles import generate_inverter_serial_number
 
-from .const import CONF_INVERTERS, DOMAIN
+from .const import CONF_CLOUD_PAUSE, CONF_INVERTERS, DEFAULT_CLOUD_PAUSE_SECONDS, DOMAIN
 from .util import async_check_and_update_enc_rand, is_encrypted_dtu
 
 _LOGGER = logging.getLogger(__name__)
@@ -60,6 +61,16 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
     async def _async_update_data(self):
         """Apply one grace period, measured from the last successful fetch."""
+        if self._is_cloud_pause_active():
+            self.data_is_stale = True
+            if self._can_reuse_last_response():
+                _LOGGER.debug(
+                    "Skipping polling of DTU %s during the cloud upload pause",
+                    self._config_entry.data.get(CONF_HOST),
+                )
+                return self.data
+            raise UpdateFailed("No recent DTU data during the cloud upload pause")
+
         try:
             response = await self._async_fetch_data()
         except (OSError, TimeoutError) as err:
@@ -80,6 +91,13 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
             )
             return self.data
         raise UpdateFailed("Unable to retrieve live data from DTU")
+
+    def _is_cloud_pause_active(self) -> bool:
+        """Reserve a quiet window beginning ten seconds before each five-minute mark."""
+        duration = self._config_entry.data.get(
+            CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS
+        )
+        return duration > 0 and (dt_util.utcnow().timestamp() + 10) % 300 < duration
 
     def _can_reuse_last_response(self) -> bool:
         """Check whether cached data is still within the outage grace period."""

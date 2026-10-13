@@ -26,7 +26,9 @@
       "cannot_connect": "Verbindung nicht möglich."
     },
     "abort": {
-      "already_configured": "Bereits konfiguriert."
+      "already_configured": "Bereits konfiguriert.",
+      "unique_id_mismatch": "Der Host gehört zu einer anderen DTU. Geben Sie die Adresse der ursprünglich konfigurierten DTU ein.",
+      "reconfigure_successful": "Die Konfiguration wurde erfolgreich aktualisiert."
     }
   },
   "entity": {

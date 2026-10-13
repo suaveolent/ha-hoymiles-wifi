@@ -134,18 +134,20 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle a reconfiguration flow initialized by the user."""
 
-        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
-        assert entry is not None
+        entry = self._get_reconfigure_entry()
 
         errors = {}
 
         if user_input is not None:
             host = user_input[CONF_HOST]
             update_interval = user_input.get(
-                CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS
+                CONF_UPDATE_INTERVAL,
+                entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS),
             )
 
-            timeout = user_input.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS)
+            timeout = user_input.get(
+                CONF_TIMEOUT, entry.data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS)
+            )
 
             try:
                 (
@@ -162,8 +164,8 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
 
             else:
-                if dtu_sn != entry.unique_id:
-                    return self.async_abort(reason="another_device")
+                if dtu_sn != entry.data.get(CONF_DTU_SERIAL_NUMBER, entry.unique_id):
+                    return self.async_abort(reason="unique_id_mismatch")
 
                 data = {
                     CONF_HOST: host,
@@ -183,14 +185,12 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     ),
                 }
 
-                self.hass.config_entries.async_update_entry(
-                    entry, data=data, version=CONFIG_VERSION
+                return self.async_update_reload_and_abort(
+                    entry,
+                    data_updates=data,
+                    unique_id=entry.unique_id or dtu_sn,
+                    title=host if entry.title == entry.data[CONF_HOST] else entry.title,
                 )
-                result = await self.hass.config_entries.async_reload(entry.entry_id)
-                if not result:
-                    errors["base"] = "unknown"
-                else:
-                    return self.async_abort(reason="reconfigure_successful")
 
         return self.async_show_form(
             step_id="reconfigure",

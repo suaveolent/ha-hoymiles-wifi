@@ -26,7 +26,9 @@
       "cannot_connect": "Failed to connect."
     },
     "abort": {
-      "already_configured": "Already configured."
+      "already_configured": "Already configured.",
+      "unique_id_mismatch": "The host belongs to a different DTU. Enter the address of the originally configured DTU.",
+      "reconfigure_successful": "The configuration was updated successfully."
     }
   },
   "entity": {

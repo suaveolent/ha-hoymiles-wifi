@@ -7,9 +7,15 @@ from typing import Any
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+)
 import voluptuous as vol
 
 from .const import (
+    CONF_CLOUD_PAUSE,
     CONF_DTU_SERIAL_NUMBER,
     CONF_ENC_RAND,
     CONF_HYBRID_INVERTERS,
@@ -21,9 +27,11 @@ from .const import (
     CONF_TIMEOUT,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
+    DEFAULT_CLOUD_PAUSE_SECONDS,
     DEFAULT_TIMEOUT_SECONDS,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
+    MAX_CLOUD_PAUSE_SECONDS,
     MIN_TIMEOUT_SECONDS,
     MIN_UPDATE_INTERVAL_SECONDS,
 )
@@ -32,9 +40,18 @@ from .util import async_get_config_entry_data_for_host
 
 _LOGGER = logging.getLogger(__name__)
 
+CLOUD_PAUSE_SELECTOR = NumberSelector(
+    NumberSelectorConfig(
+        min=0, max=MAX_CLOUD_PAUSE_SECONDS, step=1, mode=NumberSelectorMode.BOX
+    )
+)
+
 DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
+        vol.Required(
+            CONF_CLOUD_PAUSE, default=DEFAULT_CLOUD_PAUSE_SECONDS
+        ): CLOUD_PAUSE_SELECTOR,
         vol.Optional(
             CONF_UPDATE_INTERVAL,
             default=timedelta(seconds=DEFAULT_UPDATE_INTERVAL_SECONDS).seconds,
@@ -102,6 +119,9 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                         CONF_IS_ENCRYPTED: is_encrypted,
                         CONF_ENC_RAND: enc_rand,
                         CONF_TIMEOUT: timeout,
+                        CONF_CLOUD_PAUSE: user_input.get(
+                            CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS
+                        ),
                     },
                 )
 
@@ -157,6 +177,10 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     CONF_IS_ENCRYPTED: is_encrypted,
                     CONF_ENC_RAND: enc_rand,
                     CONF_TIMEOUT: timeout,
+                    CONF_CLOUD_PAUSE: user_input.get(
+                        CONF_CLOUD_PAUSE,
+                        entry.data.get(CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS),
+                    ),
                 }
 
                 self.hass.config_entries.async_update_entry(
@@ -173,6 +197,12 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_HOST, default=entry.data[CONF_HOST]): str,
+                    vol.Required(
+                        CONF_CLOUD_PAUSE,
+                        default=entry.data.get(
+                            CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS
+                        ),
+                    ): CLOUD_PAUSE_SELECTOR,
                     vol.Optional(
                         CONF_UPDATE_INTERVAL,
                         default=entry.data[CONF_UPDATE_INTERVAL],

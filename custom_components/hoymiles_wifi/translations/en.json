@@ -7,6 +7,7 @@
         "data": {
           "host": "Host",
           "update_interval": "Update Interval (seconds)",
+          "cloud_pause": "Cloud upload pause duration (seconds)",
           "timeout": "Timeout (seconds)"
         }
       },
@@ -16,6 +17,7 @@
         "data": {
           "host": "Host",
           "update_interval": "Update Interval (seconds)",
+          "cloud_pause": "Cloud upload pause duration (seconds)",
           "timeout": "Timeout (seconds)"
         }
       }

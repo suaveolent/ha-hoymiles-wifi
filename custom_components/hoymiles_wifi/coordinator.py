@@ -166,10 +166,10 @@ class HoymilesRealDataUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
         return response
 
 
-class HoymilesConfigUpdateCoordinator(HoymilesDataUpdateCoordinator):
+class HoymilesConfigUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
     """Config coordinator for Hoymiles integration."""
 
-    async def _async_update_data(self):
+    async def _async_fetch_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 
@@ -181,10 +181,10 @@ class HoymilesConfigUpdateCoordinator(HoymilesDataUpdateCoordinator):
         return response
 
 
-class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
+class HoymilesAppInfoUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
     """App Info coordinator for Hoymiles integration."""
 
-    async def _async_update_data(self):
+    async def _async_fetch_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
 

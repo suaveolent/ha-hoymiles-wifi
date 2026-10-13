@@ -1356,7 +1356,7 @@ def get_sensors_for_hybrid_inverter_description(
 
             if "<pv_panel_count>" in description.key:
                 # TODO: Dynamically determine number of PV panels
-                for pv_index in range(0, 2):
+                for pv_index in range(2):
                     new_pv_index_key = new_key.replace(
                         "<pv_panel_count>", str(pv_index)
                     )
@@ -1371,7 +1371,7 @@ def get_sensors_for_hybrid_inverter_description(
                     sensors.append(sensor)
             elif "<phase_count>" in description.key:
                 # TODO: Dynamically determine number of phases
-                for phase_index in range(0, 3):
+                for phase_index in range(3):
                     new_phase_index_key = new_key.replace(
                         "<phase_count>", str(phase_index)
                     )
@@ -1424,7 +1424,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
         self._native_value = None
         self._assumed_state = False
         self._last_known_value = None
-        self._last_successful_update = None
+        self._daily_max_value = None
         self._last_update_state = None
 
         self.update_state_value()
@@ -1438,69 +1438,40 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
     @property
     def native_value(self):
         """Return the native value of the sensor."""
-        if self._native_value == 0.0:
-            if self.entity_description.assume_state:
-                return self._last_known_value
-            elif (
-                self._last_successful_update is not None
-                and dt_util.now() - self._last_successful_update <= timedelta(minutes=3)
-            ):
-                _LOGGER.debug(
-                    "[%s] Returning last known value: %s, instead of 0.0 to cope with inverter in offline mode.",
-                    self.name,
-                    self._last_known_value,
-                )
-                self._assumed_state = True
-                return self._last_known_value
-        else:
-            self._last_successful_update = dt_util.now()
-            self._last_known_value = self._native_value
-        self._assumed_state = False
+        if self._native_value == 0.0 and self.entity_description.assume_state:
+            return self._last_known_value
         return self._native_value
 
     @property
     def assumed_state(self):
         """Return the assumed state of the sensor."""
-        return self._assumed_state
+        return (
+            self._assumed_state
+            or getattr(self.coordinator, "data_is_stale", False)
+            or (self.entity_description.assume_state and self._native_value == 0.0)
+        )
+
+    def _read_coordinator_value(self):
+        """Resolve this sensor's attribute path, returning None for missing data."""
+        value = getattr(self.coordinator, "data", None)
+        for token in re.findall(r"\w+|\[\d+\]", self._attribute_name):
+            if value is None:
+                return None
+            if token.startswith("["):
+                try:
+                    value = value[int(token[1:-1])]
+                except (IndexError, TypeError):
+                    return None
+            else:
+                value = getattr(value, token, None)
+        return value
 
     def update_state_value(self):
-        """Update the state value of the sensor based on the coordinator data."""
-        new_native_value = 0.0
+        """Update measurements and counters only from fresh coordinator data."""
+        if getattr(self.coordinator, "data_is_stale", False):
+            return
 
-        if self.coordinator is not None and (
-            not hasattr(self.coordinator, "data") or self.coordinator.data is None
-        ):
-            new_native_value = 0.0
-        elif "[" in self._attribute_name and "]" in self._attribute_name:
-            # Extracting the list index and attribute dynamically
-            attribute_name, index = self._attribute_name.split("[")
-            index = int(index.split("]")[0])
-            nested_attribute = (
-                self._attribute_name.split("].")[1]
-                if "]." in self._attribute_name
-                else None
-            )
-
-            attribute = getattr(self.coordinator.data, attribute_name.split("[")[0], [])
-
-            if index < len(attribute):
-                if nested_attribute is not None:
-                    new_native_value = getattr(attribute[index], nested_attribute, None)
-                else:
-                    new_native_value = attribute[index]
-            else:
-                new_native_value = None
-        elif "." in self._attribute_name:
-            attribute_parts = self._attribute_name.split(".")
-            attribute = self.coordinator.data
-            for part in attribute_parts:
-                attribute = getattr(attribute, part, None)
-            new_native_value = attribute
-
-        else:
-            new_native_value = getattr(
-                self.coordinator.data, self._attribute_name, None
-            )
+        new_native_value = self._read_coordinator_value()
 
         if new_native_value is not None and self._conversion_factor is not None:
             new_native_value *= self._conversion_factor
@@ -1521,14 +1492,19 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
         ):
             new_native_value = f"{self._version_prefix}{new_native_value}"
 
-        if (
-            self.entity_description.force_keep_maximum_within_day
-            and self._last_update_state is not None
-            and self._last_update_state.date() == dt_util.now().date()
-        ):
-            new_native_value = max(new_native_value, self._native_value)
-
-        self._last_update_state = dt_util.now()
+        if new_native_value is not None:
+            now = dt_util.now()
+            if self.entity_description.force_keep_maximum_within_day:
+                if (
+                    self._daily_max_value is not None
+                    and self._last_update_state is not None
+                    and self._last_update_state.date() == now.date()
+                ):
+                    new_native_value = max(new_native_value, self._daily_max_value)
+                self._daily_max_value = new_native_value
+            self._last_update_state = now
+            if self.entity_description.assume_state and new_native_value != 0.0:
+                self._last_known_value = new_native_value
         self._native_value = new_native_value
 
     async def async_added_to_hass(self) -> None:
@@ -1537,7 +1513,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
 
         state = await self.async_get_last_sensor_data()
         if state:
-            self.last_known_value = state.native_value
+            self._last_known_value = state.native_value
 
 
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
@@ -1572,6 +1548,8 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
     def native_value(self):
         """Return the native value of the sensor."""
         super_native_value = super().native_value
+        if super_native_value is None:
+            return None
         # For an energy sensor a value of 0 would mess up long term stats because of how total_increasing works
         if super_native_value == 0.0:
             _LOGGER.debug(
@@ -1671,129 +1649,5 @@ class HoymilesDiagnosticSensorEntity(
             self._last_known_value = state.native_value
 
 
-class HoymilesEnergyStorageSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
-    """Represents a sensor entity for Hoymiles data."""
-
-    def __init__(
-        self,
-        config_entry: ConfigEntry,
-        description: HoymilesEnergyStorageSensorEntityDescription,
-        coordinator: HoymilesCoordinatorEntity,
-    ):
-        """Pass coordinator to CoordinatorEntity."""
-        super().__init__(config_entry, description, coordinator)
-
-        self._attribute_name = description.key
-        self._conversion_factor = description.conversion_factor
-        self._version_translation_function = description.version_translation_function
-        self._version_prefix = description.version_prefix
-        self._native_value = None
-        self._assumed_state = False
-        self._last_known_value = None
-        self._last_successful_update = None
-        self._last_update_state = None
-
-        self.update_state_value()
-
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        """Handle updated data from the coordinator."""
-        self.update_state_value()
-        super()._handle_coordinator_update()
-
-    @property
-    def native_value(self):
-        """Return the native value of the sensor."""
-        if self._native_value == 0.0:
-            if self.entity_description.assume_state:
-                return self._last_known_value
-            elif (
-                self._last_successful_update is not None
-                and dt_util.now() - self._last_successful_update <= timedelta(minutes=3)
-            ):
-                _LOGGER.debug(
-                    "[%s] Returning last known value: %s, instead of 0.0 to cope with inverter in offline mode.",
-                    self.name,
-                    self._last_known_value,
-                )
-                self._assumed_state = True
-                return self._last_known_value
-        else:
-            self._last_successful_update = dt_util.now()
-            self._last_known_value = self._native_value
-        self._assumed_state = False
-        return self._native_value
-
-    @property
-    def assumed_state(self):
-        """Return the assumed state of the sensor."""
-        return self._assumed_state
-
-    def update_state_value(self):
-        """Update the state value of the sensor based on the coordinator data."""
-        new_native_value = 0.0
-
-        if (
-            self.coordinator is None
-            or not hasattr(self.coordinator, "data")
-            or self.coordinator.data is None
-        ):
-            self._native_value = 0.0
-            return
-
-        def resolve_path(obj, path):
-            tokens = re.findall(r"\w+|\[\d+\]", path)
-            for token in tokens:
-                if obj is None:
-                    return None
-                if token.startswith("["):
-                    index = int(token[1:-1])
-                    try:
-                        obj = obj[index]
-                    except (IndexError, TypeError):
-                        _LOGGER.error(
-                            "Index %d out of range for object: %s", index, obj
-                        )
-                        return None
-                else:
-                    obj = getattr(obj, token, None)
-            return obj
-
-        new_native_value = resolve_path(self.coordinator.data, self._attribute_name)
-
-        if new_native_value is not None and self._conversion_factor is not None:
-            new_native_value *= self._conversion_factor
-
-        if (
-            new_native_value is not None
-            and new_native_value != 0.0
-            and self._version_translation_function is not None
-        ):
-            new_native_value = getattr(
-                hoymiles_wifi.hoymiles, self._version_translation_function
-            )(int(new_native_value))
-
-        if (
-            new_native_value is not None
-            and new_native_value != 0.0
-            and self._version_prefix is not None
-        ):
-            new_native_value = f"{self._version_prefix}{new_native_value}"
-
-        if (
-            self.entity_description.force_keep_maximum_within_day
-            and self._last_update_state is not None
-            and self._last_update_state.date() == dt_util.now().date()
-        ):
-            new_native_value = max(new_native_value, self._native_value)
-
-        self._last_update_state = dt_util.now()
-        self._native_value = new_native_value
-
-        async def async_added_to_hass(self) -> None:
-            """Call when entity about to be added to hass."""
-            await super().async_added_to_hass()
-
-            state = await self.async_get_last_sensor_data()
-            if state:
-                self.last_known_value = state.native_value
+class HoymilesEnergyStorageSensorEntity(HoymilesDataSensorEntity):
+    """Use the shared live-data sensor handling for hybrid inverters."""

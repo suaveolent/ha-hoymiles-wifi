@@ -26,7 +26,9 @@
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "another_device": "The host belongs to a different DTU. Enter the address of the originally configured DTU.",
+      "reconfigure_successful": "The configuration was updated successfully."
     }
   },
   "entity": {

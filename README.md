@@ -123,6 +123,27 @@ Use this custom component responsibly and be aware of potential risks. There are
 > [!NOTE]
 > **Compatibility:** While developed for the HMS-800W-2T inverter, compatibility with other inverters from the series is untested at the time of writing. Exercise caution and conduct thorough testing if using with different inverter models.
 
+## Development
+
+Install the test and lint tools in your virtual environment:
+
+```bash
+python -m pip install -r requirements.test.txt -r requirements.lint.txt pre-commit
+pre-commit install
+```
+
+Run the checks from the project root:
+
+```bash
+ruff check .
+ruff format --check .
+python -m pytest -q
+```
+
+Use `ruff check --fix .` and `ruff format .` to apply lint and formatting fixes.
+The editor, pre-commit hooks, and CI use `ruff.toml`. The pinned Ruff version is
+the same in `requirements.lint.txt` and `.pre-commit-config.yaml`.
+
 ## Attribution
 
 This project was generated from [@oncleben31](https://github.com/oncleben31)'s [Home Assistant Custom Component Cookiecutter](https://github.com/oncleben31/cookiecutter-homeassistant-custom-component) template.

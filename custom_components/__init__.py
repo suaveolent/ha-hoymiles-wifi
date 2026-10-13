@@ -1,0 +1,1 @@
+"""Custom Home Assistant integrations."""

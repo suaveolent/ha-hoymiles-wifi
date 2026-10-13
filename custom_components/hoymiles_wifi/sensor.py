@@ -2,7 +2,7 @@
 
 import dataclasses
 from dataclasses import dataclass
-from datetime import datetime, time, timedelta
+from datetime import timedelta
 from enum import Enum
 import logging
 import re
@@ -23,18 +23,19 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
-    UnitOfTemperature,
     UnitOfReactivePower,
+    UnitOfTemperature,
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.util import dt as dt_util
 import hoymiles_wifi.hoymiles
 from hoymiles_wifi.hoymiles import DTUType, get_dtu_model_type
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
-    CONF_INVERTERS,
     CONF_HYBRID_INVERTERS,
+    CONF_INVERTERS,
     CONF_METERS,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
@@ -47,11 +48,7 @@ from .const import (
     HASS_DATA_COORDINATOR,
     HASS_ENERGY_STORAGE_DATA_COORDINATOR,
 )
-from .entity import (
-    HoymilesCoordinatorEntity,
-    HoymilesEntityDescription,
-    DeviceType,
-)
+from .entity import DeviceType, HoymilesCoordinatorEntity, HoymilesEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -1276,7 +1273,7 @@ def get_sensors_for_description(
     dtu_serial_number: str,
     inverters: list,
     ports: list,
-    meters: list = [],
+    meters: list | None = None,
 ) -> list[SensorEntity]:
     """Get sensors for the given description."""
 
@@ -1304,7 +1301,7 @@ def get_sensors_for_description(
             sensor = class_name(config_entry, updated_description, coordinator)
             sensors.append(sensor)
     elif "meter_count" in description.key:
-        for index, meter in enumerate(meters):
+        for index, meter in enumerate(meters or ()):
             meter_serial = meter["meter_serial_number"]
             meter_type = meter["device_type"]
 
@@ -1326,7 +1323,7 @@ def get_sensors_for_description(
             try:
                 dtu_type = get_dtu_model_type(serial_bytes)
             except ValueError as e:
-                _LOGGER.error(f"Error getting DTU model type: {e}")
+                _LOGGER.error("Error getting DTU model type: %s", e)
 
         if (
             description.supported_dtu_types is None
@@ -1446,8 +1443,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
                 return self._last_known_value
             elif (
                 self._last_successful_update is not None
-                and datetime.now() - self._last_successful_update
-                <= timedelta(minutes=3)
+                and dt_util.now() - self._last_successful_update <= timedelta(minutes=3)
             ):
                 _LOGGER.debug(
                     "[%s] Returning last known value: %s, instead of 0.0 to cope with inverter in offline mode.",
@@ -1457,7 +1453,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
                 self._assumed_state = True
                 return self._last_known_value
         else:
-            self._last_successful_update = datetime.now()
+            self._last_successful_update = dt_util.now()
             self._last_known_value = self._native_value
         self._assumed_state = False
         return self._native_value
@@ -1528,11 +1524,11 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
         if (
             self.entity_description.force_keep_maximum_within_day
             and self._last_update_state is not None
-            and self._last_update_state.date() == datetime.now().date()
+            and self._last_update_state.date() == dt_util.now().date()
         ):
             new_native_value = max(new_native_value, self._native_value)
 
-        self._last_update_state = datetime.now()
+        self._last_update_state = dt_util.now()
         self._native_value = new_native_value
 
     async def async_added_to_hass(self) -> None:
@@ -1560,10 +1556,8 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
     def schedule_midnight_reset(self, reset_sensor_value: bool = True):
         """Schedule the reset function to run again at the next midnight."""
-        now = datetime.now()
-        midnight = datetime.combine(now.date(), time(0, 0))
-        midnight = midnight + timedelta(days=1) if now > midnight else midnight
-        time_until_midnight = (midnight - datetime.now()).total_seconds()
+        midnight = dt_util.start_of_local_day(dt_util.now().date() + timedelta(days=1))
+        time_until_midnight = midnight.timestamp() - dt_util.utcnow().timestamp()
 
         if reset_sensor_value:
             self.reset_sensor_value()
@@ -1715,8 +1709,7 @@ class HoymilesEnergyStorageSensorEntity(HoymilesCoordinatorEntity, RestoreSensor
                 return self._last_known_value
             elif (
                 self._last_successful_update is not None
-                and datetime.now() - self._last_successful_update
-                <= timedelta(minutes=3)
+                and dt_util.now() - self._last_successful_update <= timedelta(minutes=3)
             ):
                 _LOGGER.debug(
                     "[%s] Returning last known value: %s, instead of 0.0 to cope with inverter in offline mode.",
@@ -1726,7 +1719,7 @@ class HoymilesEnergyStorageSensorEntity(HoymilesCoordinatorEntity, RestoreSensor
                 self._assumed_state = True
                 return self._last_known_value
         else:
-            self._last_successful_update = datetime.now()
+            self._last_successful_update = dt_util.now()
             self._last_known_value = self._native_value
         self._assumed_state = False
         return self._native_value
@@ -1758,7 +1751,7 @@ class HoymilesEnergyStorageSensorEntity(HoymilesCoordinatorEntity, RestoreSensor
                     try:
                         obj = obj[index]
                     except (IndexError, TypeError):
-                        logging.error(
+                        _LOGGER.error(
                             "Index %d out of range for object: %s", index, obj
                         )
                         return None
@@ -1790,11 +1783,11 @@ class HoymilesEnergyStorageSensorEntity(HoymilesCoordinatorEntity, RestoreSensor
         if (
             self.entity_description.force_keep_maximum_within_day
             and self._last_update_state is not None
-            and self._last_update_state.date() == datetime.now().date()
+            and self._last_update_state.date() == dt_util.now().date()
         ):
             new_native_value = max(new_native_value, self._native_value)
 
-        self._last_update_state = datetime.now()
+        self._last_update_state = dt_util.now()
         self._native_value = new_native_value
 
         async def async_added_to_hass(self) -> None:

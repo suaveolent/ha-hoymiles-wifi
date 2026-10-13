@@ -1,9 +1,8 @@
 """Entity base for Hoymiles entities."""
 
 from dataclasses import dataclass
-import logging
-
 from enum import Enum
+import logging
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.helpers import device_registry as dr
@@ -18,9 +17,7 @@ from hoymiles_wifi.hoymiles import (
 )
 
 from .const import CONF_DTU_SERIAL_NUMBER, DOMAIN
-from .coordinator import (
-    HoymilesDataUpdateCoordinator,
-)
+from .coordinator import HoymilesDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,24 +65,20 @@ class HoymilesEntity(Entity):
         if self.entity_description.is_dtu_sensor is True:
             device_translation_key = "dtu"
             device_model = get_dtu_model_name(self.entity_description.serial_number)
+        elif "meter" in self.entity_description.key:
+            device_model = get_meter_model_name(self.entity_description.serial_number)
+            device_translation_key = "meter"
+        elif (
+            hasattr(self.entity_description, "model_name")
+            and self.entity_description.model_name
+        ):
+            device_model = self.entity_description.model_name
+            device_translation_key = "hybrid_inverter"
         else:
-            if "meter" in self.entity_description.key:
-                device_model = get_meter_model_name(
-                    self.entity_description.serial_number
-                )
-                device_translation_key = "meter"
-            else:
-                if (
-                    hasattr(self.entity_description, "model_name")
-                    and self.entity_description.model_name
-                ):
-                    device_model = self.entity_description.model_name
-                    device_translation_key = "hybrid_inverter"
-                else:
-                    device_model = get_inverter_model_name(
-                        self.entity_description.serial_number
-                    )
-                    device_translation_key = "inverter"
+            device_model = get_inverter_model_name(
+                self.entity_description.serial_number
+            )
+            device_translation_key = "inverter"
 
         device_info = DeviceInfo(
             identifiers={(DOMAIN, serial_number)},
@@ -102,9 +95,7 @@ class HoymilesEntity(Entity):
         """Link connected devices to the DTU owned by this config entry."""
         device_info = self._attr_device_info.copy()
         if not self.entity_description.is_dtu_sensor:
-            identifier = (
-                DOMAIN, str(self._config_entry.data[CONF_DTU_SERIAL_NUMBER])
-            )
+            identifier = (DOMAIN, str(self._config_entry.data[CONF_DTU_SERIAL_NUMBER]))
             if hasattr(dr, "async_get_device_id_by_identifier"):
                 device_info["via_device_id"] = dr.async_get_device_id_by_identifier(
                     self.hass, identifier, config_entry_id=self._config_entry.entry_id

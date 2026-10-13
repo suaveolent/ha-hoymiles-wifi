@@ -151,6 +151,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             energy_storage_data_coordinator
         )
 
+    if single_phase_inverters or three_phase_inverters or meters:
+        await app_info_update_coordinator.async_refresh()
+        await data_coordinator.async_config_entry_first_refresh()
+        await config_coordinator.async_config_entry_first_refresh()
+    if hybrid_inverters:
+        await energy_storage_data_coordinator.async_config_entry_first_refresh()
+
     _LOGGER.debug("  hass_data: %s", hass_data)
     _LOGGER.debug("  config_entry_id: %s", config_entry.entry_id)
 
@@ -168,12 +175,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     )
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
-    if single_phase_inverters or three_phase_inverters or meters:
-        await app_info_update_coordinator.async_refresh()
-        await data_coordinator.async_config_entry_first_refresh()
-        await config_coordinator.async_config_entry_first_refresh()
     if hybrid_inverters:
-        await energy_storage_data_coordinator.async_config_entry_first_refresh()
         hass.services.async_register(
             domain=DOMAIN,
             service="set_bms_mode",

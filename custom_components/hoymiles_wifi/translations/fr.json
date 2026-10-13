@@ -27,7 +27,7 @@
     },
     "abort": {
       "already_configured": "Déjà configuré.",
-      "another_device": "Cet hôte appartient à un autre DTU. Saisissez l’adresse du DTU configuré à l’origine.",
+      "unique_id_mismatch": "Cet hôte appartient à un autre DTU. Saisissez l’adresse du DTU configuré à l’origine.",
       "reconfigure_successful": "La configuration a été mise à jour avec succès."
     }
   },

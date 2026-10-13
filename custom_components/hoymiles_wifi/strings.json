@@ -27,8 +27,8 @@
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
-      "another_device": "The host belongs to a different DTU. Enter the address of the originally configured DTU.",
-      "reconfigure_successful": "The configuration was updated successfully."
+      "unique_id_mismatch": "The host belongs to a different DTU. Enter the address of the originally configured DTU.",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
   },
   "entity": {

@@ -248,7 +248,7 @@ async def test_reconfigure_rejects_another_device(hass, unique_id):
         )
         await hass.async_block_till_done()
     assert result["type"] is FlowResultType.ABORT
-    assert result["reason"] == "another_device"
+    assert result["reason"] == "unique_id_mismatch"
     assert entry.data == MOCK_DATA_RESULT
     reload.assert_not_awaited()
 
@@ -292,7 +292,7 @@ async def test_reconfigure_abort_messages_are_localized(hass, language):
     translations = await translation.async_get_translations(
         hass, language, "config", {DOMAIN}
     )
-    for reason in ("another_device", "reconfigure_successful"):
+    for reason in ("unique_id_mismatch", "reconfigure_successful"):
         message = translations[f"component.{DOMAIN}.config.abort.{reason}"]
         assert message
         assert message != reason

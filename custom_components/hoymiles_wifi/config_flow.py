@@ -165,7 +165,7 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
 
             else:
                 if dtu_sn != entry.data.get(CONF_DTU_SERIAL_NUMBER, entry.unique_id):
-                    return self.async_abort(reason="another_device")
+                    return self.async_abort(reason="unique_id_mismatch")
 
                 data = {
                     CONF_HOST: host,

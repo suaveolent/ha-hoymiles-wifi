@@ -2,13 +2,11 @@
 
 import dataclasses
 from dataclasses import dataclass
-from datetime import timedelta
 from enum import Enum
 import logging
 import re
 
 from homeassistant.components.sensor import (
-    RestoreSensor,
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
@@ -28,7 +26,6 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.util import dt as dt_util
 import hoymiles_wifi.hoymiles
 from hoymiles_wifi.hoymiles import DTUType, get_dtu_model_type
 
@@ -71,12 +68,9 @@ class HoymilesSensorEntityDescription(
     """Describes Hoymiles data sensor entity."""
 
     conversion_factor: float = None
-    reset_at_midnight: bool = False
     version_translation_function: str = None
     version_prefix: str = None
-    assume_state: bool = False
     requires_device_type: int = DeviceType.ALL_DEVICES
-    force_keep_maximum_within_day: bool = False
 
 
 @dataclass(frozen=True)
@@ -87,11 +81,8 @@ class HoymilesEnergyStorageSensorEntityDescription(
 
     model_name: str = None
     conversion_factor: float = None
-    reset_at_midnight: bool = False
     version_translation_function: str = None
     version_prefix: str = None
-    assume_state: bool = False
-    force_keep_maximum_within_day: bool = False
 
 
 @dataclass(frozen=True)
@@ -130,8 +121,6 @@ HOYMILES_SENSORS = [
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        reset_at_midnight=True,
-        force_keep_maximum_within_day=True,
         is_dtu_sensor=True,
         supported_dtu_types=[
             DTUType.DTU_G100,
@@ -357,7 +346,6 @@ HOYMILES_SENSORS = [
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        reset_at_midnight=True,
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].error_code",
@@ -599,7 +587,6 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
         version_prefix="V",
         is_dtu_sensor=True,
-        assume_state=True,
     ),
     HoymilesSensorEntityDescription(
         key="dtu_info.dtu_hw_version",
@@ -608,7 +595,6 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         version_translation_function=FCTN_GENERATE_DTU_VERSION_STRING,
         version_prefix="H",
         is_dtu_sensor=True,
-        assume_state=True,
     ),
     HoymilesSensorEntityDescription(
         key="pv_info[<inverter_count>].pv_sw_version",
@@ -616,7 +602,6 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         version_translation_function=FCTN_GENERATE_INVERTER_SW_VERSION_STRING,
         version_prefix="V",
-        assume_state=True,
     ),
     HoymilesSensorEntityDescription(
         key="pv_info[<inverter_count>].pv_hw_version",
@@ -624,7 +609,6 @@ APP_INFO_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
         entity_category=EntityCategory.DIAGNOSTIC,
         version_translation_function=FCTN_GENERATE_INVERTER_HW_VERSION_STRING,
         version_prefix="H",
-        assume_state=True,
     ),
     HoymilesSensorEntityDescription(
         key="dtu_info.signal_strength",
@@ -1172,11 +1156,7 @@ async def async_setup_entry(
 
     if inverters:
         for description in HOYMILES_SENSORS:
-            device_class = description.device_class
-            if device_class == SensorDeviceClass.ENERGY:
-                class_name = HoymilesEnergySensorEntity
-            else:
-                class_name = HoymilesDataSensorEntity
+            class_name = HoymilesDataSensorEntity
 
             if "sgs_data" in description.key and single_phase_inverters:
                 sensor_entities = get_sensors_for_description(
@@ -1405,7 +1385,7 @@ def get_sensors_for_hybrid_inverter_description(
     return sensors
 
 
-class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
+class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     """Represents a sensor entity for Hoymiles data."""
 
     def __init__(
@@ -1422,10 +1402,6 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
         self._version_translation_function = description.version_translation_function
         self._version_prefix = description.version_prefix
         self._native_value = None
-        self._assumed_state = False
-        self._last_known_value = None
-        self._daily_max_value = None
-        self._last_update_state = None
 
         self.update_state_value()
 
@@ -1438,18 +1414,17 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
     @property
     def native_value(self):
         """Return the native value of the sensor."""
-        if self._native_value == 0.0 and self.entity_description.assume_state:
-            return self._last_known_value
         return self._native_value
 
     @property
     def assumed_state(self):
         """Return the assumed state of the sensor."""
-        return (
-            self._assumed_state
-            or getattr(self.coordinator, "data_is_stale", False)
-            or (self.entity_description.assume_state and self._native_value == 0.0)
-        )
+        return getattr(self.coordinator, "data_is_stale", False)
+
+    @property
+    def available(self) -> bool:
+        """Expose a state only when the coordinator and this reading are available."""
+        return super().available and self._native_value is not None
 
     def _read_coordinator_value(self):
         """Resolve this sensor's attribute path, returning None for missing data."""
@@ -1478,105 +1453,19 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, RestoreSensor):
 
         if (
             new_native_value is not None
-            and new_native_value != 0.0
             and self._version_translation_function is not None
         ):
             new_native_value = getattr(
                 hoymiles_wifi.hoymiles, self._version_translation_function
             )(int(new_native_value))
 
-        if (
-            new_native_value is not None
-            and new_native_value != 0.0
-            and self._version_prefix is not None
-        ):
+        if new_native_value is not None and self._version_prefix is not None:
             new_native_value = f"{self._version_prefix}{new_native_value}"
 
-        if new_native_value is not None:
-            now = dt_util.now()
-            if self.entity_description.force_keep_maximum_within_day:
-                if (
-                    self._daily_max_value is not None
-                    and self._last_update_state is not None
-                    and self._last_update_state.date() == now.date()
-                ):
-                    new_native_value = max(new_native_value, self._daily_max_value)
-                self._daily_max_value = new_native_value
-            self._last_update_state = now
-            if self.entity_description.assume_state and new_native_value != 0.0:
-                self._last_known_value = new_native_value
         self._native_value = new_native_value
 
-    async def async_added_to_hass(self) -> None:
-        """Call when entity about to be added to hass."""
-        await super().async_added_to_hass()
 
-        state = await self.async_get_last_sensor_data()
-        if state:
-            self._last_known_value = state.native_value
-
-
-class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
-    """Represents an energy sensor entity for Hoymiles data."""
-
-    def __init__(
-        self,
-        config_entry: ConfigEntry,
-        description: HoymilesDiagnosticEntityDescription,
-        coordinator: HoymilesCoordinatorEntity,
-    ):
-        """Initialize the HoymilesEnergySensorEntity."""
-        super().__init__(config_entry, description, coordinator)
-        # Important to set to None to not mess with long term stats
-        self._last_known_value = None
-
-    def schedule_midnight_reset(self, reset_sensor_value: bool = True):
-        """Schedule the reset function to run again at the next midnight."""
-        midnight = dt_util.start_of_local_day(dt_util.now().date() + timedelta(days=1))
-        time_until_midnight = midnight.timestamp() - dt_util.utcnow().timestamp()
-
-        if reset_sensor_value:
-            self.reset_sensor_value()
-
-        self.hass.loop.call_later(time_until_midnight, self.schedule_midnight_reset)
-
-    def reset_sensor_value(self):
-        """Reset the sensor value."""
-        self._last_known_value = 0
-
-    @property
-    def native_value(self):
-        """Return the native value of the sensor."""
-        super_native_value = super().native_value
-        if super_native_value is None:
-            return None
-        # For an energy sensor a value of 0 would mess up long term stats because of how total_increasing works
-        if super_native_value == 0.0:
-            _LOGGER.debug(
-                "Returning last known value instead of 0.0 for %s to avoid resetting total_increasing counter",
-                self.name,
-            )
-            self._assumed_state = True
-            return self._last_known_value
-        self._last_known_value = super_native_value
-        self._assumed_state = False
-        return super_native_value
-
-    async def async_added_to_hass(self) -> None:
-        """Call when entity about to be added to hass."""
-        await super().async_added_to_hass()
-
-        state = await self.async_get_last_sensor_data()
-        if state:
-            self._last_known_value = state.native_value
-
-        if self.entity_description.reset_at_midnight:
-            self.schedule_midnight_reset(reset_sensor_value=False)
-
-
-class HoymilesDiagnosticSensorEntity(
-    HoymilesCoordinatorEntity, RestoreSensor, SensorEntity
-):
+class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     """Represents a diagnostic sensor entity for Hoymiles data."""
 
     def __init__(self, config_entry, description, coordinator):
@@ -1587,10 +1476,8 @@ class HoymilesDiagnosticSensorEntity(
         self._conversion = description.conversion
         self._separator = description.separator
         self._native_value = None
-        self._assumed_state = False
 
         self.update_state_value()
-        self._last_known_value = self._native_value
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -1601,16 +1488,22 @@ class HoymilesDiagnosticSensorEntity(
     @property
     def native_value(self):
         """Return the native value of the sensor."""
-        if self._native_value is None:
-            self._assumed_state = True
-            return self._last_known_value
-
-        self._last_known_value = self._native_value
-        self._assumed_state = False
         return self._native_value
+
+    @property
+    def available(self) -> bool:
+        """Expose a state only when the coordinator and this reading are available."""
+        return super().available and self._native_value is not None
+
+    @property
+    def assumed_state(self) -> bool:
+        """Mark cached diagnostic readings during the shared outage grace period."""
+        return getattr(self.coordinator, "data_is_stale", False)
 
     def update_state_value(self):
         """Update the state value of the sensor."""
+        if getattr(self.coordinator, "data_is_stale", False):
+            return
 
         if "[" in self._attribute_name and "]" in self._attribute_name:
             attribute_parts = self._attribute_name.split("[")
@@ -1622,14 +1515,14 @@ class HoymilesDiagnosticSensorEntity(
                 f"{attribute_name}{i}" for i in range(start, end + 1)
             ]
             attribute_values = [
-                str(getattr(self.coordinator.data, attr, ""))
+                getattr(self.coordinator.data, attr, None)
                 for attr in new_attribute_names
             ]
 
-            if "" in attribute_values:
+            if any(value is None or value == "" for value in attribute_values):
                 self._native_value = None
             else:
-                self._native_value = self._separator.join(attribute_values)
+                self._native_value = self._separator.join(map(str, attribute_values))
         else:
             self._native_value = getattr(
                 self.coordinator.data, self._attribute_name, None
@@ -1640,13 +1533,6 @@ class HoymilesDiagnosticSensorEntity(
                 hex(int(value))[2:]
                 for value in self._native_value.split(self._separator)
             ).upper()
-
-    async def async_added_to_hass(self) -> None:
-        """Call when entity about to be added to hass."""
-        await super().async_added_to_hass()
-        state = await self.async_get_last_sensor_data()
-        if state:
-            self._last_known_value = state.native_value
 
 
 class HoymilesEnergyStorageSensorEntity(HoymilesDataSensorEntity):

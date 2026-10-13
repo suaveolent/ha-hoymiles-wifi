@@ -28,7 +28,7 @@ The custom component was successfully tested with:
 ## Warning
 
 > [!CAUTION]
-> Please refrain from using the current power limitation feature for zero feed-in, as it may lead to damaging the inverter due to excessive writes to the EEPROM.
+> Please refrain from using the persistent power limit for frequent zero feed-in adjustments, as it may lead to damaging the inverter due to excessive writes to the EEPROM. Supported HMS-W devices can use the temporary power limit instead.
 
 ## Installation
 
@@ -102,6 +102,18 @@ Configuration is done in the UI.
 
 > [!NOTE]
 > Setting the update interval below approximately 32 seconds (120 seconds for newer firmware versions) may disable Hoymiles cloud functionality. To ensure proper communication with Hoymiles servers, keep the update interval at or above this threshold.
+
+### Power limits
+
+- **Persistent power limit** sets a percentage and remains stored after an inverter restart.
+- **Temporary power limit** sets watts on supported HMS-W devices with firmware V01.01.01 or newer. It accepts 0.1–3276.7 W in steps of 0.1 W, uses the runtime command, and resets to the persistent limit after an inverter restart.
+
+The temporary control shows the acknowledged target as assumed until live data
+echoes the matching watt value. It starts unknown after an integration reload,
+because the same echo field can represent either percent or watts. Sending a
+persistent limit clears the temporary readback. Commands sent by another app are
+not tracked, so their echo units cannot be determined reliably. Temporary limits
+are not restored or automatically reapplied.
 
 ## Screenshots
 

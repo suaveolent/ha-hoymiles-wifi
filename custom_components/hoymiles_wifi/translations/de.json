@@ -35,7 +35,10 @@
     },
     "number": {
       "limit_power_mypower": {
-        "name": "Leistungsbegrenzung"
+        "name": "Dauerhafte Leistungsbegrenzung"
+      },
+      "power_limit_temporary": {
+        "name": "Temporäre Leistungsbegrenzung"
       }
     },
     "sensor": {

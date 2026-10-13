@@ -8,9 +8,14 @@ import homeassistant
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from hoymiles_wifi.const import (
+    MAX_TEMPORARY_POWER_LIMIT_WATTS,
+    MIN_TEMPORARY_POWER_LIMIT_WATTS,
+)
 from hoymiles_wifi.dtu import DTU
+from hoymiles_wifi.hoymiles import generate_inverter_serial_number
 
-from .const import DOMAIN
+from .const import CONF_INVERTERS, DOMAIN
 from .util import async_check_and_update_enc_rand, is_encrypted_dtu
 
 _LOGGER = logging.getLogger(__name__)
@@ -92,6 +97,60 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
 class HoymilesRealDataUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
     """Data coordinator for Hoymiles integration."""
 
+    temporary_power_limit: float | None = None
+    temporary_power_limit_confirmed = False
+    _temporary_power_limit_target: float | None = None
+
+    def set_temporary_power_limit_target(self, value: float) -> None:
+        """Establish watt units and wait for a matching live-data echo."""
+        self._temporary_power_limit_target = value
+        self.temporary_power_limit = value
+        self.temporary_power_limit_confirmed = False
+        self.async_update_listeners()
+
+    def clear_temporary_power_limit(self) -> None:
+        """Stop interpreting live echoes as watts after a persistent command."""
+        self._temporary_power_limit_target = None
+        self.temporary_power_limit = None
+        self.temporary_power_limit_confirmed = False
+        self.async_update_listeners()
+
+    def _update_temporary_power_limit_readback(self, response) -> None:
+        """Read a known watt echo for the configured inverter."""
+        if self._temporary_power_limit_target is None:
+            return
+
+        inverters = self._config_entry.data.get(CONF_INVERTERS, [])
+        readings = [
+            inverter.power_limit / 10
+            for inverter in response.sgs_data
+            if generate_inverter_serial_number(inverter.serial_number) in inverters
+        ]
+        if (
+            len(readings) != 1
+            or not MIN_TEMPORARY_POWER_LIMIT_WATTS
+            <= readings[0]
+            <= MAX_TEMPORARY_POWER_LIMIT_WATTS
+        ):
+            self.temporary_power_limit = None
+            self.temporary_power_limit_confirmed = False
+            return
+
+        value = readings[0]
+        if (
+            not self.temporary_power_limit_confirmed
+            and value != self._temporary_power_limit_target
+        ):
+            _LOGGER.debug(
+                "Waiting for temporary power limit echo: received %s W, expected %s W",
+                value,
+                self._temporary_power_limit_target,
+            )
+            return
+
+        self.temporary_power_limit = value
+        self.temporary_power_limit_confirmed = True
+
     async def _async_fetch_data(self):
         """Update data via library."""
         _LOGGER.debug("Hoymiles data coordinator update")
@@ -102,6 +161,8 @@ class HoymilesRealDataUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
             _LOGGER.debug(
                 "Unable to retrieve real data new. Inverter might be offline."
             )
+        else:
+            self._update_temporary_power_limit_readback(response)
         return response
 
 

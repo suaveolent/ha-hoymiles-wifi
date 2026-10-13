@@ -35,7 +35,10 @@
     },
     "number": {
       "limit_power_mypower": {
-        "name": "Limite de puissance"
+        "name": "Limite persistante de puissance"
+      },
+      "power_limit_temporary": {
+        "name": "Limite temporaire de puissance"
       }
     },
     "sensor": {

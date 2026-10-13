@@ -35,7 +35,10 @@
     },
     "number": {
       "limit_power_mypower": {
-        "name": "Power limit"
+        "name": "Persistent power limit"
+      },
+      "power_limit_temporary": {
+        "name": "Temporary power limit"
       }
     },
     "sensor": {

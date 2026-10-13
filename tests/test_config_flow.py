@@ -2,34 +2,29 @@
 
 from unittest.mock import patch
 
-import pytest
-
 from homeassistant import config_entries
-from custom_components.hoymiles_wifi.const import (
-    DOMAIN,
-    CONF_UPDATE_INTERVAL,
-    CONF_INVERTERS,
-    CONF_PORTS,
-    CONF_DTU_SERIAL_NUMBER,
-    CONF_ENC_RAND,
-    CONF_HYBRID_INVERTERS,
-    CONF_IS_ENCRYPTED,
-    CONF_METERS,
-    CONF_THREE_PHASE_INVERTERS,
-    CONF_TIMEOUT,
-    DEFAULT_TIMEOUT_SECONDS,
-    DEFAULT_UPDATE_INTERVAL_SECONDS,
-)
-from custom_components.hoymiles_wifi.error import CannotConnect
-
 from homeassistant.const import CONF_HOST
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
+from hoymiles_wifi.protobuf import APPInfomationData_pb2, RealDataNew_pb2
+import pytest
 
-from hoymiles_wifi.protobuf import (
-    APPInfomationData_pb2,
-    RealDataNew_pb2,
+from custom_components.hoymiles_wifi.const import (
+    CONF_DTU_SERIAL_NUMBER,
+    CONF_ENC_RAND,
+    CONF_HYBRID_INVERTERS,
+    CONF_INVERTERS,
+    CONF_IS_ENCRYPTED,
+    CONF_METERS,
+    CONF_PORTS,
+    CONF_THREE_PHASE_INVERTERS,
+    CONF_TIMEOUT,
+    CONF_UPDATE_INTERVAL,
+    DEFAULT_TIMEOUT_SECONDS,
+    DEFAULT_UPDATE_INTERVAL_SECONDS,
+    DOMAIN,
 )
+from custom_components.hoymiles_wifi.error import CannotConnect
 
 DTU_TEST_HOST = "DTUBI-123456789101.lan"
 

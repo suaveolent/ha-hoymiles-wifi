@@ -8,10 +8,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, Platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from hoymiles_wifi.dtu import DTU
-from .util import is_encrypted_dtu, async_check_and_update_enc_rand
-
 
 from .const import DOMAIN
+from .util import async_check_and_update_enc_rand, is_encrypted_dtu
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -86,14 +85,17 @@ class HoymilesAppInfoUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
         response = await self._dtu.async_app_information_data()
 
-        if response and response.dtu_info.dfs:
-            if is_encrypted_dtu(response.dtu_info.dfs):
-                await async_check_and_update_enc_rand(
-                    self._hass,
-                    self._config_entry,
-                    self._dtu,
-                    response.dtu_info.enc_rand.hex(),
-                )
+        if (
+            response
+            and response.dtu_info.dfs
+            and is_encrypted_dtu(response.dtu_info.dfs)
+        ):
+            await async_check_and_update_enc_rand(
+                self._hass,
+                self._config_entry,
+                self._dtu,
+                response.dtu_info.enc_rand.hex(),
+            )
 
         if not response:
             _LOGGER.debug(
@@ -146,6 +148,7 @@ class HoymilesEnergyStorageUpdateCoordinator(HoymilesDataUpdateCoordinator):
         dtu_serial_number: int,
         inverters: list[int],
     ) -> None:
+        """Initialize energy storage polling for the configured inverters."""
         self._dtu_serial_number = dtu_serial_number
         self._inverters = inverters
         super().__init__(hass, dtu, config_entry, update_interval)

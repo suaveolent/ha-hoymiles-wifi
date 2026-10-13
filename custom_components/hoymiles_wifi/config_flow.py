@@ -4,29 +4,28 @@ from datetime import timedelta
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST
 from homeassistant.data_entry_flow import FlowResult
+import voluptuous as vol
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
+    CONF_ENC_RAND,
     CONF_HYBRID_INVERTERS,
     CONF_INVERTERS,
+    CONF_IS_ENCRYPTED,
     CONF_METERS,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
     CONF_TIMEOUT,
     CONF_UPDATE_INTERVAL,
-    CONF_IS_ENCRYPTED,
-    CONF_ENC_RAND,
     CONFIG_VERSION,
     DEFAULT_TIMEOUT_SECONDS,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
-    MIN_UPDATE_INTERVAL_SECONDS,
     MIN_TIMEOUT_SECONDS,
+    MIN_UPDATE_INTERVAL_SECONDS,
 )
 from .error import CannotConnect
 from .util import async_get_config_entry_data_for_host

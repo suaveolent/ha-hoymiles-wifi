@@ -1,15 +1,14 @@
-from homeassistant.core import ServiceCall
-from hoymiles_wifi.dtu import DTU
-
-from hoymiles_wifi.hoymiles import BMSWorkingMode
-
-from custom_components.hoymiles_wifi.const import HASS_DTU, DOMAIN
-from homeassistant.helpers.device_registry import async_get as async_get_device_registry
-
-
-from hoymiles_wifi.utils import parse_time_periods_input, parse_time_settings_input
+"""Services for controlling Hoymiles energy storage devices."""
 
 import logging
+
+from homeassistant.core import ServiceCall
+from homeassistant.helpers.device_registry import async_get as async_get_device_registry
+from hoymiles_wifi.dtu import DTU
+from hoymiles_wifi.hoymiles import BMSWorkingMode
+from hoymiles_wifi.utils import parse_time_periods_input, parse_time_settings_input
+
+from custom_components.hoymiles_wifi.const import DOMAIN, HASS_DTU
 
 from .const import CONF_DTU_SERIAL_NUMBER
 
@@ -17,6 +16,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_handle_set_bms_mode(call: ServiceCall):
+    """Apply a BMS working mode to the selected inverters."""
     hass = call.hass
     device_registry = async_get_device_registry(hass)
 
@@ -34,13 +34,13 @@ async def async_handle_set_bms_mode(call: ServiceCall):
 
     bms_working_mode = BMSWorkingMode[bms_mode_str.upper()]
 
-    _LOGGER.debug(f"Setting BMS mode to {bms_working_mode}")
-    _LOGGER.debug(f"  rev_soc: {rev_soc}")
-    _LOGGER.debug(f"  max_power: {max_power}")
-    _LOGGER.debug(f"  peak_soc: {peak_soc}")
-    _LOGGER.debug(f"  peak_meter_power: {peak_meter_power}")
-    _LOGGER.debug(f"  time_settings_str: {time_settings_str}")
-    _LOGGER.debug(f"  time_periods_str: {time_periods_str}")
+    _LOGGER.debug("Setting BMS mode to %s", bms_working_mode)
+    _LOGGER.debug("  rev_soc: %s", rev_soc)
+    _LOGGER.debug("  max_power: %s", max_power)
+    _LOGGER.debug("  peak_soc: %s", peak_soc)
+    _LOGGER.debug("  peak_meter_power: %s", peak_meter_power)
+    _LOGGER.debug("  time_settings_str: %s", time_settings_str)
+    _LOGGER.debug("  time_periods_str: %s", time_periods_str)
 
     if rev_soc is None:
         raise ValueError("No reserve SOC provided!")
@@ -71,7 +71,7 @@ async def async_handle_set_bms_mode(call: ServiceCall):
     for device_id in device_ids:
         device = device_registry.async_get(device_id)
         if not device:
-            _LOGGER.error(f"Device {device_id} not found in registry")
+            _LOGGER.error("Device %s not found in registry", device_id)
             continue
 
         for entry_id in device.config_entries:
@@ -81,7 +81,7 @@ async def async_handle_set_bms_mode(call: ServiceCall):
 
             dtu = hass_data[HASS_DTU]
             if not dtu or not isinstance(dtu, DTU):
-                _LOGGER.error(f"DTU not found for entry {entry_id}")
+                _LOGGER.error("DTU not found for entry %s", entry_id)
                 continue
 
             _LOGGER.debug("Found DTU for entry %s -> %s", entry_id, dtu)
@@ -89,14 +89,17 @@ async def async_handle_set_bms_mode(call: ServiceCall):
             dtu_serial_number_str = hass_data.get(CONF_DTU_SERIAL_NUMBER, None)
 
             if not dtu_serial_number_str:
-                _LOGGER.error(f"DTU serial number not found in config entry {entry_id}")
+                _LOGGER.error(
+                    "DTU serial number not found in config entry %s", entry_id
+                )
                 continue
 
             dtu_serial_number = int(dtu_serial_number_str)
             inverter_serial_number = int(device.serial_number)
 
             _LOGGER.debug(
-                f"Setting BMS mode for inverter_serial_number: {inverter_serial_number}"
+                "Setting BMS mode for inverter_serial_number: %s",
+                inverter_serial_number,
             )
 
             await dtu.async_set_energy_storage_working_mode(

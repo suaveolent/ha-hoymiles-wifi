@@ -2,11 +2,15 @@
 
 from unittest.mock import patch
 
-import pytest
 from hoymiles_wifi.dtu import DTU
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
-from custom_components.hoymiles_wifi.const import CONF_ENC_RAND, CONF_IS_ENCRYPTED, DOMAIN
+from custom_components.hoymiles_wifi.const import (
+    CONF_ENC_RAND,
+    CONF_IS_ENCRYPTED,
+    DOMAIN,
+)
 from custom_components.hoymiles_wifi.util import async_check_and_update_enc_rand
 
 

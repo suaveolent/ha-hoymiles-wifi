@@ -2,12 +2,12 @@
 
 from unittest.mock import patch
 
-import pytest
 from homeassistant.const import CONF_HOST
 from homeassistant.helpers import device_registry as dr
 from homeassistant.setup import async_setup_component
 from hoymiles_wifi.dtu import DTU
 from hoymiles_wifi.protobuf import APPInfomationData_pb2, GetConfig_pb2, RealDataNew_pb2
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hoymiles_wifi.const import (
@@ -83,11 +83,17 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
         return GetConfig_pb2.GetConfigReqDTO()
 
     with (
-        patch.object(DTU, "async_app_information_data", autospec=True, side_effect=app_info),
-        patch.object(DTU, "async_get_real_data_new", autospec=True, side_effect=real_data),
+        patch.object(
+            DTU, "async_app_information_data", autospec=True, side_effect=app_info
+        ),
+        patch.object(
+            DTU, "async_get_real_data_new", autospec=True, side_effect=real_data
+        ),
         patch.object(DTU, "async_get_config", autospec=True, side_effect=config_data),
         patch.object(
-            hass.config_entries, "async_forward_entry_setups", side_effect=forward_platforms
+            hass.config_entries,
+            "async_forward_entry_setups",
+            side_effect=forward_platforms,
         ),
         patch.object(hass.config_entries, "async_unload_platforms", return_value=True),
     ):

@@ -1,7 +1,7 @@
 """Tests for Hoymiles device relationships."""
 
-import pytest
 from homeassistant.helpers import device_registry as dr
+import pytest
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hoymiles_wifi.const import CONF_DTU_SERIAL_NUMBER, DOMAIN
@@ -54,9 +54,7 @@ async def test_device_parent(hass, caplog, key, serial_number, is_dtu):
         assert info["via_device_id"] == parents[1].id
         assert info["via_device_id"] != parents[0].id
 
-    device = registry.async_get_or_create(
-        config_entry_id=entries[1].entry_id, **info
-    )
+    device = registry.async_get_or_create(config_entry_id=entries[1].entry_id, **info)
     assert device.via_device_id == (None if is_dtu else parents[1].id)
     assert device.identifiers == {(DOMAIN, serial_number)}
     assert "deprecated" not in caplog.text
@@ -70,9 +68,7 @@ def test_device_parent_legacy_api(hass, monkeypatch):
     )
     entity = HoymilesEntity(
         entry,
-        HoymilesEntityDescription(
-            key="sgs_data_power", serial_number="112345678901"
-        ),
+        HoymilesEntityDescription(key="sgs_data_power", serial_number="112345678901"),
     )
     entity.hass = hass
 

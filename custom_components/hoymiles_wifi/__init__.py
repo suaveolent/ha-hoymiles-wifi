@@ -154,7 +154,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if single_phase_inverters or three_phase_inverters or meters:
         await app_info_update_coordinator.async_refresh()
         await data_coordinator.async_config_entry_first_refresh()
-        await config_coordinator.async_config_entry_first_refresh()
+        # Some DTUs (e.g. the one built into HMS-xxxW-2T) never answer GetConfig.
+        # Config data only feeds optional entities, so it must not block setup.
+        await config_coordinator.async_refresh()
     if hybrid_inverters:
         await energy_storage_data_coordinator.async_config_entry_first_refresh()
 

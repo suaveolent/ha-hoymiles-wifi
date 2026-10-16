@@ -29,6 +29,8 @@ MIN_TIMEOUT_SECONDS = 1
 
 DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS = 60 * 5
 DEFAULT_APP_INFO_UPDATE_INTERVAL_SECONDS = 60 * 60 * 2
+# Minimum delay between two on-demand encryption key resynchronizations.
+ENC_RAND_RESYNC_MIN_INTERVAL_SECONDS = 60
 
 
 HASS_DATA_COORDINATOR = "data_coordinator"

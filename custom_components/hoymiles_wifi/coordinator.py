@@ -1,5 +1,6 @@
 """Coordinator for Hoymiles integration."""
 
+from collections.abc import Awaitable, Callable
 from datetime import timedelta
 import logging
 from time import monotonic
@@ -13,10 +14,16 @@ from hoymiles_wifi.const import (
     MAX_TEMPORARY_POWER_LIMIT_WATTS,
     MIN_TEMPORARY_POWER_LIMIT_WATTS,
 )
-from hoymiles_wifi.dtu import DTU
+from hoymiles_wifi.dtu import DTU, NetworkState
 from hoymiles_wifi.hoymiles import generate_inverter_serial_number
 
-from .const import CONF_CLOUD_PAUSE, CONF_INVERTERS, DEFAULT_CLOUD_PAUSE_SECONDS, DOMAIN
+from .const import (
+    CONF_CLOUD_PAUSE,
+    CONF_INVERTERS,
+    DEFAULT_CLOUD_PAUSE_SECONDS,
+    DOMAIN,
+    ENC_RAND_RESYNC_MIN_INTERVAL_SECONDS,
+)
 from .util import async_check_and_update_enc_rand, is_encrypted_dtu
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,7 +64,12 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
     """Keep live readings through brief outages, then report unavailability."""
 
     _last_successful_fetch: float | None = None
+    _encryption_resync: Callable[[], Awaitable[bool]] | None = None
     data_is_stale = False
+
+    def set_encryption_resync(self, resync: Callable[[], Awaitable[bool]]) -> None:
+        """Register the callback that refreshes the DTU encryption key."""
+        self._encryption_resync = resync
 
     async def _async_update_data(self):
         """Apply one grace period, measured from the last successful fetch."""
@@ -71,11 +83,10 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
                 return self.data
             raise UpdateFailed("No recent DTU data during the cloud upload pause")
 
-        try:
-            response = await self._async_fetch_data()
-        except (OSError, TimeoutError) as err:
-            _LOGGER.debug("Live data request failed: %s", err)
-            response = None
+        response = await self._async_try_fetch_data()
+
+        if response is None and await self._async_resync_encryption():
+            response = await self._async_try_fetch_data()
 
         if response is not None:
             self._last_successful_fetch = monotonic()
@@ -91,6 +102,30 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
             )
             return self.data
         raise UpdateFailed("Unable to retrieve live data from DTU")
+
+    async def _async_try_fetch_data(self):
+        """Fetch a response, treating communication errors as no response."""
+        try:
+            return await self._async_fetch_data()
+        except (OSError, TimeoutError) as err:
+            _LOGGER.debug("Live data request failed: %s", err)
+            return None
+
+    async def _async_resync_encryption(self) -> bool:
+        """Refresh the encryption key when the DTU answers but cannot be decoded.
+
+        Encrypted DTUs generate a new key (enc_rand) whenever they restart, for
+        example every morning or when PV power drops. Requests encrypted with
+        the previous key are answered but cannot be parsed, which the library
+        reports as NetworkState.Unknown (an unreachable DTU is Offline).
+        """
+        if (
+            self._encryption_resync is None
+            or not getattr(self._dtu, "is_encrypted", False)
+            or self._dtu.get_state() != NetworkState.Unknown
+        ):
+            return False
+        return await self._encryption_resync()
 
     def _is_cloud_pause_active(self) -> bool:
         """Reserve a quiet window beginning ten seconds before each five-minute mark."""
@@ -201,6 +236,30 @@ class HoymilesConfigUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
 
 class HoymilesAppInfoUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
     """App Info coordinator for Hoymiles integration."""
+
+    _last_encryption_resync: float | None = None
+
+    async def async_resync_encryption(self) -> bool:
+        """Refresh app info on demand and report whether the key changed."""
+        now = monotonic()
+        if (
+            self._last_encryption_resync is not None
+            and now - self._last_encryption_resync
+            < ENC_RAND_RESYNC_MIN_INTERVAL_SECONDS
+        ):
+            return False
+        self._last_encryption_resync = now
+
+        previous_enc_rand = self._dtu.enc_rand
+        await self.async_refresh()
+        if self._dtu.enc_rand == previous_enc_rand:
+            return False
+
+        _LOGGER.info(
+            "DTU %s uses a new encryption key; communication resynchronized",
+            self._config_entry.data.get(CONF_HOST),
+        )
+        return True
 
     async def _async_fetch_data(self):
         """Update data via library."""

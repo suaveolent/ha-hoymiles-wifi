@@ -123,7 +123,7 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
         assert await hass.config_entries.async_unload(entry.entry_id)
 
 
-@pytest.mark.parametrize("failure", ["real_data", "config", "hybrid"])
+@pytest.mark.parametrize("failure", ["real_data", "hybrid"])
 async def test_failed_initial_refresh_retries_before_platform_setup(
     hass, freezer, failure
 ):
@@ -188,4 +188,38 @@ async def test_failed_initial_refresh_retries_before_platform_setup(
         assert entry.state is ConfigEntryState.LOADED
         forward.assert_awaited_once()
         assert hass.services.has_service(DOMAIN, "set_bms_mode")
+        assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_setup_succeeds_when_dtu_never_answers_get_config(hass):
+    """DTUs that ignore GetConfig must still load; config entities stay unknown."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=CONFIG_VERSION,
+        data={
+            CONF_HOST: "dtu.local",
+            CONF_DTU_SERIAL_NUMBER: "414392349724",
+            CONF_UPDATE_INTERVAL: 35,
+            CONF_INVERTERS: ["112345678901"],
+        },
+    )
+    entry.add_to_hass(hass)
+    app_info = APPInfomationData_pb2.APPInfoDataReqDTO()
+    real_data = RealDataNew_pb2.RealDataNewReqDTO(device_serial_number="414392349724")
+
+    with (
+        patch.object(DTU, "async_app_information_data", return_value=app_info),
+        patch.object(DTU, "async_get_real_data_new", return_value=real_data),
+        patch.object(DTU, "async_get_config", return_value=None),
+        patch.object(
+            hass.config_entries, "async_forward_entry_setups", return_value=None
+        ) as forward,
+        patch.object(hass.config_entries, "async_unload_platforms", return_value=True),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        assert entry.state is ConfigEntryState.LOADED
+        forward.assert_awaited_once()
+        runtime = hass.data[DOMAIN][entry.entry_id]
+        assert runtime[HASS_DATA_COORDINATOR].data is real_data
+        assert runtime[HASS_CONFIG_COORDINATOR].data is None
         assert await hass.config_entries.async_unload(entry.entry_id)

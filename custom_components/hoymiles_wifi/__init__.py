@@ -137,6 +137,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         )
         hass_data[HASS_APP_INFO_COORDINATOR] = app_info_update_coordinator
 
+        for coordinator in (data_coordinator, config_coordinator):
+            coordinator.set_encryption_resync(
+                app_info_update_coordinator.async_resync_encryption
+            )
+
     if hybrid_inverters:
         energy_storage_data_coordinator = HoymilesEnergyStorageUpdateCoordinator(
             hass=hass,

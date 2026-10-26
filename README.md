@@ -118,6 +118,8 @@ Configuration is done in the UI.
 Persistent percentage readback prefers live inverter data when its units are
 known, with configuration data as a fallback for older firmware. Devices that
 do not answer configuration requests can still load their live entities.
+If the initial configuration fetch fails, configuration polling is disabled
+until the integration is reloaded or Home Assistant restarts.
 Multiple single-phase inverters must report the same limit; three-phase setups
 use configuration readback because their live messages lack the limit field.
 

@@ -62,6 +62,9 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
     async def forward_platforms(config_entry, platforms):
         """The parent must exist before any platform starts adding entities."""
         assert requests == ["app_info", "real_data", "config"]
+        assert hass.data[DOMAIN][config_entry.entry_id][
+            HASS_CONFIG_COORDINATOR
+        ].update_interval == timedelta(minutes=5)
         device = dr.async_get(hass).async_get_device_by_identifier(
             (DOMAIN, config_entry.data[CONF_DTU_SERIAL_NUMBER]),
             config_entry.entry_id,
@@ -191,7 +194,7 @@ async def test_failed_initial_refresh_retries_before_platform_setup(
 
 
 @pytest.mark.parametrize("failure", [None, TimeoutError(), OSError("unsupported")])
-async def test_setup_tolerates_unsupported_config_command(hass, failure):
+async def test_setup_tolerates_unsupported_config_command(hass, freezer, failure):
     """Missing optional configuration must not prevent working live entities loading."""
     entry = MockConfigEntry(
         domain=DOMAIN,
@@ -205,6 +208,7 @@ async def test_setup_tolerates_unsupported_config_command(hass, failure):
     )
     entry.add_to_hass(hass)
     real = RealDataNew_pb2.RealDataNewReqDTO(device_serial_number="411000000001")
+    listeners = []
 
     async def forward_platforms(config_entry, platforms):
         runtime = hass.data[DOMAIN][config_entry.entry_id]
@@ -212,6 +216,10 @@ async def test_setup_tolerates_unsupported_config_command(hass, failure):
         assert runtime[HASS_DATA_COORDINATOR].last_update_success
         assert not runtime[HASS_CONFIG_COORDINATOR].last_update_success
         assert runtime[HASS_CONFIG_COORDINATOR].data is None
+        assert runtime[HASS_CONFIG_COORDINATOR].update_interval is None
+        listeners.append(
+            runtime[HASS_CONFIG_COORDINATOR].async_add_listener(lambda: None)
+        )
 
     with (
         patch.object(
@@ -220,7 +228,9 @@ async def test_setup_tolerates_unsupported_config_command(hass, failure):
             return_value=APPInfomationData_pb2.APPInfoDataReqDTO(),
         ),
         patch.object(DTU, "async_get_real_data_new", return_value=real),
-        patch.object(DTU, "async_get_config", return_value=None, side_effect=failure),
+        patch.object(
+            DTU, "async_get_config", return_value=None, side_effect=failure
+        ) as get_config,
         patch.object(
             hass.config_entries,
             "async_forward_entry_setups",
@@ -231,4 +241,10 @@ async def test_setup_tolerates_unsupported_config_command(hass, failure):
         assert await hass.config_entries.async_setup(entry.entry_id)
         assert entry.state is ConfigEntryState.LOADED
         forward.assert_awaited_once()
+        freezer.tick(timedelta(minutes=15))
+        async_fire_time_changed(hass, dt_util.utcnow())
+        await hass.async_block_till_done()
+        get_config.assert_awaited_once()
+        for remove_listener in listeners:
+            remove_listener()
         assert await hass.config_entries.async_unload(entry.entry_id)

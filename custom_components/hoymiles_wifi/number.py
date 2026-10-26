@@ -4,6 +4,7 @@ import dataclasses
 from dataclasses import dataclass
 from enum import Enum
 import logging
+import math
 
 from homeassistant.components.number import (
     NumberDeviceClass,
@@ -12,8 +13,15 @@ from homeassistant.components.number import (
     NumberMode,
 )
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfPower
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from hoymiles_wifi.const import (
+    MAX_TEMPORARY_POWER_LIMIT_WATTS,
+    MIN_TEMPORARY_POWER_LIMIT_WATTS,
+)
+from hoymiles_wifi.hoymiles import DTUType, get_dtu_model_type
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
@@ -23,16 +31,15 @@ from .const import (
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
 )
+from .coordinator import HoymilesRealDataUpdateCoordinator
 from .entity import HoymilesCoordinatorEntity, HoymilesEntityDescription
-
-from hoymiles_wifi.const import MAX_POWER_LIMIT
-from hoymiles_wifi.hoymiles import DTUType, get_dtu_model_type
 
 
 class SetAction(Enum):
     """Enum for set actions."""
 
     POWER_LIMIT = 1
+    POWER_LIMIT_TEMPORARY = 2
 
 
 @dataclass(frozen=True)
@@ -62,6 +69,19 @@ CONFIG_CONTROL_ENTITIES = (
         conversion_factor=0.1,
         is_dtu_sensor=True,
     ),
+    HoymilesNumberSensorEntityDescription(
+        key="power_limit_temporary",
+        translation_key="power_limit_temporary",
+        mode=NumberMode.BOX,
+        device_class=NumberDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        native_min_value=MIN_TEMPORARY_POWER_LIMIT_WATTS,
+        native_max_value=MAX_TEMPORARY_POWER_LIMIT_WATTS,
+        native_step=0.1,
+        set_action=SetAction.POWER_LIMIT_TEMPORARY,
+        is_dtu_sensor=True,
+        supported_dtu_types=[DTUType.DTUBI],
+    ),
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,7 +95,7 @@ async def async_setup_entry(
     """Set up the Hoymiles number entities."""
     hass_data = hass.data[DOMAIN][config_entry.entry_id]
     config_coordinator = hass_data.get(HASS_CONFIG_COORDINATOR, None)
-    data_coordinator = hass_data.get(HASS_DATA_COORDINATOR, None)
+    data_coordinator = hass_data.get(HASS_DATA_COORDINATOR)
     single_phase_inverters = config_entry.data.get(CONF_INVERTERS, [])
     three_phase_inverters = config_entry.data.get(CONF_THREE_PHASE_INVERTERS, [])
     dtu_serial_number = config_entry.data[CONF_DTU_SERIAL_NUMBER]
@@ -83,6 +103,14 @@ async def async_setup_entry(
     if single_phase_inverters or three_phase_inverters:
         sensors = []
         for description in CONFIG_CONTROL_ENTITIES:
+            if description.supported_dtu_types is not None:
+                try:
+                    dtu_type = get_dtu_model_type(bytes.fromhex(dtu_serial_number))
+                except ValueError:
+                    _LOGGER.debug("Cannot determine DTU type for %s", dtu_serial_number)
+                    continue
+                if dtu_type not in description.supported_dtu_types:
+                    continue
             if description.is_dtu_sensor is True:
                 updated_description = dataclasses.replace(
                     description, serial_number=dtu_serial_number
@@ -91,13 +119,10 @@ async def async_setup_entry(
                     HoymilesNumberEntity(
                         config_entry,
                         updated_description,
-                        # Real data is the primary source: newer DTU firmware no
-                        # longer answers get_config, but still reports the limit
-                        # per inverter in the real data response. The config
-                        # coordinator stays as a fallback for firmware that only
-                        # exposes it there.
-                        data_coordinator or config_coordinator,
-                        fallback_coordinator=config_coordinator,
+                        data_coordinator
+                        if description.set_action == SetAction.POWER_LIMIT_TEMPORARY
+                        else config_coordinator,
+                        data_coordinator,
                     )
                 )
         async_add_entities(sensors)
@@ -111,31 +136,29 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         config_entry: ConfigEntry,
         description: HoymilesNumberSensorEntityDescription,
         coordinator: HoymilesCoordinatorEntity,
-        fallback_coordinator: HoymilesCoordinatorEntity = None,
+        power_limit_coordinator: HoymilesRealDataUpdateCoordinator,
     ) -> None:
         """Initialize the HoymilesNumberEntity."""
         super().__init__(config_entry, description, coordinator)
         self._attribute_name = description.key
         self._conversion_factor = description.conversion_factor
         self._set_action = description.set_action
-        self._fallback_coordinator = fallback_coordinator
+        self._power_limit_coordinator = power_limit_coordinator
         self._native_value = None
         self._assumed_state = False
+        self._pending_persistent_limit = None
 
         self.update_state_value()
 
     async def async_added_to_hass(self) -> None:
-        """Subscribe to the fallback coordinator in addition to the primary.
-
-        On firmware that only reports the limit via ``get_config``, the value
-        comes from the fallback coordinator. Without its own subscription the
-        entity would not pick that up until the next real data tick.
-        """
+        """Listen to live readback as well as configuration fallback changes."""
         await super().async_added_to_hass()
-
-        if self._fallback_coordinator is not None:
+        if (
+            self._set_action == SetAction.POWER_LIMIT
+            and self._power_limit_coordinator is not self.coordinator
+        ):
             self.async_on_remove(
-                self._fallback_coordinator.async_add_listener(
+                self._power_limit_coordinator.async_add_listener(
                     self._handle_coordinator_update
                 )
             )
@@ -154,7 +177,20 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     @property
     def assumed_state(self):
         """Return the assumed state of the entity."""
-        return self._assumed_state
+        return self._assumed_state or (
+            self._set_action == SetAction.POWER_LIMIT_TEMPORARY
+            and self._power_limit_coordinator.data_is_stale
+        )
+
+    @property
+    def available(self) -> bool:
+        """Keep persistent controls available when either read source is responding."""
+        if self._set_action == SetAction.POWER_LIMIT_TEMPORARY:
+            return super().available
+        return any(
+            source.last_update_success and source.data is not None
+            for source in (self.coordinator, self._power_limit_coordinator)
+        )
 
     async def async_set_native_value(self, value: float) -> None:
         """Set the native value of the entity.
@@ -162,64 +198,85 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         Args:
             value (float): The value to set.
         """
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or not self.native_min_value <= value <= self.native_max_value
+        ):
+            raise HomeAssistantError("Power limit value out of range")
+
+        dtu = self.coordinator.get_dtu()
         if self._set_action == SetAction.POWER_LIMIT:
-            dtu = self.coordinator.get_dtu()
-            if value < 0 or value > MAX_POWER_LIMIT:
-                _LOGGER.error(
-                    "Power limit %s out of range (0-%s)", value, MAX_POWER_LIMIT
-                )
-                return
-            await dtu.async_set_power_limit(value)
-            await self.coordinator.async_request_refresh()
-        else:
-            _LOGGER.error("Invalid set action!")
+            response = await dtu.async_set_power_limit(value)
+            self._validate_command_response(response)
+            self._pending_persistent_limit = value
+            self._power_limit_coordinator.set_persistent_power_limit_target(value)
+            await self._power_limit_coordinator.async_request_refresh()
+            if self.coordinator.last_update_success:
+                await self.coordinator.async_request_refresh()
+            self.update_state_value()
             return
+        elif self._set_action == SetAction.POWER_LIMIT_TEMPORARY:
+            response = await dtu.async_set_power_limit_temporary(value)
+            self._validate_command_response(response)
+            value = math.floor(value * 10 + 0.5) / 10
+            self._power_limit_coordinator.set_temporary_power_limit_target(value)
+            await self.coordinator.async_request_refresh()
+            self.update_state_value()
+            return
+        else:
+            raise HomeAssistantError("Invalid set action")
 
-        self._assumed_state = True
-        self._native_value = value
-
-    def _resolve_raw_power_limit(self) -> int | None:
-        """Read the raw power limit from whichever source reports it.
-
-        Preferred source is the real data response, which reports ``power_limit``
-        per single phase inverter. Newer DTU firmware stops answering
-        ``get_config`` entirely, so that is the only place the limit survives.
-        Older firmware is covered by the ``get_config`` fallback.
-        """
-        data = getattr(self.coordinator, "data", None)
-        sgs_data = getattr(data, "sgs_data", None)
-        if sgs_data:
-            # A power limit command applies to the whole DTU, so every inverter
-            # reports the same value. Take the first that reports one.
-            for sgs in sgs_data:
-                raw = getattr(sgs, "power_limit", None)
-                if raw:
-                    return raw
-
-        fallback = getattr(self._fallback_coordinator, "data", None)
-        if fallback is not None:
-            return getattr(fallback, "limit_power_mypower", None)
-
-        # Real data was available but reported no limit, which is how an
-        # unconfigured DTU looks. Distinguish that from "no data at all".
-        return 0 if sgs_data else None
+    def _validate_command_response(self, response) -> None:
+        """Keep the previous interpretation when the DTU rejects a command."""
+        if response is None:
+            raise HomeAssistantError("DTU did not acknowledge the power limit")
+        if response.err_code != 0:
+            raise HomeAssistantError(
+                f"DTU rejected the power limit (error {response.err_code})"
+            )
 
     def update_state_value(self):
-        """Update the state value of the entity."""
-        raw = self._resolve_raw_power_limit()
+        """Read persistent configuration or the temporary live-data echo."""
 
-        self._assumed_state = False
-
-        if raw is None:
-            self._native_value = None
+        if self._set_action == SetAction.POWER_LIMIT_TEMPORARY:
+            self._native_value = self._power_limit_coordinator.temporary_power_limit
+            self._assumed_state = (
+                self._native_value is not None
+                and not self._power_limit_coordinator.temporary_power_limit_confirmed
+            )
             return
 
-        if raw == 0:
-            # 0 is not a settable limit: the DTU reports it when no limit is
-            # stored, which means the inverter is running unrestricted.
-            self._native_value = float(MAX_POWER_LIMIT)
-            return
+        value, source = self._resolve_persistent_power_limit()
+        if self._pending_persistent_limit is not None:
+            if value == self._pending_persistent_limit and not source.data_is_stale:
+                self._pending_persistent_limit = None
+            else:
+                self._native_value = self._pending_persistent_limit
+                self._assumed_state = True
+                return
+        self._native_value = value
+        self._assumed_state = source is not None and source.data_is_stale
 
-        self._native_value = (
-            raw * self._conversion_factor if self._conversion_factor else raw
-        )
+    def _resolve_persistent_power_limit(self):
+        """Prefer known percentage echoes and fall back to available configuration."""
+        live = self._power_limit_coordinator
+        if (
+            live.last_update_success
+            and live.data is not None
+            and live.persistent_power_limit is not None
+        ):
+            return live.persistent_power_limit, live
+
+        config = self.coordinator
+        if config.last_update_success and config.data is not None:
+            raw = getattr(config.data, self._attribute_name, None)
+            if raw is not None:
+                value = raw * self._conversion_factor
+                if (
+                    math.isfinite(value)
+                    and self.native_min_value <= value <= self.native_max_value
+                ):
+                    return value, config
+        return None, None

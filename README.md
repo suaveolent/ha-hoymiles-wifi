@@ -28,7 +28,7 @@ The custom component was successfully tested with:
 ## Warning
 
 > [!CAUTION]
-> Please refrain from using the current power limitation feature for zero feed-in, as it may lead to damaging the inverter due to excessive writes to the EEPROM.
+> Please refrain from using the persistent power limit for frequent zero feed-in adjustments, as it may lead to damaging the inverter due to excessive writes to the EEPROM. Supported HMS-W devices can use the temporary power limit instead.
 
 ## Installation
 
@@ -98,10 +98,38 @@ Configuration is done in the UI.
 > [!NOTE]
 > To find the IP address or hostname of your inverter/DTU, you can either access your router’s web interface to view connected devices, or use a network scanning tool (such as Fing or Angry IP Scanner) to identify the device on your local network.
 
-2. `Update interval (seconds)`: This defines how frequently the system will request data from the inverter or DTU. Enter the desired time in seconds.
+2. `Cloud upload pause duration (seconds)`: Briefly pauses polling every five minutes to give the DTU time to upload to the Hoymiles cloud. Accepts **0–120 seconds**, with a default of **0 (disabled)**. Set a positive duration if local polling interferes with cloud updates.
+
+> [!NOTE]
+> Each pause starts ten seconds before a five-minute mark on Home Assistant's clock. For example, **30 seconds** pauses polling from **12:04:50** to **12:05:20**, then from **12:09:50** to **12:10:20**, repeating every five minutes. Polling resumes on its next scheduled update after the pause.
+
+3. `Update interval (seconds)`: This defines how frequently the system will request data from the inverter or DTU. Enter the desired time in seconds.
 
 > [!NOTE]
 > Setting the update interval below approximately 32 seconds (120 seconds for newer firmware versions) may disable Hoymiles cloud functionality. To ensure proper communication with Hoymiles servers, keep the update interval at or above this threshold.
+
+4. `Timeout (seconds)`: How long each connection or response wait may take before the request fails. The default is **10 seconds**, with a minimum of **1 second**. Increase it if your DTU responds slowly. This does not change the polling interval.
+
+### Power limits
+
+- **Persistent power limit** sets a percentage and remains stored after an inverter restart.
+- **Temporary power limit** sets watts on supported HMS-W devices with firmware V01.01.01 or newer. It accepts 0.1–3276.7 W in steps of 0.1 W, uses the runtime command, and resets to the persistent limit after an inverter restart.
+
+Persistent percentage readback prefers live inverter data when its units are
+known, with configuration data as a fallback for older firmware. Devices that
+do not answer configuration requests can still load their live entities.
+Multiple single-phase inverters must report the same limit; three-phase setups
+use configuration readback because their live messages lack the limit field.
+
+Integrated Wi-Fi DTUs can echo either percent or watts. After an integration
+restart, their live echo units remain unknown until this integration sends a
+power-limit command. A temporary watt echo never replaces the persistent
+percentage. Acknowledged targets are shown as assumed until confirmed by fresh
+readback. An ambiguous zero or missing live limit stays unknown when there is
+no usable configuration fallback; zero is not automatically treated as 100%.
+
+Commands sent by another app are not tracked, so their echo units cannot be determined reliably. Temporary limits
+are not restored or automatically reapplied.
 
 ## Screenshots
 
@@ -122,6 +150,27 @@ Use this custom component responsibly and be aware of potential risks. There are
 
 > [!NOTE]
 > **Compatibility:** While developed for the HMS-800W-2T inverter, compatibility with other inverters from the series is untested at the time of writing. Exercise caution and conduct thorough testing if using with different inverter models.
+
+## Development
+
+Install the test and lint tools in your virtual environment:
+
+```bash
+python -m pip install -r requirements.test.txt -r requirements.lint.txt pre-commit
+pre-commit install
+```
+
+Run the checks from the project root:
+
+```bash
+ruff check .
+ruff format --check .
+python -m pytest -q
+```
+
+Use `ruff check --fix .` and `ruff format .` to apply lint and formatting fixes.
+The editor, pre-commit hooks, and CI use `ruff.toml`. The pinned Ruff version is
+the same in `requirements.lint.txt` and `.pre-commit-config.yaml`.
 
 ## Attribution
 

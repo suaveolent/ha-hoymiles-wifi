@@ -4,38 +4,54 @@ from datetime import timedelta
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
+)
+import voluptuous as vol
 
 from .const import (
+    CONF_CLOUD_PAUSE,
     CONF_DTU_SERIAL_NUMBER,
+    CONF_ENC_RAND,
     CONF_HYBRID_INVERTERS,
     CONF_INVERTERS,
+    CONF_IS_ENCRYPTED,
     CONF_METERS,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
     CONF_TIMEOUT,
     CONF_UPDATE_INTERVAL,
-    CONF_IS_ENCRYPTED,
-    CONF_ENC_RAND,
     CONFIG_VERSION,
+    DEFAULT_CLOUD_PAUSE_SECONDS,
     DEFAULT_TIMEOUT_SECONDS,
     DEFAULT_UPDATE_INTERVAL_SECONDS,
     DOMAIN,
-    MIN_UPDATE_INTERVAL_SECONDS,
+    MAX_CLOUD_PAUSE_SECONDS,
     MIN_TIMEOUT_SECONDS,
+    MIN_UPDATE_INTERVAL_SECONDS,
 )
 from .error import CannotConnect
 from .util import async_get_config_entry_data_for_host
 
 _LOGGER = logging.getLogger(__name__)
 
+CLOUD_PAUSE_SELECTOR = NumberSelector(
+    NumberSelectorConfig(
+        min=0, max=MAX_CLOUD_PAUSE_SECONDS, step=1, mode=NumberSelectorMode.BOX
+    )
+)
+
 DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_HOST): str,
+        vol.Required(
+            CONF_CLOUD_PAUSE, default=DEFAULT_CLOUD_PAUSE_SECONDS
+        ): CLOUD_PAUSE_SELECTOR,
         vol.Optional(
             CONF_UPDATE_INTERVAL,
             default=timedelta(seconds=DEFAULT_UPDATE_INTERVAL_SECONDS).seconds,
@@ -103,6 +119,9 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                         CONF_IS_ENCRYPTED: is_encrypted,
                         CONF_ENC_RAND: enc_rand,
                         CONF_TIMEOUT: timeout,
+                        CONF_CLOUD_PAUSE: user_input.get(
+                            CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS
+                        ),
                     },
                 )
 
@@ -115,18 +134,20 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> ConfigFlowResult:
         """Handle a reconfiguration flow initialized by the user."""
 
-        entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
-        assert entry is not None
+        entry = self._get_reconfigure_entry()
 
         errors = {}
 
         if user_input is not None:
             host = user_input[CONF_HOST]
             update_interval = user_input.get(
-                CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS
+                CONF_UPDATE_INTERVAL,
+                entry.data.get(CONF_UPDATE_INTERVAL, DEFAULT_UPDATE_INTERVAL_SECONDS),
             )
 
-            timeout = user_input.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS)
+            timeout = user_input.get(
+                CONF_TIMEOUT, entry.data.get(CONF_TIMEOUT, DEFAULT_TIMEOUT_SECONDS)
+            )
 
             try:
                 (
@@ -143,8 +164,8 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                 errors["base"] = "cannot_connect"
 
             else:
-                if dtu_sn != entry.unique_id:
-                    return self.async_abort(reason="another_device")
+                if dtu_sn != entry.data.get(CONF_DTU_SERIAL_NUMBER, entry.unique_id):
+                    return self.async_abort(reason="unique_id_mismatch")
 
                 data = {
                     CONF_HOST: host,
@@ -158,22 +179,30 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     CONF_IS_ENCRYPTED: is_encrypted,
                     CONF_ENC_RAND: enc_rand,
                     CONF_TIMEOUT: timeout,
+                    CONF_CLOUD_PAUSE: user_input.get(
+                        CONF_CLOUD_PAUSE,
+                        entry.data.get(CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS),
+                    ),
                 }
 
-                self.hass.config_entries.async_update_entry(
-                    entry, data=data, version=CONFIG_VERSION
+                return self.async_update_reload_and_abort(
+                    entry,
+                    data_updates=data,
+                    unique_id=entry.unique_id or dtu_sn,
+                    title=host if entry.title == entry.data[CONF_HOST] else entry.title,
                 )
-                result = await self.hass.config_entries.async_reload(entry.entry_id)
-                if not result:
-                    errors["base"] = "unknown"
-                else:
-                    return self.async_abort(reason="reconfigure_successful")
 
         return self.async_show_form(
             step_id="reconfigure",
             data_schema=vol.Schema(
                 {
                     vol.Required(CONF_HOST, default=entry.data[CONF_HOST]): str,
+                    vol.Required(
+                        CONF_CLOUD_PAUSE,
+                        default=entry.data.get(
+                            CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS
+                        ),
+                    ): CLOUD_PAUSE_SELECTOR,
                     vol.Optional(
                         CONF_UPDATE_INTERVAL,
                         default=entry.data[CONF_UPDATE_INTERVAL],

@@ -1,8 +1,8 @@
 """Support for Hoymiles buttons."""
 
 import dataclasses
-from inspect import signature
 from dataclasses import dataclass
+from inspect import signature
 
 from homeassistant.components.button import (
     ButtonDeviceClass,

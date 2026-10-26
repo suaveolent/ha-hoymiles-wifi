@@ -23,6 +23,7 @@ from custom_components.hoymiles_wifi.const import (
 from custom_components.hoymiles_wifi.coordinator import (
     HoymilesConfigUpdateCoordinator,
     HoymilesRealDataUpdateCoordinator,
+    PowerLimitUnit,
 )
 from custom_components.hoymiles_wifi.number import (
     CONFIG_CONTROL_ENTITIES,
@@ -352,10 +353,10 @@ async def test_no_microinverters_needs_no_live_coordinator(hass):
 
 @pytest.fixture
 async def persistent_readback(hass, power_controls):
-    """Register both real coordinator listeners on an external DTU's percent control."""
+    """Register both listeners with known percentage units and no config readback."""
     entry, config, dtu, (persistent, temporary) = power_controls
     live = temporary.coordinator
-    live._percent_echo_expected = True
+    live.power_limit_echo_unit = PowerLimitUnit.PERCENT
     persistent.hass = hass
     persistent.entity_id = "number.test_persistent_limit"
     await persistent.async_added_to_hass()
@@ -561,3 +562,53 @@ async def test_multiple_matching_limits_produce_one_dtu_percentage(persistent_re
     dtu.async_get_real_data_new.return_value = response
     await temporary.coordinator.async_refresh()
     assert persistent.native_value == 80
+
+
+async def test_pending_persistent_target_is_shared_between_entities(
+    persistent_readback,
+):
+    """Recreating a number entity does not lose a pending persistent command."""
+    entry, config, _, persistent, temporary, echo = persistent_readback
+    await echo(800)
+    await persistent.async_set_native_value(50)
+    peer = HoymilesNumberEntity(
+        entry, persistent.entity_description, config, temporary.coordinator
+    )
+    assert peer.native_value == persistent.native_value == 50
+    assert peer.assumed_state
+
+    await temporary.async_set_native_value(80)
+    await echo(800)
+    peer.update_state_value()
+    assert peer.native_value == persistent.native_value == 50
+    assert peer.assumed_state
+
+    config.async_set_updated_data(
+        GetConfig_pb2.GetConfigReqDTO(limit_power_mypower=500)
+    )
+    peer.update_state_value()
+    assert peer.native_value == persistent.native_value == 50
+    assert not peer.assumed_state
+    assert not persistent.assumed_state
+
+
+async def test_config_confirmation_does_not_accept_previous_watt_echo(
+    persistent_readback,
+):
+    """Config can confirm a target while live readback still waits for its new units."""
+    _, config, _, persistent, temporary, echo = persistent_readback
+    await temporary.async_set_native_value(80)
+    await echo(800)
+    await persistent.async_set_native_value(50)
+    config.async_set_updated_data(
+        GetConfig_pb2.GetConfigReqDTO(limit_power_mypower=500)
+    )
+    assert persistent.native_value == 50
+    assert not persistent.assumed_state
+
+    await echo(800)
+    assert persistent.native_value == 50
+    await echo(500)
+    assert persistent.native_value == 50
+    await echo(600)
+    assert persistent.native_value == 60

@@ -54,7 +54,6 @@ class HoymilesNumberSensorEntityDescription(
     """Describes Hoymiles number sensor entity."""
 
     set_action: SetAction = None
-    conversion_factor: float = None
     serial_number: str = None
     is_dtu_sensor: bool = False
 
@@ -66,7 +65,6 @@ CONFIG_CONTROL_ENTITIES = (
         mode=NumberMode.SLIDER,
         device_class=NumberDeviceClass.POWER_FACTOR,
         set_action=SetAction.POWER_LIMIT,
-        conversion_factor=0.1,
         is_dtu_sensor=True,
     ),
     HoymilesNumberSensorEntityDescription(
@@ -140,13 +138,10 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     ) -> None:
         """Initialize the HoymilesNumberEntity."""
         super().__init__(config_entry, description, coordinator)
-        self._attribute_name = description.key
-        self._conversion_factor = description.conversion_factor
         self._set_action = description.set_action
         self._power_limit_coordinator = power_limit_coordinator
         self._native_value = None
         self._assumed_state = False
-        self._pending_persistent_limit = None
 
         self.update_state_value()
 
@@ -210,7 +205,6 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         if self._set_action == SetAction.POWER_LIMIT:
             response = await dtu.async_set_power_limit(value)
             self._validate_command_response(response)
-            self._pending_persistent_limit = value
             self._power_limit_coordinator.set_persistent_power_limit_target(value)
             await self._power_limit_coordinator.async_request_refresh()
             if self.coordinator.last_update_success:
@@ -248,35 +242,8 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
             )
             return
 
-        value, source = self._resolve_persistent_power_limit()
-        if self._pending_persistent_limit is not None:
-            if value == self._pending_persistent_limit and not source.data_is_stale:
-                self._pending_persistent_limit = None
-            else:
-                self._native_value = self._pending_persistent_limit
-                self._assumed_state = True
-                return
-        self._native_value = value
-        self._assumed_state = source is not None and source.data_is_stale
-
-    def _resolve_persistent_power_limit(self):
-        """Prefer known percentage echoes and fall back to available configuration."""
-        live = self._power_limit_coordinator
-        if (
-            live.last_update_success
-            and live.data is not None
-            and live.persistent_power_limit is not None
-        ):
-            return live.persistent_power_limit, live
-
-        config = self.coordinator
-        if config.last_update_success and config.data is not None:
-            raw = getattr(config.data, self._attribute_name, None)
-            if raw is not None:
-                value = raw * self._conversion_factor
-                if (
-                    math.isfinite(value)
-                    and self.native_min_value <= value <= self.native_max_value
-                ):
-                    return value, config
-        return None, None
+        self._native_value, self._assumed_state = (
+            self._power_limit_coordinator.resolve_persistent_power_limit(
+                self.coordinator
+            )
+        )

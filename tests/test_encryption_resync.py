@@ -45,7 +45,7 @@ def _setup(hass, dtu):
     entry.add_to_hass(hass)
     data = HoymilesRealDataUpdateCoordinator(hass, dtu, entry, timedelta(seconds=35))
     app_info = HoymilesAppInfoUpdateCoordinator(hass, dtu, entry, timedelta(hours=2))
-    data.set_encryption_resync(app_info.async_resync_encryption)
+    data.set_encryption_resync_callback(app_info.async_resync_encryption)
     return entry, data, app_info
 
 

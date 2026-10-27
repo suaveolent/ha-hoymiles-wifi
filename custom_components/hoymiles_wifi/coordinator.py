@@ -73,12 +73,14 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
     """Keep live readings through brief outages, then report unavailability."""
 
     _last_successful_fetch: float | None = None
-    _encryption_resync: Callable[[], Awaitable[bool]] | None = None
+    _encryption_resync_callback: Callable[[], Awaitable[bool]] | None = None
     data_is_stale = False
 
-    def set_encryption_resync(self, resync: Callable[[], Awaitable[bool]]) -> None:
-        """Register the callback that refreshes the DTU encryption key."""
-        self._encryption_resync = resync
+    def set_encryption_resync_callback(
+        self, resync_callback: Callable[[], Awaitable[bool]]
+    ) -> None:
+        """Register an async app-info callback that reports whether the key changed."""
+        self._encryption_resync_callback = resync_callback
 
     async def _async_update_data(self):
         """Apply one grace period, measured from the last successful fetch."""
@@ -133,12 +135,12 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
         reports as NetworkState.Unknown (an unreachable DTU is Offline).
         """
         if (
-            self._encryption_resync is None
+            self._encryption_resync_callback is None
             or not getattr(self._dtu, "is_encrypted", False)
             or self._dtu.get_state() != NetworkState.Unknown
         ):
             return False
-        return await self._encryption_resync()
+        return await self._encryption_resync_callback()
 
     def _is_cloud_pause_active(self) -> bool:
         """Reserve a quiet window beginning ten seconds before each five-minute mark."""

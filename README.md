@@ -115,6 +115,21 @@ Configuration is done in the UI.
 - **Persistent power limit** sets a percentage and remains stored after an inverter restart.
 - **Temporary power limit** sets watts on supported HMS-W devices with firmware V01.01.01 or newer. It accepts 0.1–3276.7 W in steps of 0.1 W, uses the runtime command, and resets to the persistent limit after an inverter restart.
 
+Persistent percentage readback prefers live inverter data when its units are
+known, with configuration data as a fallback for older firmware. Devices that
+do not answer configuration requests can still load their live entities.
+If the initial configuration fetch fails, configuration polling is disabled
+until the integration is reloaded or Home Assistant restarts.
+Multiple single-phase inverters must report the same limit; three-phase setups
+use configuration readback because their live messages lack the limit field.
+
+Integrated Wi-Fi DTUs can echo either percent or watts. After an integration
+restart, their live echo units remain unknown until this integration sends a
+power-limit command. A temporary watt echo never replaces the persistent
+percentage. Acknowledged targets are shown as assumed until confirmed by fresh
+readback. An ambiguous zero or missing live limit stays unknown when there is
+no usable configuration fallback; zero is not automatically treated as 100%.
+
 Commands sent by another app are not tracked, so their echo units cannot be determined reliably. Temporary limits
 are not restored or automatically reapplied.
 

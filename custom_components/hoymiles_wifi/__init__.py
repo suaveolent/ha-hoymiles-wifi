@@ -154,7 +154,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if single_phase_inverters or three_phase_inverters or meters:
         await app_info_update_coordinator.async_refresh()
         await data_coordinator.async_config_entry_first_refresh()
-        await config_coordinator.async_config_entry_first_refresh()
+        await config_coordinator.async_refresh()
+        if not config_coordinator.last_update_success:
+            config_coordinator.update_interval = None
+            _LOGGER.info(
+                "DTU %s did not provide configuration during setup; disabling configuration polling until the integration is reloaded",
+                host,
+            )
     if hybrid_inverters:
         await energy_storage_data_coordinator.async_config_entry_first_refresh()
 

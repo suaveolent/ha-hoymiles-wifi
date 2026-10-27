@@ -96,7 +96,7 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
         if (
             response is None
-            and await self._async_resync_encryption()
+            and await self._async_check_and_resync_encryption()
             and not self._is_cloud_pause_active()
         ):
             response = await self._async_try_fetch_data()
@@ -124,7 +124,7 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
             _LOGGER.debug("Live data request failed: %s", err)
             return None
 
-    async def _async_resync_encryption(self) -> bool:
+    async def _async_check_and_resync_encryption(self) -> bool:
         """Refresh the encryption key when the DTU answers but cannot be decoded.
 
         Encrypted DTUs generate a new key (enc_rand) whenever they restart, for

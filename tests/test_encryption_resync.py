@@ -1,6 +1,6 @@
 """Tests for on-demand resynchronization of the DTU encryption key."""
 
-from datetime import timedelta
+from datetime import UTC, datetime, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -8,6 +8,7 @@ from hoymiles_wifi.dtu import NetworkState
 from pytest_homeassistant_custom_component.common import MockConfigEntry
 
 from custom_components.hoymiles_wifi.const import (
+    CONF_CLOUD_PAUSE,
     CONF_ENC_RAND,
     CONF_IS_ENCRYPTED,
     DOMAIN,
@@ -124,3 +125,55 @@ async def test_resync_is_rate_limited_and_skips_retry_when_key_unchanged(hass):
         clock.return_value = 1000 + ENC_RAND_RESYNC_MIN_INTERVAL_SECONDS
         await data.async_refresh()
         assert dtu.async_app_information_data.await_count == 2
+
+
+async def test_resync_crossing_cloud_pause_defers_retry(hass):
+    """Keep cached data if key recovery finishes inside the cloud's quiet window."""
+    dtu = _encrypted_dtu(NetworkState.Unknown)
+    entry, data, app_info = _setup(hass, dtu)
+    hass.config_entries.async_update_entry(
+        entry, data={**entry.data, CONF_CLOUD_PAUSE: 30}
+    )
+    live = SimpleNamespace(sgs_data=[])
+    dtu.async_get_real_data_new = AsyncMock(return_value=live)
+
+    with (
+        patch(
+            "custom_components.hoymiles_wifi.coordinator.dt_util.utcnow",
+            return_value=datetime(2026, 10, 27, 12, 4, 48, tzinfo=UTC),
+        ) as now,
+        patch(
+            "custom_components.hoymiles_wifi.coordinator.is_encrypted_dtu",
+            return_value=True,
+        ),
+    ):
+        await data.async_refresh()
+        last_success = data._last_successful_fetch
+        dtu.async_get_real_data_new = AsyncMock(return_value=None)
+        now.return_value = datetime(2026, 10, 27, 12, 4, 49, tzinfo=UTC)
+
+        async def resync_response():
+            now.return_value = datetime(2026, 10, 27, 12, 4, 50, tzinfo=UTC)
+            return _app_info_response(NEW_KEY)
+
+        dtu.async_app_information_data = AsyncMock(side_effect=resync_response)
+        await data.async_refresh()
+
+        assert dtu.enc_rand == bytes.fromhex(NEW_KEY)
+        assert entry.data[CONF_ENC_RAND] == NEW_KEY
+        dtu.async_app_information_data.assert_awaited_once()
+        dtu.async_get_real_data_new.assert_awaited_once()
+        assert data.data is live
+        assert data.last_update_success
+        assert data.data_is_stale
+        assert data._last_successful_fetch == last_success
+
+        now.return_value = datetime(2026, 10, 27, 12, 5, 20, tzinfo=UTC)
+        dtu.async_get_real_data_new.return_value = live
+        await data.async_refresh()
+        assert dtu.async_get_real_data_new.await_count == 2
+        assert not data.data_is_stale
+        assert data.last_update_success
+
+    await data.async_shutdown()
+    await app_info.async_shutdown()

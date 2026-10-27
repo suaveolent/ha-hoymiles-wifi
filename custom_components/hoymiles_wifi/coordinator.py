@@ -2,7 +2,9 @@
 
 from collections.abc import Awaitable, Callable
 from datetime import timedelta
+from enum import Enum
 import logging
+import math
 from time import monotonic
 
 import homeassistant
@@ -11,15 +13,22 @@ from homeassistant.const import CONF_HOST, Platform
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 from hoymiles_wifi.const import (
+    MAX_POWER_LIMIT,
     MAX_TEMPORARY_POWER_LIMIT_WATTS,
     MIN_TEMPORARY_POWER_LIMIT_WATTS,
 )
 from hoymiles_wifi.dtu import DTU, NetworkState
-from hoymiles_wifi.hoymiles import generate_inverter_serial_number
+from hoymiles_wifi.hoymiles import (
+    DTUType,
+    generate_inverter_serial_number,
+    get_dtu_model_type,
+)
 
 from .const import (
     CONF_CLOUD_PAUSE,
+    CONF_DTU_SERIAL_NUMBER,
     CONF_INVERTERS,
+    CONF_THREE_PHASE_INVERTERS,
     DEFAULT_CLOUD_PAUSE_SECONDS,
     DOMAIN,
     ENC_RAND_RESYNC_MIN_INTERVAL_SECONDS,
@@ -85,7 +94,11 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
 
         response = await self._async_try_fetch_data()
 
-        if response is None and await self._async_resync_encryption():
+        if (
+            response is None
+            and await self._async_resync_encryption()
+            and not self._is_cloud_pause_active()
+        ):
             response = await self._async_try_fetch_data()
 
         if response is not None:
@@ -147,62 +160,165 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
         raise NotImplementedError
 
 
-class HoymilesRealDataUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
-    """Data coordinator for Hoymiles integration."""
+class PowerLimitUnit(Enum):
+    """Units carried by the DTU's shared live power-limit field."""
 
-    temporary_power_limit: float | None = None
-    temporary_power_limit_confirmed = False
-    _temporary_power_limit_target: float | None = None
+    UNKNOWN = "unknown"
+    PERCENT = "percent"
+    WATTS = "watts"
+
+
+class HoymilesRealDataUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
+    """Resolve live readings and power-limit command confirmation."""
+
+    def __init__(self, hass, dtu, config_entry, update_interval):
+        """Only infer percent units for DTUs without temporary watt controls."""
+        super().__init__(hass, dtu, config_entry, update_interval)
+        self.power_limit_echo_unit = PowerLimitUnit.UNKNOWN
+        self._power_limit_target: float | None = None
+        self._power_limit_echo_confirmed = False
+        self._pending_persistent_limit: float | None = None
+        self._zero_percent_expected = False
+        self.persistent_power_limit: float | None = None
+        self.temporary_power_limit: float | None = None
+        serial = config_entry.data.get(CONF_DTU_SERIAL_NUMBER)
+        try:
+            if get_dtu_model_type(bytes.fromhex(serial)) != DTUType.DTUBI:
+                self.power_limit_echo_unit = PowerLimitUnit.PERCENT
+        except (TypeError, ValueError):
+            pass
+
+    @property
+    def temporary_power_limit_confirmed(self) -> bool:
+        """Whether a fresh watt echo has confirmed the temporary target."""
+        return (
+            self.power_limit_echo_unit == PowerLimitUnit.WATTS
+            and self._power_limit_echo_confirmed
+        )
 
     def set_temporary_power_limit_target(self, value: float) -> None:
         """Establish watt units and wait for a matching live-data echo."""
-        self._temporary_power_limit_target = value
-        self.temporary_power_limit = value
-        self.temporary_power_limit_confirmed = False
+        self._set_power_limit_target(value, PowerLimitUnit.WATTS)
+
+    def set_persistent_power_limit_target(self, value: float) -> None:
+        """Establish percent units and wait for fresh readback confirmation."""
+        self._set_power_limit_target(value, PowerLimitUnit.PERCENT)
+
+    def _set_power_limit_target(self, value: float, unit: PowerLimitUnit) -> None:
+        """Replace the active command target and discard readings in the previous units."""
+        self.power_limit_echo_unit = unit
+        self._power_limit_target = value
+        self._power_limit_echo_confirmed = False
+        if unit == PowerLimitUnit.PERCENT:
+            self._pending_persistent_limit = value
+        self._zero_percent_expected = unit == PowerLimitUnit.PERCENT and value == 0
+        self.persistent_power_limit = None
+        self.temporary_power_limit = value if unit == PowerLimitUnit.WATTS else None
         self.async_update_listeners()
 
-    def clear_temporary_power_limit(self) -> None:
-        """Stop interpreting live echoes as watts after a persistent command."""
-        self._temporary_power_limit_target = None
-        self.temporary_power_limit = None
-        self.temporary_power_limit_confirmed = False
-        self.async_update_listeners()
+    def resolve_persistent_power_limit(
+        self, config_coordinator: HoymilesLiveDataUpdateCoordinator
+    ) -> tuple[float | None, bool]:
+        """Return the percentage and assumed flag, confirming targets from either source."""
+        value, source = self._resolve_persistent_readback(config_coordinator)
+        if self._pending_persistent_limit is not None:
+            if (
+                value == self._pending_persistent_limit
+                and source is not None
+                and not source.data_is_stale
+            ):
+                self._pending_persistent_limit = None
+            else:
+                return self._pending_persistent_limit, True
+        return value, source is not None and source.data_is_stale
 
-    def _update_temporary_power_limit_readback(self, response) -> None:
-        """Read a known watt echo for the configured inverter."""
-        if self._temporary_power_limit_target is None:
-            return
-
-        inverters = self._config_entry.data.get(CONF_INVERTERS, [])
-        readings = [
-            inverter.power_limit / 10
-            for inverter in response.sgs_data
-            if generate_inverter_serial_number(inverter.serial_number) in inverters
-        ]
+    def _resolve_persistent_readback(
+        self, config_coordinator: HoymilesLiveDataUpdateCoordinator
+    ):
+        """Prefer known live percentages over usable configuration fallback data."""
         if (
-            len(readings) != 1
+            self.last_update_success
+            and self.data is not None
+            and self.persistent_power_limit is not None
+        ):
+            return self.persistent_power_limit, self
+        if (
+            config_coordinator.last_update_success
+            and config_coordinator.data is not None
+        ):
+            raw = getattr(config_coordinator.data, "limit_power_mypower", None)
+            if raw is not None:
+                value = raw / 10
+                if math.isfinite(value) and 0 <= value <= MAX_POWER_LIMIT:
+                    return value, config_coordinator
+        return None, None
+
+    def _read_configured_power_limits(self, response) -> list[tuple[str, int]]:
+        """Extract raw limits for configured single-phase inverters once per response."""
+        inverters = set(self._config_entry.data.get(CONF_INVERTERS, []))
+        readings = []
+        for inverter in getattr(response, "sgs_data", ()):
+            serial = generate_inverter_serial_number(inverter.serial_number)
+            if serial in inverters:
+                readings.append((serial, inverter.power_limit))
+        return readings
+
+    def _update_persistent_power_limit_readback(self, readings) -> None:
+        """Resolve a common percentage only for all configured single-phase inverters."""
+        self.persistent_power_limit = None
+        if (
+            self.power_limit_echo_unit != PowerLimitUnit.PERCENT
+            or self._config_entry.data.get(CONF_THREE_PHASE_INVERTERS)
+        ):
+            return
+        inverters = set(self._config_entry.data.get(CONF_INVERTERS, []))
+        limits = dict(readings)
+        if (
+            not inverters
+            or limits.keys() != inverters
+            or len(set(limits.values())) != 1
+        ):
+            return
+        raw = next(iter(limits.values()))
+        if not 0 <= raw <= MAX_POWER_LIMIT * 10:
+            return
+        value = raw / 10
+        if (
+            self._power_limit_target is not None
+            and not self._power_limit_echo_confirmed
+        ):
+            if value != self._power_limit_target:
+                return
+        elif raw == 0 and not self._zero_percent_expected:
+            return
+        self._power_limit_echo_confirmed = True
+        self._zero_percent_expected = raw == 0
+        self.persistent_power_limit = value
+
+    def _update_temporary_power_limit_readback(self, readings) -> None:
+        """Read a known watt echo for the configured inverter."""
+        if self.power_limit_echo_unit != PowerLimitUnit.WATTS:
+            return
+        values = [raw / 10 for _, raw in readings]
+        if (
+            len(values) != 1
             or not MIN_TEMPORARY_POWER_LIMIT_WATTS
-            <= readings[0]
+            <= values[0]
             <= MAX_TEMPORARY_POWER_LIMIT_WATTS
         ):
             self.temporary_power_limit = None
-            self.temporary_power_limit_confirmed = False
+            self._power_limit_echo_confirmed = False
             return
-
-        value = readings[0]
-        if (
-            not self.temporary_power_limit_confirmed
-            and value != self._temporary_power_limit_target
-        ):
+        value = values[0]
+        if not self._power_limit_echo_confirmed and value != self._power_limit_target:
             _LOGGER.debug(
                 "Waiting for temporary power limit echo: received %s W, expected %s W",
                 value,
-                self._temporary_power_limit_target,
+                self._power_limit_target,
             )
             return
-
         self.temporary_power_limit = value
-        self.temporary_power_limit_confirmed = True
+        self._power_limit_echo_confirmed = True
 
     async def _async_fetch_data(self):
         """Update data via library."""
@@ -215,7 +331,9 @@ class HoymilesRealDataUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
                 "Unable to retrieve real data new. Inverter might be offline."
             )
         else:
-            self._update_temporary_power_limit_readback(response)
+            readings = self._read_configured_power_limits(response)
+            self._update_persistent_power_limit_readback(readings)
+            self._update_temporary_power_limit_readback(readings)
         return response
 
 

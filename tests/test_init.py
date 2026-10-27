@@ -62,6 +62,9 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
     async def forward_platforms(config_entry, platforms):
         """The parent must exist before any platform starts adding entities."""
         assert requests == ["app_info", "real_data", "config"]
+        assert hass.data[DOMAIN][config_entry.entry_id][
+            HASS_CONFIG_COORDINATOR
+        ].update_interval == timedelta(minutes=5)
         device = dr.async_get(hass).async_get_device_by_identifier(
             (DOMAIN, config_entry.data[CONF_DTU_SERIAL_NUMBER]),
             config_entry.entry_id,
@@ -123,7 +126,7 @@ async def test_setup_refreshes_encryption_before_data(hass, dfs):
         assert await hass.config_entries.async_unload(entry.entry_id)
 
 
-@pytest.mark.parametrize("failure", ["real_data", "config", "hybrid"])
+@pytest.mark.parametrize("failure", ["real_data", "hybrid"])
 async def test_failed_initial_refresh_retries_before_platform_setup(
     hass, freezer, failure
 ):
@@ -157,7 +160,7 @@ async def test_failed_initial_refresh_retries_before_platform_setup(
         patch.object(
             DTU, "async_get_real_data_new", return_value=real_data
         ) as get_real,
-        patch.object(DTU, "async_get_config", return_value=config) as get_config,
+        patch.object(DTU, "async_get_config", return_value=config),
         patch.object(
             DTU, "async_get_energy_storage_data", return_value=hybrid
         ) as get_hybrid,
@@ -170,7 +173,6 @@ async def test_failed_initial_refresh_retries_before_platform_setup(
     ):
         failed_fetch = {
             "real_data": get_real,
-            "config": get_config,
             "hybrid": get_hybrid,
         }[failure]
         response = failed_fetch.return_value
@@ -188,4 +190,61 @@ async def test_failed_initial_refresh_retries_before_platform_setup(
         assert entry.state is ConfigEntryState.LOADED
         forward.assert_awaited_once()
         assert hass.services.has_service(DOMAIN, "set_bms_mode")
+        assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize("failure", [None, TimeoutError(), OSError("unsupported")])
+async def test_setup_tolerates_unsupported_config_command(hass, freezer, failure):
+    """Missing optional configuration must not prevent working live entities loading."""
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=CONFIG_VERSION,
+        data={
+            CONF_HOST: "dtu.local",
+            CONF_DTU_SERIAL_NUMBER: "411000000001",
+            CONF_UPDATE_INTERVAL: 35,
+            CONF_INVERTERS: ["112400000001"],
+        },
+    )
+    entry.add_to_hass(hass)
+    real = RealDataNew_pb2.RealDataNewReqDTO(device_serial_number="411000000001")
+    listeners = []
+
+    async def forward_platforms(config_entry, platforms):
+        runtime = hass.data[DOMAIN][config_entry.entry_id]
+        assert runtime[HASS_DATA_COORDINATOR].data is real
+        assert runtime[HASS_DATA_COORDINATOR].last_update_success
+        assert not runtime[HASS_CONFIG_COORDINATOR].last_update_success
+        assert runtime[HASS_CONFIG_COORDINATOR].data is None
+        assert runtime[HASS_CONFIG_COORDINATOR].update_interval is None
+        listeners.append(
+            runtime[HASS_CONFIG_COORDINATOR].async_add_listener(lambda: None)
+        )
+
+    with (
+        patch.object(
+            DTU,
+            "async_app_information_data",
+            return_value=APPInfomationData_pb2.APPInfoDataReqDTO(),
+        ),
+        patch.object(DTU, "async_get_real_data_new", return_value=real),
+        patch.object(
+            DTU, "async_get_config", return_value=None, side_effect=failure
+        ) as get_config,
+        patch.object(
+            hass.config_entries,
+            "async_forward_entry_setups",
+            side_effect=forward_platforms,
+        ) as forward,
+        patch.object(hass.config_entries, "async_unload_platforms", return_value=True),
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        assert entry.state is ConfigEntryState.LOADED
+        forward.assert_awaited_once()
+        freezer.tick(timedelta(minutes=15))
+        async_fire_time_changed(hass, dt_util.utcnow())
+        await hass.async_block_till_done()
+        get_config.assert_awaited_once()
+        for remove_listener in listeners:
+            remove_listener()
         assert await hass.config_entries.async_unload(entry.entry_id)

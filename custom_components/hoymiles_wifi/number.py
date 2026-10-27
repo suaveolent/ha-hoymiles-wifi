@@ -54,7 +54,6 @@ class HoymilesNumberSensorEntityDescription(
     """Describes Hoymiles number sensor entity."""
 
     set_action: SetAction = None
-    conversion_factor: float = None
     serial_number: str = None
     is_dtu_sensor: bool = False
 
@@ -66,7 +65,6 @@ CONFIG_CONTROL_ENTITIES = (
         mode=NumberMode.SLIDER,
         device_class=NumberDeviceClass.POWER_FACTOR,
         set_action=SetAction.POWER_LIMIT,
-        conversion_factor=0.1,
         is_dtu_sensor=True,
     ),
     HoymilesNumberSensorEntityDescription(
@@ -140,14 +138,25 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
     ) -> None:
         """Initialize the HoymilesNumberEntity."""
         super().__init__(config_entry, description, coordinator)
-        self._attribute_name = description.key
-        self._conversion_factor = description.conversion_factor
         self._set_action = description.set_action
         self._power_limit_coordinator = power_limit_coordinator
         self._native_value = None
         self._assumed_state = False
 
         self.update_state_value()
+
+    async def async_added_to_hass(self) -> None:
+        """Listen to live readback as well as configuration fallback changes."""
+        await super().async_added_to_hass()
+        if (
+            self._set_action == SetAction.POWER_LIMIT
+            and self._power_limit_coordinator is not self.coordinator
+        ):
+            self.async_on_remove(
+                self._power_limit_coordinator.async_add_listener(
+                    self._handle_coordinator_update
+                )
+            )
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -168,6 +177,16 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
             and self._power_limit_coordinator.data_is_stale
         )
 
+    @property
+    def available(self) -> bool:
+        """Keep persistent controls available when either read source is responding."""
+        if self._set_action == SetAction.POWER_LIMIT_TEMPORARY:
+            return super().available
+        return any(
+            source.last_update_success and source.data is not None
+            for source in (self.coordinator, self._power_limit_coordinator)
+        )
+
     async def async_set_native_value(self, value: float) -> None:
         """Set the native value of the entity.
 
@@ -186,8 +205,12 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
         if self._set_action == SetAction.POWER_LIMIT:
             response = await dtu.async_set_power_limit(value)
             self._validate_command_response(response)
-            self._power_limit_coordinator.clear_temporary_power_limit()
-            await self.coordinator.async_request_refresh()
+            self._power_limit_coordinator.set_persistent_power_limit_target(value)
+            await self._power_limit_coordinator.async_request_refresh()
+            if self.coordinator.last_update_success:
+                await self.coordinator.async_request_refresh()
+            self.update_state_value()
+            return
         elif self._set_action == SetAction.POWER_LIMIT_TEMPORARY:
             response = await dtu.async_set_power_limit_temporary(value)
             self._validate_command_response(response)
@@ -198,9 +221,6 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
             return
         else:
             raise HomeAssistantError("Invalid set action")
-
-        self._assumed_state = True
-        self._native_value = value
 
     def _validate_command_response(self, response) -> None:
         """Keep the previous interpretation when the DTU rejects a command."""
@@ -222,13 +242,8 @@ class HoymilesNumberEntity(HoymilesCoordinatorEntity, NumberEntity):
             )
             return
 
-        self._native_value = getattr(
-            self.coordinator.data,
-            self._attribute_name,
-            None,
+        self._native_value, self._assumed_state = (
+            self._power_limit_coordinator.resolve_persistent_power_limit(
+                self.coordinator
+            )
         )
-
-        self._assumed_state = False
-
-        if self._native_value is not None and self._conversion_factor is not None:
-            self._native_value *= self._conversion_factor

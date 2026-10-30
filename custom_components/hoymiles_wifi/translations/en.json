@@ -91,6 +91,12 @@
       "port_error_code": {
         "name": "Port {port_number} error code"
       },
+      "port_operating_status": {
+        "name": "Port {port_number} operating status"
+      },
+      "port_alarm_code": {
+        "name": "Port {port_number} alarm code"
+      },
       "wifi_ssid": {
         "name": "Wi-Fi SSID"
       },

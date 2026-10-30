@@ -1,5 +1,6 @@
 """Support for Hoymiles sensors."""
 
+from collections.abc import Callable
 import dataclasses
 from dataclasses import dataclass
 from enum import Enum
@@ -71,6 +72,24 @@ class HoymilesSensorEntityDescription(
     version_translation_function: str = None
     version_prefix: str = None
     requires_device_type: int = DeviceType.ALL_DEVICES
+    # Read this field in place of the key's last one, for a value that
+    # shares a field with other sensors, and derive the value with value_fn.
+    source_field: str = None
+    value_fn: Callable[[int], int] = None
+
+
+def port_operating_status(error_code: int) -> int:
+    """Return the operating status in the top byte of a port's error code.
+
+    The inverters report 0 while asleep and 3 while producing, the same
+    as the operating status register of the DTU-Pro's Modbus interface.
+    """
+    return (error_code & 0xFFFFFFFF) >> 24
+
+
+def port_alarm_code(error_code: int) -> int:
+    """Return the alarm in the low 24 bits of a port's error code."""
+    return error_code & 0xFFFFFF
 
 
 @dataclass(frozen=True)
@@ -350,6 +369,18 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].error_code",
         translation_key="port_error_code",
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[<pv_count>].operating_status",
+        translation_key="port_operating_status",
+        source_field="error_code",
+        value_fn=port_operating_status,
+    ),
+    HoymilesSensorEntityDescription(
+        key="pv_data[<pv_count>].alarm_code",
+        translation_key="port_alarm_code",
+        source_field="error_code",
+        value_fn=port_alarm_code,
     ),
     HoymilesSensorEntityDescription(
         key="meter_data[<meter_count>].phase_total_power",
@@ -1398,6 +1429,10 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         super().__init__(config_entry, description, coordinator)
 
         self._attribute_name = description.key
+        if getattr(description, "source_field", None) is not None:
+            parent, dot, _ = description.key.rpartition(".")
+            self._attribute_name = f"{parent}{dot}{description.source_field}"
+        self._value_fn = getattr(description, "value_fn", None)
         self._conversion_factor = description.conversion_factor
         self._version_translation_function = description.version_translation_function
         self._version_prefix = description.version_prefix
@@ -1447,6 +1482,9 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
             return
 
         new_native_value = self._read_coordinator_value()
+
+        if new_native_value is not None and self._value_fn is not None:
+            new_native_value = self._value_fn(new_native_value)
 
         if new_native_value is not None and self._conversion_factor is not None:
             new_native_value *= self._conversion_factor

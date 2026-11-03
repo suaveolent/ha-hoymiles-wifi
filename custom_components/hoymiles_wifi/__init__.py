@@ -34,11 +34,13 @@ from .const import (
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
     HASS_DTU,
+    HASS_ENERGY_STORAGE_CONFIG_COORDINATOR,
     HASS_ENERGY_STORAGE_DATA_COORDINATOR,
 )
 from .coordinator import (
     HoymilesAppInfoUpdateCoordinator,
     HoymilesConfigUpdateCoordinator,
+    HoymilesEnergyStorageConfigUpdateCoordinator,
     HoymilesEnergyStorageUpdateCoordinator,
     HoymilesRealDataUpdateCoordinator,
 )
@@ -155,6 +157,21 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         hass_data[HASS_ENERGY_STORAGE_DATA_COORDINATOR] = (
             energy_storage_data_coordinator
         )
+        energy_storage_config_coordinator = (
+            HoymilesEnergyStorageConfigUpdateCoordinator(
+                hass=hass,
+                dtu=dtu,
+                config_entry=config_entry,
+                update_interval=timedelta(
+                    seconds=DEFAULT_CONFIG_UPDATE_INTERVAL_SECONDS
+                ),
+                dtu_serial_number=config_entry.data[CONF_DTU_SERIAL_NUMBER],
+                inverters=hybrid_inverters,
+            )
+        )
+        hass_data[HASS_ENERGY_STORAGE_CONFIG_COORDINATOR] = (
+            energy_storage_config_coordinator
+        )
 
     if single_phase_inverters or three_phase_inverters or meters:
         await app_info_update_coordinator.async_refresh()
@@ -168,6 +185,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             )
     if hybrid_inverters:
         await energy_storage_data_coordinator.async_config_entry_first_refresh()
+        await energy_storage_config_coordinator.async_refresh()
 
     _LOGGER.debug("  hass_data: %s", hass_data)
     _LOGGER.debug("  config_entry_id: %s", config_entry.entry_id)

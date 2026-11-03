@@ -37,6 +37,7 @@ HASS_DATA_COORDINATOR = "data_coordinator"
 HASS_CONFIG_COORDINATOR = "config_coordinator"
 HASS_APP_INFO_COORDINATOR = "app_info_coordinator"
 HASS_ENERGY_STORAGE_DATA_COORDINATOR = "energy_stroage_data_coordinator"
+HASS_ENERGY_STORAGE_CONFIG_COORDINATOR = "energy_storage_config_coordinator"
 HASS_DTU = "dtu"
 HASS_DATA_UNSUB_OPTIONS_UPDATE_LISTENER = "unsub_options_update_listener"
 

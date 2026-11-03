@@ -459,23 +459,40 @@ class HoymilesEnergyStorageUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
         """Update data via library."""
         _LOGGER.debug("Hoymiles energy storage coordinator update")
 
+        return await self._async_fetch_inverter_data(
+            self._dtu.async_get_energy_storage_data
+        )
+
+    async def _async_fetch_inverter_data(self, fetch_data):
+        """Keep each configured inverter at its position, including missing replies."""
         responses = []
-
         for inverter in self._inverters:
-            storage_data = await self._dtu.async_get_energy_storage_data(
-                dtu_serial_number=int(self._dtu_serial_number),
-                inverter_serial_number=inverter["inverter_serial_number"],
-            )
-            if storage_data is None:
-                _LOGGER.debug(
-                    "No response from inverter %s; retaining its position with missing data",
-                    inverter["inverter_serial_number"],
+            serial = int(inverter["inverter_serial_number"])
+            try:
+                response = await fetch_data(
+                    dtu_serial_number=int(self._dtu_serial_number),
+                    inverter_serial_number=serial,
                 )
-            responses.append(storage_data)
+            except (OSError, TimeoutError) as err:
+                _LOGGER.debug("Energy storage request for %s failed: %s", serial, err)
+                response = None
+            if response is None:
+                _LOGGER.debug(
+                    "No response from inverter %s; preserving its position", serial
+                )
+            responses.append(response)
+        return (
+            responses if any(response is not None for response in responses) else None
+        )
 
-        if not any(response is not None for response in responses):
-            _LOGGER.debug(
-                "Unable to retrieve energy storage data. Inverter might be offline."
-            )
-            return None
-        return responses
+
+class HoymilesEnergyStorageConfigUpdateCoordinator(
+    HoymilesEnergyStorageUpdateCoordinator
+):
+    """Read hybrid working-mode settings independently of live measurements."""
+
+    async def _async_fetch_data(self):
+        """Read the configuration of each hybrid inverter through the library."""
+        return await self._async_fetch_inverter_data(
+            self._dtu.async_get_energy_storage_working_mode
+        )

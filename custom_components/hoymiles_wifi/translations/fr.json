@@ -46,6 +46,19 @@
       }
     },
     "sensor": {
+      "working_mode": {
+        "name": "Mode de fonctionnement",
+        "state": {
+          "self_use": "Mode autoconsommation",
+          "economic": "Mode économique",
+          "backup_power": "Mode secours",
+          "pure_off_grid": "Mode hors réseau",
+          "forced_charging": "Mode charge forcée",
+          "forced_discharge": "Mode décharge forcée",
+          "peak_shaving": "Mode écrêtage de pointe",
+          "time_of_use": "Mode heures d’utilisation"
+        }
+      },
       "ac_active_power": {
         "name": "Puissance AC"
       },

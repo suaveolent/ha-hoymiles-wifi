@@ -46,6 +46,19 @@
       }
     },
     "sensor": {
+      "working_mode": {
+        "name": "Betriebsmodus",
+        "state": {
+          "self_use": "Eigenverbrauchsmodus",
+          "economic": "Sparmodus",
+          "backup_power": "Notstrommodus",
+          "pure_off_grid": "Inselbetriebsmodus",
+          "forced_charging": "Erzwungener Ladebetrieb",
+          "forced_discharge": "Erzwungener Entladebetrieb",
+          "peak_shaving": "Lastspitzenkappungsmodus",
+          "time_of_use": "Nutzungszeitmodus"
+        }
+      },
       "ac_active_power": {
         "name": "AC-Leistung"
       },

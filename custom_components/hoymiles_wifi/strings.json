@@ -46,6 +46,19 @@
       }
     },
     "sensor": {
+      "working_mode": {
+        "name": "Working mode",
+        "state": {
+          "self_use": "Self-Consumption Mode",
+          "economic": "Economy Mode",
+          "backup_power": "Backup Mode",
+          "pure_off_grid": "Off-Grid Mode",
+          "forced_charging": "Force Charge Mode",
+          "forced_discharge": "Force Discharge Mode",
+          "peak_shaving": "Peak Shaving Mode",
+          "time_of_use": "Time of Use Mode"
+        }
+      },
       "ac_active_power": {
         "name": "AC power"
       },
@@ -469,7 +482,7 @@
   "selector": {
     "bms_mode_type": {
       "options": {
-        "self_use": "Self-Consumption Mode translated",
+        "self_use": "Self-Consumption Mode",
         "economic": "Economy Mode",
         "backup_power": "Backup Mode",
         "pure_off_grid": "Off-Grid Mode",

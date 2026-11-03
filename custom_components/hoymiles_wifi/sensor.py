@@ -6,6 +6,7 @@ from enum import Enum
 import logging
 import re
 
+from google.protobuf.json_format import MessageToDict
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -27,7 +28,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 import hoymiles_wifi.hoymiles
-from hoymiles_wifi.hoymiles import DTUType, get_dtu_model_type
+from hoymiles_wifi.hoymiles import BMSWorkingMode, DTUType, get_dtu_model_type
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
@@ -43,6 +44,7 @@ from .const import (
     HASS_APP_INFO_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
+    HASS_ENERGY_STORAGE_CONFIG_COORDINATOR,
     HASS_ENERGY_STORAGE_DATA_COORDINATOR,
 )
 from .entity import DeviceType, HoymilesCoordinatorEntity, HoymilesEntityDescription
@@ -1231,6 +1233,25 @@ async def async_setup_entry(
             sensors.extend(sensor_entities)
 
     if hybrid_inverters:
+        sensors.extend(
+            get_sensors_for_hybrid_inverter_description(
+                config_entry,
+                HoymilesEnergyStorageSensorEntityDescription(
+                    key="[<inverter_count>].emspara",
+                    translation_key="working_mode",
+                    device_class=SensorDeviceClass.ENUM,
+                    options=[
+                        mode.name.lower()
+                        for mode in BMSWorkingMode
+                        if mode != BMSWorkingMode.UNKNOWN
+                    ],
+                ),
+                hass_data[HASS_ENERGY_STORAGE_CONFIG_COORDINATOR],
+                HoymilesWorkingModeSensorEntity,
+                dtu_serial_number,
+                hybrid_inverters,
+            )
+        )
         for description in HOYMILES_ENERGY_STORAGE_SENSORS:
             sensor_entities = get_sensors_for_hybrid_inverter_description(
                 config_entry,
@@ -1537,3 +1558,36 @@ class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
 class HoymilesEnergyStorageSensorEntity(HoymilesDataSensorEntity):
     """Use the shared live-data sensor handling for hybrid inverters."""
+
+
+class HoymilesWorkingModeSensorEntity(HoymilesEnergyStorageSensorEntity):
+    """Expose the reported working mode and its unmodified EMS settings."""
+
+    def _read_coordinator_value(self):
+        """Treat absent EMS settings as a missing reading, rather than mode zero."""
+        settings = super()._read_coordinator_value()
+        return settings if settings is not None and settings.ListFields() else None
+
+    @property
+    def native_value(self) -> str | None:
+        """Translate a recognized protocol mode to its stable enum state."""
+        if self._native_value is None:
+            return None
+        try:
+            mode = BMSWorkingMode(self._native_value.mode)
+        except ValueError:
+            return None
+        return mode.name.lower() if mode != BMSWorkingMode.UNKNOWN else None
+
+    @property
+    def extra_state_attributes(self):
+        """Include reported settings with protocol field names and raw units."""
+        if self._native_value is None:
+            return None
+        return {
+            "settings": MessageToDict(
+                self._native_value,
+                preserving_proto_field_name=True,
+                always_print_fields_with_no_presence=True,
+            )
+        }

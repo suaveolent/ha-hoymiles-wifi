@@ -10,7 +10,7 @@ from hoymiles_wifi.utils import parse_time_periods_input, parse_time_settings_in
 
 from custom_components.hoymiles_wifi.const import DOMAIN, HASS_DTU
 
-from .const import CONF_DTU_SERIAL_NUMBER
+from .const import CONF_DTU_SERIAL_NUMBER, HASS_ENERGY_STORAGE_CONFIG_COORDINATOR
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -68,6 +68,7 @@ async def async_handle_set_bms_mode(call: ServiceCall):
         if not time_periods:
             raise ValueError("Invalid time periods!")
 
+    coordinators = set()
     for device_id in device_ids:
         device = device_registry.async_get(device_id)
         if not device:
@@ -113,3 +114,10 @@ async def async_handle_set_bms_mode(call: ServiceCall):
                 peak_meter_power=peak_meter_power,
                 time_periods=time_periods,
             )
+
+            coordinator = hass_data.get(HASS_ENERGY_STORAGE_CONFIG_COORDINATOR)
+            if coordinator is not None:
+                coordinators.add(coordinator)
+
+    for coordinator in coordinators:
+        await coordinator.async_request_refresh()

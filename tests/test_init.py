@@ -164,6 +164,7 @@ async def test_failed_initial_refresh_retries_before_platform_setup(
         patch.object(
             DTU, "async_get_energy_storage_data", return_value=hybrid
         ) as get_hybrid,
+        patch.object(DTU, "async_get_energy_storage_working_mode", return_value=None),
         patch.object(
             hass.config_entries,
             "async_forward_entry_setups",

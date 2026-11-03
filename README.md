@@ -133,19 +133,6 @@ no usable configuration fallback; zero is not automatically treated as 100%.
 Commands sent by another app are not tracked, so their echo units cannot be determined reliably. Temporary limits
 are not restored or automatically reapplied.
 
-### Hybrid inverter working mode
-
-Each hybrid inverter has a read-only **Working mode** sensor. The integration
-reads the mode and its settings every five minutes and refreshes them after the
-`hoymiles_wifi.set_bms_mode` action. Changes made in the Hoymiles app are picked up
-on the next poll.
-
-The sensor's `settings` attribute contains the reported EMS configuration,
-including mode-specific reserve SOC, power limits, and schedules when present.
-Field names and values use the library's protocol format and raw units. Unknown
-mode codes produce an unknown state; a missing response becomes unavailable.
-Unsupported working-mode readback does not prevent live sensors from loading.
-
 ## Screenshots
 
 ![Integration](/screenshots/integration.png?raw=true)

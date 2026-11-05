@@ -1,5 +1,6 @@
 """Entity base for Hoymiles entities."""
 
+import copy
 from dataclasses import dataclass
 from enum import Enum
 import logging
@@ -93,7 +94,7 @@ class HoymilesEntity(Entity):
     @property
     def device_info(self) -> DeviceInfo:
         """Link connected devices to the DTU owned by this config entry."""
-        device_info = self._attr_device_info.copy()
+        device_info = copy.copy(self._attr_device_info)
         if not self.entity_description.is_dtu_sensor:
             identifier = (DOMAIN, str(self._config_entry.data[CONF_DTU_SERIAL_NUMBER]))
             if hasattr(dr, "async_get_device_id_by_identifier"):

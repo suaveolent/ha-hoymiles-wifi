@@ -47,6 +47,9 @@ async def test_device_parent(hass, caplog, key, serial_number, is_dtu):
     )
     entity.hass = hass
     info = entity.device_info
+    assert info is not entity._attr_device_info
+    assert "via_device_id" not in entity._attr_device_info
+    assert "via_device" not in entity._attr_device_info
     assert "via_device" not in info
     if is_dtu:
         assert "via_device_id" not in info
@@ -58,6 +61,8 @@ async def test_device_parent(hass, caplog, key, serial_number, is_dtu):
     assert device.via_device_id == (None if is_dtu else parents[1].id)
     assert device.identifiers == {(DOMAIN, serial_number)}
     assert "deprecated" not in caplog.text
+    info["manufacturer"] = "Changed returned metadata"
+    assert entity.device_info["manufacturer"] == "Hoymiles"
 
 
 def test_device_parent_legacy_api(hass, monkeypatch):

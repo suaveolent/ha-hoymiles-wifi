@@ -5,11 +5,17 @@ from unittest.mock import patch
 
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_HOST
-from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import device_registry as dr, entity_registry as er
 from homeassistant.setup import async_setup_component
 from homeassistant.util import dt as dt_util
 from hoymiles_wifi.dtu import DTU
-from hoymiles_wifi.protobuf import APPInfomationData_pb2, GetConfig_pb2, RealDataNew_pb2
+from hoymiles_wifi.protobuf import (
+    APPInfomationData_pb2,
+    ESData_pb2,
+    ESParaSet_pb2,
+    GetConfig_pb2,
+    RealDataNew_pb2,
+)
 import pytest
 from pytest_homeassistant_custom_component.common import (
     MockConfigEntry,
@@ -22,11 +28,14 @@ from custom_components.hoymiles_wifi.const import (
     CONF_HYBRID_INVERTERS,
     CONF_INVERTERS,
     CONF_IS_ENCRYPTED,
+    CONF_PORTS,
     CONF_UPDATE_INTERVAL,
     CONFIG_VERSION,
     DOMAIN,
+    HASS_APP_INFO_COORDINATOR,
     HASS_CONFIG_COORDINATOR,
     HASS_DATA_COORDINATOR,
+    HASS_ENERGY_STORAGE_CONFIG_COORDINATOR,
     HASS_ENERGY_STORAGE_DATA_COORDINATOR,
 )
 
@@ -249,3 +258,149 @@ async def test_setup_tolerates_unsupported_config_command(hass, freezer, failure
         for remove_listener in listeners:
             remove_listener()
         assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize("hybrid", [False, True], ids=["microinverter", "hybrid"])
+@pytest.mark.parametrize("outcome", ["unload_offline", "recover", "unsupported_config"])
+async def test_registered_dtu_loads_offline_and_recovers(
+    hass, freezer, hybrid, outcome
+):
+    """Restore real entities at night and recover live data and metadata at sunrise."""
+    serial = "1234567800000001" if hybrid else "4143A6B7C8D9"
+    inverter = "1124A6B7C8D9"
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=CONFIG_VERSION,
+        data={
+            CONF_HOST: "dtu.local",
+            CONF_DTU_SERIAL_NUMBER: serial,
+            CONF_UPDATE_INTERVAL: 35,
+            CONF_INVERTERS: [] if hybrid else [inverter],
+            CONF_HYBRID_INVERTERS: [
+                {
+                    "inverter_serial_number": "1234567800000002",
+                    "model_name": "HYT-5.0HV-EUG1",
+                }
+            ]
+            if hybrid
+            else [],
+            CONF_PORTS: [],
+        },
+    )
+    entry.add_to_hass(hass)
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=entry.entry_id, identifiers={(DOMAIN, serial)}
+    )
+    with (
+        patch.object(DTU, "async_app_information_data", return_value=None) as app_info,
+        patch.object(DTU, "async_get_real_data_new", return_value=None) as real,
+        patch.object(DTU, "async_get_config", return_value=None) as config,
+        patch.object(
+            DTU, "async_get_energy_storage_data", return_value=None
+        ) as storage,
+        patch.object(
+            DTU, "async_get_energy_storage_working_mode", return_value=None
+        ) as mode,
+    ):
+        assert await hass.config_entries.async_setup(entry.entry_id)
+        assert entry.state is ConfigEntryState.LOADED
+        runtime = hass.data[DOMAIN][entry.entry_id]
+        live = runtime[
+            HASS_ENERGY_STORAGE_DATA_COORDINATOR if hybrid else HASS_DATA_COORDINATOR
+        ]
+        metadata = runtime[
+            HASS_ENERGY_STORAGE_CONFIG_COORDINATOR
+            if hybrid
+            else HASS_CONFIG_COORDINATOR
+        ]
+        assert not live.last_update_success
+        assert live.data is None
+        assert metadata.update_interval is None
+        assert all(
+            state.state == "unavailable"
+            for state in hass.states.async_all()
+            if state.entity_id.startswith(("sensor.", "number.", "binary_sensor."))
+        )
+        key = "[0].emspara" if hybrid else "dtu_daily_energy"
+        sensor_id = er.async_get(hass).async_get_entity_id(
+            "sensor", DOMAIN, f"hoymiles_{entry.entry_id}_{key}"
+        )
+        assert sensor_id is not None
+        assert hass.states.get(sensor_id).state == "unavailable"
+
+        if outcome == "unload_offline":
+            assert await hass.config_entries.async_unload(entry.entry_id)
+            assert await hass.config_entries.async_setup(entry.entry_id)
+            assert entry.state is ConfigEntryState.LOADED
+            assert hass.states.get(sensor_id).state == "unavailable"
+            assert await hass.config_entries.async_unload(entry.entry_id)
+            return
+
+        real.return_value = RealDataNew_pb2.RealDataNewReqDTO(
+            device_serial_number=serial, dtu_daily_energy=42
+        )
+        app_info.return_value = APPInfomationData_pb2.APPInfoDataReqDTO(
+            dtu_serial_number=serial
+        )
+        app_info.return_value.dtu_info.signal_strength = 50
+        config.return_value = GetConfig_pb2.GetConfigReqDTO(wifi_ssid="test-wifi")
+        storage.return_value = ESData_pb2.ESDataReqDTO()
+        storage.return_value.production.energy_to_load = 100
+        mode.return_value = ESParaSet_pb2.ESParaSetBO()
+        mode.return_value.emspara.mode = 1
+        mode.return_value.emspara.selfu.rev_soc = 10
+        if outcome == "unsupported_config":
+            config.return_value = None
+            mode.return_value = None
+        freezer.tick(timedelta(seconds=36))
+        async_fire_time_changed(hass, dt_util.utcnow())
+        await hass.async_block_till_done(wait_background_tasks=True)
+        assert entry.state is ConfigEntryState.LOADED
+        assert live.last_update_success
+        assert metadata.last_update_success == (outcome == "recover")
+        expected_interval = (
+            timedelta(minutes=5) if hybrid or outcome == "recover" else None
+        )
+        assert metadata.update_interval == expected_interval
+        expected_state = (
+            ("self_use" if outcome == "recover" else "unavailable") if hybrid else "42"
+        )
+        assert hass.states.get(sensor_id).state == expected_state
+        if not hybrid:
+            assert runtime[HASS_APP_INFO_COORDINATOR].last_update_success
+        metadata_calls = mode.await_count if hybrid else config.await_count
+        assert metadata_calls == 2
+        freezer.tick(timedelta(seconds=36))
+        async_fire_time_changed(hass, dt_util.utcnow())
+        await hass.async_block_till_done(wait_background_tasks=True)
+        assert (mode.await_count if hybrid else config.await_count) == metadata_calls
+        assert await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_offline_startup_does_not_trust_another_entry_device(hass):
+    """A registered DTU from another entry is not proof this entry was set up."""
+    serial = "4143A6B7C8D9"
+    owner = MockConfigEntry(domain="other_integration")
+    owner.add_to_hass(hass)
+    dr.async_get(hass).async_get_or_create(
+        config_entry_id=owner.entry_id, identifiers={(DOMAIN, serial)}
+    )
+    entry = MockConfigEntry(
+        domain=DOMAIN,
+        version=CONFIG_VERSION,
+        data={
+            CONF_HOST: "dtu.local",
+            CONF_DTU_SERIAL_NUMBER: serial,
+            CONF_UPDATE_INTERVAL: 35,
+            CONF_INVERTERS: ["1124A6B7C8D9"],
+        },
+    )
+    entry.add_to_hass(hass)
+    with (
+        patch.object(DTU, "async_app_information_data", return_value=None),
+        patch.object(DTU, "async_get_real_data_new", return_value=None),
+        patch.object(hass.config_entries, "async_forward_entry_setups") as forward,
+    ):
+        assert not await hass.config_entries.async_setup(entry.entry_id)
+    assert entry.state is ConfigEntryState.SETUP_RETRY
+    forward.assert_not_awaited()

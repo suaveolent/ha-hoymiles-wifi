@@ -21,6 +21,7 @@ from custom_components.hoymiles_wifi.sensor import (
     HoymilesDataSensorEntity,
     HoymilesDiagnosticEntityDescription,
     HoymilesDiagnosticSensorEntity,
+    HoymilesEnergySensorEntity,
     HoymilesEnergyStorageSensorEntity,
     HoymilesSensorEntityDescription,
 )
@@ -194,8 +195,8 @@ async def test_counter_reports_decreases_and_missing_values(live_sensor):
     await coordinator.async_shutdown()
 
 
-async def test_energy_counter_accepts_zero(live_sensor):
-    """A successful zero reading is not replaced with a previous counter value."""
+async def test_measurement_accepts_zero(live_sensor):
+    """Measurement sensors still accept successful zero readings."""
     coordinator, fetch, original = live_sensor
     sensor = HoymilesDataSensorEntity(
         original._config_entry,
@@ -224,7 +225,7 @@ async def test_daily_energy_accepts_zero_and_preserves_outage_handling(
 ):
     """Device resets are valid readings; missing and stale readings are not zeros."""
     coordinator, fetch, original = live_sensor
-    sensor = HoymilesDataSensorEntity(
+    sensor = HoymilesEnergySensorEntity(
         original._config_entry,
         replace(
             description,

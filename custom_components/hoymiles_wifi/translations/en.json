@@ -8,7 +8,11 @@
           "host": "Host",
           "update_interval": "Update Interval (seconds)",
           "cloud_pause": "Cloud upload pause duration (seconds)",
-          "timeout": "Timeout (seconds)"
+          "timeout": "Timeout (seconds)",
+          "offline_fallback": "Use estimated values when offline"
+        },
+        "data_description": {
+          "offline_fallback": "After the outage grace period, show zero measurements and retain energy totals. Daily totals reset at local midnight. Estimated values can affect statistics."
         }
       },
       "reconfigure": {
@@ -18,7 +22,11 @@
           "host": "Host",
           "update_interval": "Update Interval (seconds)",
           "cloud_pause": "Cloud upload pause duration (seconds)",
-          "timeout": "Timeout (seconds)"
+          "timeout": "Timeout (seconds)",
+          "offline_fallback": "Use estimated values when offline"
+        },
+        "data_description": {
+          "offline_fallback": "After the outage grace period, show zero measurements and retain energy totals. Daily totals reset at local midnight. Estimated values can affect statistics."
         }
       }
     },
@@ -72,7 +80,7 @@
         "name": "Grid voltage"
       },
       "ac_current": {
-        "name": "AC current" 
+        "name": "AC current"
       },
       "grid_frequency": {
         "name": "Grid frequency"

@@ -8,7 +8,11 @@
           "host": "Hôte",
           "update_interval": "Intervalle de mise à jour (secondes)",
           "cloud_pause": "Durée de la pause pour envoi au cloud (secondes)",
-          "timeout": "Délai d'attente (secondes)"
+          "timeout": "Délai d'attente (secondes)",
+          "offline_fallback": "Utiliser des valeurs estimées hors ligne"
+        },
+        "data_description": {
+          "offline_fallback": "Après le délai de tolérance, afficher des mesures nulles et conserver les totaux d’énergie. Les totaux journaliers sont remis à zéro à minuit local. Les estimations peuvent affecter les statistiques."
         }
       },
       "reconfigure": {
@@ -18,7 +22,11 @@
           "host": "Hôte",
           "update_interval": "Intervalle de mise à jour (secondes)",
           "cloud_pause": "Durée de la pause pour envoi au cloud (secondes)",
-          "timeout": "Délai d'attente (secondes)"
+          "timeout": "Délai d'attente (secondes)",
+          "offline_fallback": "Utiliser des valeurs estimées hors ligne"
+        },
+        "data_description": {
+          "offline_fallback": "Après le délai de tolérance, afficher des mesures nulles et conserver les totaux d’énergie. Les totaux journaliers sont remis à zéro à minuit local. Les estimations peuvent affecter les statistiques."
         }
       }
     },

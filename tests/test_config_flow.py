@@ -19,6 +19,7 @@ from custom_components.hoymiles_wifi.const import (
     CONF_INVERTERS,
     CONF_IS_ENCRYPTED,
     CONF_METERS,
+    CONF_OFFLINE_FALLBACK,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
     CONF_TIMEOUT,
@@ -40,6 +41,7 @@ MOCK_DATA_STEP = {
 }
 
 MOCK_DATA_RESULT = {
+    CONF_OFFLINE_FALLBACK: False,
     CONF_CLOUD_PAUSE: 0,
     CONF_HOST: DTU_TEST_HOST,
     CONF_DTU_SERIAL_NUMBER: DTU_TEST_SERIAL_NUMBER,
@@ -71,8 +73,11 @@ def mock_app_information_data():
         yield
 
 
+@pytest.mark.parametrize("offline_fallback", [False, True])
 @pytest.mark.parametrize("cloud_pause", [0, 1, 30, 120])
-async def test_form_valid_input(hass: HomeAssistant, cloud_pause) -> None:
+async def test_form_valid_input(
+    hass: HomeAssistant, cloud_pause, offline_fallback
+) -> None:
     """Test handling valid user input."""
 
     result = await hass.config_entries.flow.async_init(
@@ -96,6 +101,7 @@ async def test_form_valid_input(hass: HomeAssistant, cloud_pause) -> None:
             {
                 **MOCK_DATA_STEP,
                 CONF_CLOUD_PAUSE: cloud_pause,
+                CONF_OFFLINE_FALLBACK: offline_fallback,
             },
         )
         await hass.async_block_till_done()
@@ -105,6 +111,7 @@ async def test_form_valid_input(hass: HomeAssistant, cloud_pause) -> None:
     assert result2["data"] == {
         **MOCK_DATA_RESULT,
         CONF_CLOUD_PAUSE: cloud_pause,
+        CONF_OFFLINE_FALLBACK: offline_fallback,
     }
     assert len(mock_setup_entry.mock_calls) == 1
     assert len(mock_async_get_real_data_new.mock_calls) == 1
@@ -168,7 +175,10 @@ async def test_flow_user_init_data_error_and_recover(
 
 @pytest.mark.parametrize("unique_id", [None, DTU_TEST_SERIAL_NUMBER])
 @pytest.mark.parametrize("custom_title", [False, True])
-async def test_reconfigure_updates_existing_entry(hass, unique_id, custom_title):
+@pytest.mark.parametrize("offline_fallback", [False, True])
+async def test_reconfigure_updates_existing_entry(
+    hass, unique_id, custom_title, offline_fallback
+):
     """Host changes persist for legacy entries and retain unrelated settings."""
     old_host = "192.168.1.10"
     new_host = "192.168.1.20"
@@ -184,6 +194,7 @@ async def test_reconfigure_updates_existing_entry(hass, unique_id, custom_title)
             CONF_TIMEOUT: 21,
             CONF_CLOUD_PAUSE: 30,
             "preserved_setting": True,
+            CONF_OFFLINE_FALLBACK: offline_fallback,
         },
     )
     entry.add_to_hass(hass)
@@ -215,6 +226,7 @@ async def test_reconfigure_updates_existing_entry(hass, unique_id, custom_title)
         CONF_TIMEOUT: 21,
         CONF_CLOUD_PAUSE: 30,
         "preserved_setting": True,
+        CONF_OFFLINE_FALLBACK: offline_fallback,
     }
     assert entry.title == ("Garden DTU" if custom_title else new_host)
     assert hass.config_entries.async_entries(DOMAIN) == [entry]

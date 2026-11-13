@@ -110,6 +110,11 @@ Configuration is done in the UI.
 
 4. `Timeout (seconds)`: How long each connection or response wait may take before the request fails. The default is **10 seconds**, with a minimum of **1 second**. Increase it if your DTU responds slowly. This does not change the polling interval.
 
+5. `Use estimated values when offline`: Optional, **disabled by default**. After the existing three-minute outage grace period, numeric live measurements are shown as zero when the DTU is confirmed offline. Energy counters retain their last reported value; daily production counters show zero after local midnight until a new reading arrives. Fallback values are marked as assumed. Diagnostics remain unavailable. Energy totals are kept only in memory; after a Home Assistant restart or integration reload, the fallback starts at zero until a fresh reading arrives.
+
+> [!NOTE]
+> An unreachable DTU does not prove that production is zero. Enabling this option can affect sensor statistics and automations. Missing fields in a successful response and decoding failures still report unavailable. Leave the option disabled for the normal Home Assistant unavailable behavior. For display-only alternatives, use template sensors or a daily Utility Meter helper with `always_available` enabled.
+
 ### Power limits
 
 - **Persistent power limit** sets a percentage and remains stored after an inverter restart.

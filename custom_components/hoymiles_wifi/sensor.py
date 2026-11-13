@@ -27,6 +27,9 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_time_change
+from homeassistant.util import dt as dt_util
+from hoymiles_wifi.dtu import NetworkState
 import hoymiles_wifi.hoymiles
 from hoymiles_wifi.hoymiles import BMSWorkingMode, DTUType, get_dtu_model_type
 
@@ -35,6 +38,7 @@ from .const import (
     CONF_HYBRID_INVERTERS,
     CONF_INVERTERS,
     CONF_METERS,
+    CONF_OFFLINE_FALLBACK,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
     DOMAIN,
@@ -73,6 +77,7 @@ class HoymilesSensorEntityDescription(
     version_translation_function: str = None
     version_prefix: str = None
     requires_device_type: int = DeviceType.ALL_DEVICES
+    is_daily_energy: bool = False
 
 
 @dataclass(frozen=True)
@@ -119,6 +124,7 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="dtu_daily_energy",
+        is_daily_energy=True,
         translation_key="ac_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -344,6 +350,7 @@ HOYMILES_SENSORS = [
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].energy_daily",
+        is_daily_energy=True,
         translation_key="port_dc_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -1423,8 +1430,60 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         self._version_translation_function = description.version_translation_function
         self._version_prefix = description.version_prefix
         self._native_value = None
+        self._last_energy_value = None
+        self._last_energy_date = None
 
         self.update_state_value()
+
+    async def async_added_to_hass(self) -> None:
+        """Schedule midnight updates only for optional daily-energy fallback."""
+        await super().async_added_to_hass()
+        if self._config_entry.data.get(CONF_OFFLINE_FALLBACK, False) and getattr(
+            self.entity_description, "is_daily_energy", False
+        ):
+            self.async_on_remove(
+                async_track_time_change(
+                    self.hass,
+                    self._async_refresh_daily_fallback,
+                    hour=0,
+                    minute=0,
+                    second=0,
+                )
+            )
+
+    @callback
+    def _async_refresh_daily_fallback(self, now) -> None:
+        """Re-evaluate an offline daily total at local midnight."""
+        self.async_write_ha_state()
+
+    def _uses_offline_fallback(self) -> bool:
+        """Use offline estimates after grace, with daily rollover at local midnight."""
+        return (
+            self._config_entry.data.get(CONF_OFFLINE_FALLBACK, False)
+            and self.coordinator.get_dtu().get_state() == NetworkState.Offline
+            and (
+                not self.coordinator.last_update_success
+                or (self.coordinator.data_is_stale and self._daily_total_has_expired())
+            )
+        )
+
+    def _daily_total_has_expired(self) -> bool:
+        """Detect a retained daily counter from an earlier local calendar day."""
+        return (
+            getattr(self.entity_description, "is_daily_energy", False)
+            and self._last_energy_date is not None
+            and self._last_energy_date < dt_util.now().date()
+        )
+
+    def _offline_fallback_value(self):
+        """Retain known energy totals and estimate instantaneous measurements as zero."""
+        if self.device_class == SensorDeviceClass.ENERGY:
+            if self._daily_total_has_expired() or self._last_energy_value is None:
+                return 0
+            return self._last_energy_value
+        if self.state_class == SensorStateClass.MEASUREMENT:
+            return 0
+        return None
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -1435,16 +1494,23 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     @property
     def native_value(self):
         """Return the native value of the sensor."""
+        if self._uses_offline_fallback():
+            return self._offline_fallback_value()
         return self._native_value
 
     @property
     def assumed_state(self):
         """Return the assumed state of the sensor."""
-        return getattr(self.coordinator, "data_is_stale", False)
+        return (
+            getattr(self.coordinator, "data_is_stale", False)
+            or self._uses_offline_fallback()
+        )
 
     @property
     def available(self) -> bool:
         """Expose a state only when the coordinator and this reading are available."""
+        if self._uses_offline_fallback():
+            return self._offline_fallback_value() is not None
         return super().available and self._native_value is not None
 
     def _read_coordinator_value(self):
@@ -1484,6 +1550,12 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
             new_native_value = f"{self._version_prefix}{new_native_value}"
 
         self._native_value = new_native_value
+        if (
+            self.device_class == SensorDeviceClass.ENERGY
+            and new_native_value is not None
+        ):
+            self._last_energy_value = new_native_value
+            self._last_energy_date = dt_util.now().date()
 
 
 class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):

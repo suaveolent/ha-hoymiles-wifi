@@ -8,9 +8,11 @@ import re
 
 from google.protobuf.json_format import MessageToDict
 from homeassistant.components.sensor import (
+    RestoreSensor,
     SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
+    SensorExtraStoredData,
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
@@ -1165,7 +1167,11 @@ async def async_setup_entry(
 
     if inverters:
         for description in HOYMILES_SENSORS:
-            class_name = HoymilesDataSensorEntity
+            class_name = (
+                HoymilesEnergySensorEntity
+                if description.device_class == SensorDeviceClass.ENERGY
+                else HoymilesDataSensorEntity
+            )
 
             if "sgs_data" in description.key and single_phase_inverters:
                 sensor_entities = get_sensors_for_description(
@@ -1264,7 +1270,9 @@ async def async_setup_entry(
                 config_entry,
                 description,
                 energy_storage_data_coordinator,
-                HoymilesEnergyStorageSensorEntity,
+                HoymilesEnergySensorEntity
+                if description.device_class == SensorDeviceClass.ENERGY
+                else HoymilesEnergyStorageSensorEntity,
                 dtu_serial_number,
                 hybrid_inverters,
             )
@@ -1556,6 +1564,72 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         ):
             self._last_energy_value = new_native_value
             self._last_energy_date = dt_util.now().date()
+
+
+class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
+    """Restore lifetime counters and suppress zeros that would reset statistics."""
+
+    def __init__(self, config_entry, description, coordinator):
+        """Initialize zero-reading protection before the first coordinator value."""
+        self._filtered_zero = False
+        super().__init__(config_entry, description, coordinator)
+
+    @property
+    def _is_daily_energy(self) -> bool:
+        """Identify counters for which a reset to zero is a normal daily event."""
+        return getattr(self.entity_description, "is_daily_energy", False)
+
+    def update_state_value(self):
+        """Keep zero lifetime readings out of the sensor and its stored counter."""
+        if getattr(self.coordinator, "data_is_stale", False):
+            return
+        self._filtered_zero = (
+            not self._is_daily_energy and self._read_coordinator_value() == 0
+        )
+        if self._filtered_zero:
+            _LOGGER.debug(
+                "Ignoring zero lifetime energy reading for %s",
+                self.entity_description.key,
+            )
+            self._native_value = self._last_energy_value
+            return
+        super().update_state_value()
+
+    async def async_added_to_hass(self) -> None:
+        """Restore a known lifetime total unless fresh data has already supplied it."""
+        await super().async_added_to_hass()
+        if self._is_daily_energy or self._last_energy_value is not None:
+            return
+        restored = await self.async_get_last_sensor_data()
+        if (
+            restored is not None
+            and restored.native_unit_of_measurement == self.native_unit_of_measurement
+            and isinstance(restored.native_value, (int, float))
+            and restored.native_value > 0
+        ):
+            self._last_energy_value = restored.native_value
+            if self._filtered_zero:
+                self._native_value = restored.native_value
+
+    @property
+    def extra_restore_state_data(self):
+        """Persist only reported lifetime totals, including while unavailable."""
+        if self._is_daily_energy:
+            return None
+        return SensorExtraStoredData(
+            self._last_energy_value, self.native_unit_of_measurement
+        )
+
+    @property
+    def assumed_state(self):
+        """Identify values retained instead of a zero lifetime reading."""
+        return super().assumed_state or self._filtered_zero
+
+    def _offline_fallback_value(self):
+        """Never fabricate a zero lifetime counter when no prior total is known."""
+        if not self._is_daily_energy and self._last_energy_value is None:
+            return None
+        return super()._offline_fallback_value()
 
 
 class HoymilesDiagnosticSensorEntity(HoymilesCoordinatorEntity, SensorEntity):

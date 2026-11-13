@@ -26,6 +26,7 @@ from custom_components.hoymiles_wifi.coordinator import (
 )
 from custom_components.hoymiles_wifi.sensor import (
     HoymilesDataSensorEntity,
+    HoymilesEnergySensorEntity,
     HoymilesSensorEntityDescription,
 )
 
@@ -81,7 +82,12 @@ async def offline_sensor(hass, request):
                 conversion_factor=None,
                 is_daily_energy=kind == "daily",
             )
-        sensor = HoymilesDataSensorEntity(entry, current, coordinator)
+        sensor_class = (
+            HoymilesEnergySensorEntity
+            if kind in ("daily", "lifetime")
+            else HoymilesDataSensorEntity
+        )
+        sensor = sensor_class(entry, current, coordinator)
         sensor.hass = hass
         sensor.entity_id = f"sensor.test_offline_{kind}"
         created.append(sensor)
@@ -158,12 +164,14 @@ async def test_known_energy_is_retained_instead_of_zero(offline_sensor):
     await coordinator.async_refresh()
     for sensor in (daily, lifetime):
         sensor.update_state_value()
-        assert sensor.native_value == 0
-        assert not sensor.assumed_state
+    assert daily.native_value == 0
+    assert not daily.assumed_state
+    assert lifetime.native_value == 1234
+    assert lifetime.assumed_state
 
 
-async def test_offline_startup_uses_zero_for_measurements_and_energy(offline_sensor):
-    """Without in-memory readings, use zero estimates and keep diagnostics unavailable."""
+async def test_offline_startup_does_not_zero_unknown_lifetime_totals(offline_sensor):
+    """Estimate power and daily energy, but leave unknown lifetime totals unavailable."""
     _, coordinator, _, _, make_sensor = offline_sensor
     power, daily, lifetime = (
         make_sensor(),
@@ -173,10 +181,11 @@ async def test_offline_startup_uses_zero_for_measurements_and_energy(offline_sen
     await coordinator.async_refresh()
     assert power.native_value == 0
     assert power.available
-    for sensor in (daily, lifetime):
-        assert sensor.native_value == 0
-        assert sensor.available
-        assert sensor.assumed_state
+    assert daily.native_value == 0
+    assert daily.available
+    assert daily.assumed_state
+    assert lifetime.native_value is None
+    assert not lifetime.available
     diagnostic = make_sensor()
     diagnostic.entity_description = replace(
         diagnostic.entity_description, state_class=None

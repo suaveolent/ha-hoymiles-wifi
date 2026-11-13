@@ -18,6 +18,7 @@ CONF_METERS = "meters"
 CONF_IS_ENCRYPTED = "is_encrypted"
 CONF_ENC_RAND = "enc_rand"
 CONF_TIMEOUT = "timeout"
+CONF_OFFLINE_FALLBACK = "offline_fallback"
 CONF_CLOUD_PAUSE = "cloud_pause"
 DEFAULT_CLOUD_PAUSE_SECONDS = 0
 MAX_CLOUD_PAUSE_SECONDS = 120

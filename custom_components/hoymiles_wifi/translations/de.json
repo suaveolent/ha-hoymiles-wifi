@@ -8,7 +8,11 @@
           "host": "Host",
           "update_interval": "Aktualisierungsintervall (Sekunden)",
           "cloud_pause": "Dauer der Cloud-Upload-Pause (Sekunden)",
-          "timeout": "Timeout (Sekunden)"
+          "timeout": "Timeout (Sekunden)",
+          "offline_fallback": "Geschätzte Werte bei Nichterreichbarkeit verwenden"
+        },
+        "data_description": {
+          "offline_fallback": "Nach der Ausfalltoleranz werden Messwerte als null angezeigt und Energiezähler beibehalten. Tageszähler werden um Mitternacht Ortszeit zurückgesetzt. Geschätzte Werte können Statistiken beeinflussen."
         }
       },
       "reconfigure": {
@@ -18,7 +22,11 @@
           "host": "Host",
           "update_interval": "Aktualisierungsintervall (Sekunden)",
           "cloud_pause": "Dauer der Cloud-Upload-Pause (Sekunden)",
-          "timeout": "Timeout (Sekunden)"
+          "timeout": "Timeout (Sekunden)",
+          "offline_fallback": "Geschätzte Werte bei Nichterreichbarkeit verwenden"
+        },
+        "data_description": {
+          "offline_fallback": "Nach der Ausfalltoleranz werden Messwerte als null angezeigt und Energiezähler beibehalten. Tageszähler werden um Mitternacht Ortszeit zurückgesetzt. Geschätzte Werte können Statistiken beeinflussen."
         }
       }
     },
@@ -72,7 +80,7 @@
         "name": "Netzspannung"
       },
       "ac_current": {
-        "name": "AC-Strom" 
+        "name": "AC-Strom"
       },
       "grid_frequency": {
         "name": "Netzfrequenz"

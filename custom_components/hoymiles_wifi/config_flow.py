@@ -22,6 +22,7 @@ from .const import (
     CONF_INVERTERS,
     CONF_IS_ENCRYPTED,
     CONF_METERS,
+    CONF_OFFLINE_FALLBACK,
     CONF_PORTS,
     CONF_THREE_PHASE_INVERTERS,
     CONF_TIMEOUT,
@@ -66,6 +67,7 @@ DATA_SCHEMA = vol.Schema(
             vol.Coerce(int),
             vol.Range(min=timedelta(seconds=MIN_TIMEOUT_SECONDS).seconds),
         ),
+        vol.Optional(CONF_OFFLINE_FALLBACK, default=False): bool,
     }
 )
 
@@ -119,6 +121,9 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                         CONF_IS_ENCRYPTED: is_encrypted,
                         CONF_ENC_RAND: enc_rand,
                         CONF_TIMEOUT: timeout,
+                        CONF_OFFLINE_FALLBACK: user_input.get(
+                            CONF_OFFLINE_FALLBACK, False
+                        ),
                         CONF_CLOUD_PAUSE: user_input.get(
                             CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS
                         ),
@@ -179,6 +184,10 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                     CONF_IS_ENCRYPTED: is_encrypted,
                     CONF_ENC_RAND: enc_rand,
                     CONF_TIMEOUT: timeout,
+                    CONF_OFFLINE_FALLBACK: user_input.get(
+                        CONF_OFFLINE_FALLBACK,
+                        entry.data.get(CONF_OFFLINE_FALLBACK, False),
+                    ),
                     CONF_CLOUD_PAUSE: user_input.get(
                         CONF_CLOUD_PAUSE,
                         entry.data.get(CONF_CLOUD_PAUSE, DEFAULT_CLOUD_PAUSE_SECONDS),
@@ -219,6 +228,10 @@ class HoymilesInverterConfigFlowHandler(ConfigFlow, domain=DOMAIN):
                         vol.Coerce(int),
                         vol.Range(min=timedelta(seconds=MIN_TIMEOUT_SECONDS).seconds),
                     ),
+                    vol.Optional(
+                        CONF_OFFLINE_FALLBACK,
+                        default=entry.data.get(CONF_OFFLINE_FALLBACK, False),
+                    ): bool,
                 }
             ),
             errors=errors,

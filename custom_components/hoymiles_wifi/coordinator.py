@@ -17,7 +17,7 @@ from hoymiles_wifi.const import (
     MAX_TEMPORARY_POWER_LIMIT_WATTS,
     MIN_TEMPORARY_POWER_LIMIT_WATTS,
 )
-from hoymiles_wifi.dtu import DTU, NetworkState
+from hoymiles_wifi.dtu import DTU
 from hoymiles_wifi.hoymiles import DTUType, generate_inverter_serial_number
 
 from .const import (
@@ -123,17 +123,9 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
             return None
 
     async def _async_check_and_resync_encryption(self) -> bool:
-        """Refresh the encryption key when the DTU answers but cannot be decoded.
-
-        Encrypted DTUs generate a new key (enc_rand) whenever they restart, for
-        example every morning or when PV power drops. Requests encrypted with
-        the previous key are answered but cannot be parsed, which the library
-        reports as NetworkState.Unknown (an unreachable DTU is Offline).
-        """
-        if (
-            self._encryption_resync_callback is None
-            or not getattr(self._dtu, "is_encrypted", False)
-            or self._dtu.get_state() != NetworkState.Unknown
+        """Check for a changed key after a failed encrypted read, including timeouts."""
+        if self._encryption_resync_callback is None or not getattr(
+            self._dtu, "is_encrypted", False
         ):
             return False
         return await self._encryption_resync_callback()

@@ -37,10 +37,12 @@ from custom_components.hoymiles_wifi.coordinator import (
     HoymilesRealDataUpdateCoordinator,
 )
 from custom_components.hoymiles_wifi.sensor import (
-    HOYMILES_SENSORS,
     HoymilesEnergySensorEntity,
-    HoymilesSensorEntityDescription,
     async_setup_entry,
+)
+from custom_components.hoymiles_wifi.sensor_descriptions import (
+    HOYMILES_SENSORS,
+    HoymilesSensorEntityDescription,
 )
 
 DTU_SERIAL = "4143A6B7C8D9"

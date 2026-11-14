@@ -16,13 +16,15 @@ from custom_components.hoymiles_wifi.coordinator import (
     HoymilesRealDataUpdateCoordinator,
 )
 from custom_components.hoymiles_wifi.sensor import (
-    APP_INFO_SENSORS,
-    HOYMILES_SENSORS,
     HoymilesDataSensorEntity,
-    HoymilesDiagnosticEntityDescription,
     HoymilesDiagnosticSensorEntity,
     HoymilesEnergySensorEntity,
     HoymilesEnergyStorageSensorEntity,
+)
+from custom_components.hoymiles_wifi.sensor_descriptions import (
+    APP_INFO_SENSORS,
+    HOYMILES_SENSORS,
+    HoymilesDiagnosticEntityDescription,
     HoymilesSensorEntityDescription,
 )
 

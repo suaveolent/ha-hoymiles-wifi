@@ -27,6 +27,8 @@ from custom_components.hoymiles_wifi.coordinator import (
 from custom_components.hoymiles_wifi.sensor import (
     HoymilesDataSensorEntity,
     HoymilesEnergySensorEntity,
+)
+from custom_components.hoymiles_wifi.sensor_descriptions import (
     HoymilesSensorEntityDescription,
 )
 

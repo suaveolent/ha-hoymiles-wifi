@@ -220,10 +220,10 @@ async def test_measurement_accepts_zero(live_sensor):
     ],
     ids=lambda description: description.translation_key,
 )
-async def test_daily_energy_accepts_zero_and_preserves_outage_handling(
+async def test_daily_energy_filters_resets_and_preserves_outage_handling(
     live_sensor, description
 ):
-    """Device resets are valid readings; missing and stale readings are not zeros."""
+    """Retain daily totals for zeros and keep missing data and outages unavailable."""
     coordinator, fetch, original = live_sensor
     sensor = HoymilesEnergySensorEntity(
         original._config_entry,
@@ -235,18 +235,25 @@ async def test_daily_energy_accepts_zero_and_preserves_outage_handling(
         ),
         coordinator,
     )
-    for raw in [100, 0, 5, None, 0]:
+    decreased = 100 if description.force_keep_maximum_within_day else 5
+    for raw, expected, assumed in [
+        (100, 100, False),
+        (0, 100, True),
+        (5, decreased, description.force_keep_maximum_within_day),
+        (None, None, False),
+        (0, decreased, True),
+    ]:
         fetch.return_value = SimpleNamespace(power=raw)
         await coordinator.async_refresh()
         sensor.update_state_value()
-        assert sensor.native_value == raw
-        assert sensor.available == (raw is not None)
-        assert not sensor.assumed_state
+        assert sensor.native_value == expected
+        assert sensor.available == (expected is not None)
+        assert sensor.assumed_state is assumed
 
     fetch.return_value = None
     await coordinator.async_refresh()
     sensor.update_state_value()
-    assert sensor.native_value == 0
+    assert sensor.native_value == decreased
     assert sensor.assumed_state
 
     coordinator._last_successful_fetch -= 181

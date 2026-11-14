@@ -18,11 +18,7 @@ from hoymiles_wifi.const import (
     MIN_TEMPORARY_POWER_LIMIT_WATTS,
 )
 from hoymiles_wifi.dtu import DTU, NetworkState
-from hoymiles_wifi.hoymiles import (
-    DTUType,
-    generate_inverter_serial_number,
-    get_dtu_model_type,
-)
+from hoymiles_wifi.hoymiles import DTUType, generate_inverter_serial_number
 
 from .const import (
     CONF_CLOUD_PAUSE,
@@ -33,7 +29,7 @@ from .const import (
     DOMAIN,
     ENC_RAND_RESYNC_MIN_INTERVAL_SECONDS,
 )
-from .util import async_check_and_update_enc_rand, is_encrypted_dtu
+from .util import async_check_and_update_enc_rand, get_dtu_type, is_encrypted_dtu
 
 _LOGGER = logging.getLogger(__name__)
 LIVE_DATA_GRACE_SECONDS = 180
@@ -184,11 +180,8 @@ class HoymilesRealDataUpdateCoordinator(HoymilesLiveDataUpdateCoordinator):
         self.persistent_power_limit: float | None = None
         self.temporary_power_limit: float | None = None
         serial = config_entry.data.get(CONF_DTU_SERIAL_NUMBER)
-        try:
-            if get_dtu_model_type(bytes.fromhex(serial)) != DTUType.DTUBI:
-                self.power_limit_echo_unit = PowerLimitUnit.PERCENT
-        except (TypeError, ValueError):
-            pass
+        if get_dtu_type(serial) not in (DTUType.DTUBI, DTUType.UNKNOWN):
+            self.power_limit_echo_unit = PowerLimitUnit.PERCENT
 
     @property
     def temporary_power_limit_confirmed(self) -> bool:

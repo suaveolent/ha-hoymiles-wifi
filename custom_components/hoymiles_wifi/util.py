@@ -2,17 +2,33 @@
 
 import asyncio
 import logging
+import struct
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from hoymiles_wifi.const import IS_ENCRYPTED_BIT_INDEX
 from hoymiles_wifi.dtu import DTU
-from hoymiles_wifi.hoymiles import generate_inverter_serial_number
+from hoymiles_wifi.hoymiles import (
+    DTUType,
+    generate_inverter_serial_number,
+    get_dtu_model_type,
+)
 
 from .const import CONF_ENC_RAND, CONF_IS_ENCRYPTED, DEFAULT_TIMEOUT_SECONDS
 from .error import CannotConnect
 
 _LOGGER = logging.getLogger(__name__)
+
+
+def get_dtu_type(serial_number: str | None) -> DTUType:
+    """Identify a DTU by its hexadecimal prefix, accepting any serial suffix."""
+    if not serial_number:
+        return DTUType.UNKNOWN
+    try:
+        return get_dtu_model_type(bytes.fromhex(serial_number[:4]))
+    except (ValueError, struct.error):
+        _LOGGER.debug("Unknown DTU serial prefix %r", serial_number[:4])
+        return DTUType.UNKNOWN
 
 
 async def async_get_config_entry_data_for_host(

@@ -18,10 +18,8 @@ from custom_components.hoymiles_wifi.const import (
     CONFIG_VERSION,
     DOMAIN,
 )
-from custom_components.hoymiles_wifi.sensor import (
-    HOYMILES_SENSORS,
-    get_sensors_for_description,
-)
+from custom_components.hoymiles_wifi.sensor import get_sensors_for_description
+from custom_components.hoymiles_wifi.sensor_descriptions import HOYMILES_SENSORS
 
 
 @pytest.mark.parametrize(

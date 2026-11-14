@@ -21,7 +21,7 @@ from hoymiles_wifi.const import (
     MAX_TEMPORARY_POWER_LIMIT_WATTS,
     MIN_TEMPORARY_POWER_LIMIT_WATTS,
 )
-from hoymiles_wifi.hoymiles import DTUType, get_dtu_model_type
+from hoymiles_wifi.hoymiles import DTUType
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
@@ -33,6 +33,7 @@ from .const import (
 )
 from .coordinator import HoymilesRealDataUpdateCoordinator
 from .entity import HoymilesCoordinatorEntity, HoymilesEntityDescription
+from .util import get_dtu_type
 
 
 class SetAction(Enum):
@@ -102,11 +103,7 @@ async def async_setup_entry(
         sensors = []
         for description in CONFIG_CONTROL_ENTITIES:
             if description.supported_dtu_types is not None:
-                try:
-                    dtu_type = get_dtu_model_type(bytes.fromhex(dtu_serial_number))
-                except ValueError:
-                    _LOGGER.debug("Cannot determine DTU type for %s", dtu_serial_number)
-                    continue
+                dtu_type = get_dtu_type(dtu_serial_number)
                 if dtu_type not in description.supported_dtu_types:
                     continue
             if description.is_dtu_sensor is True:

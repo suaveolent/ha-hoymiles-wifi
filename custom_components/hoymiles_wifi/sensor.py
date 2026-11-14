@@ -33,7 +33,7 @@ from homeassistant.helpers.event import async_track_time_change
 from homeassistant.util import dt as dt_util
 from hoymiles_wifi.dtu import NetworkState
 import hoymiles_wifi.hoymiles
-from hoymiles_wifi.hoymiles import BMSWorkingMode, DTUType, get_dtu_model_type
+from hoymiles_wifi.hoymiles import BMSWorkingMode, DTUType
 
 from .const import (
     CONF_DTU_SERIAL_NUMBER,
@@ -54,6 +54,7 @@ from .const import (
     HASS_ENERGY_STORAGE_DATA_COORDINATOR,
 )
 from .entity import DeviceType, HoymilesCoordinatorEntity, HoymilesEntityDescription
+from .util import get_dtu_type
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -122,6 +123,7 @@ HOYMILES_SENSORS = [
             DTUType.DTU_PRO_S,
             DTUType.DTUBI,
             DTUType.DTU_W_LITE,
+            DTUType.SOLENSO_SLT_V2,
         ],
     ),
     HoymilesSensorEntityDescription(
@@ -141,6 +143,7 @@ HOYMILES_SENSORS = [
             DTUType.DTU_PRO_S,
             DTUType.DTUBI,
             DTUType.DTU_W_LITE,
+            DTUType.SOLENSO_SLT_V2,
         ],
     ),
     HoymilesSensorEntityDescription(
@@ -1332,17 +1335,11 @@ def get_sensors_for_description(
                 sensor = class_name(config_entry, updated_description, coordinator)
                 sensors.append(sensor)
     else:
-        if description.supported_dtu_types is not None:
-            serial_bytes = bytes.fromhex(dtu_serial_number)
-
-            dtu_type = None
-            try:
-                dtu_type = get_dtu_model_type(serial_bytes)
-            except ValueError as e:
-                _LOGGER.error("Error getting DTU model type: %s", e)
+        dtu_type = get_dtu_type(dtu_serial_number)
 
         if (
             description.supported_dtu_types is None
+            or dtu_type == DTUType.UNKNOWN
             or dtu_type in description.supported_dtu_types
         ):
             updated_description = dataclasses.replace(

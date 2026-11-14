@@ -164,8 +164,8 @@ async def test_known_energy_is_retained_instead_of_zero(offline_sensor):
     await coordinator.async_refresh()
     for sensor in (daily, lifetime):
         sensor.update_state_value()
-    assert daily.native_value == 0
-    assert not daily.assumed_state
+    assert daily.native_value == 1234
+    assert daily.assumed_state
     assert lifetime.native_value == 1234
     assert lifetime.assumed_state
 
@@ -212,7 +212,7 @@ async def test_daily_fallback_updates_at_local_midnight(hass, freezer, offline_s
     async_fire_time_changed(hass, dt_util.utcnow())
     await hass.async_block_till_done(wait_background_tasks=True)
     assert hass.states.get(sensor.entity_id).state == "0"
-    assert sensor._last_energy_value == 1234
+    assert sensor._last_energy_value == 0
 
 
 async def test_new_sensor_does_not_restore_previous_energy(offline_sensor):

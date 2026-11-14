@@ -81,6 +81,7 @@ class HoymilesSensorEntityDescription(
     version_prefix: str = None
     requires_device_type: int = DeviceType.ALL_DEVICES
     is_daily_energy: bool = False
+    force_keep_maximum_within_day: bool = False
 
 
 @dataclass(frozen=True)
@@ -129,6 +130,7 @@ HOYMILES_SENSORS = [
     HoymilesSensorEntityDescription(
         key="dtu_daily_energy",
         is_daily_energy=True,
+        force_keep_maximum_within_day=True,
         translation_key="ac_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -1441,11 +1443,9 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
         self.update_state_value()
 
     async def async_added_to_hass(self) -> None:
-        """Schedule midnight updates only for optional daily-energy fallback."""
+        """Schedule one local midnight callback for daily-energy sensors."""
         await super().async_added_to_hass()
-        if self._config_entry.data.get(CONF_OFFLINE_FALLBACK, False) and getattr(
-            self.entity_description, "is_daily_energy", False
-        ):
+        if getattr(self.entity_description, "is_daily_energy", False):
             self.async_on_remove(
                 async_track_time_change(
                     self.hass,
@@ -1564,11 +1564,11 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
 
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
-    """Restore lifetime counters and suppress zeros that would reset statistics."""
+    """Restore lifetime counters and protect energy totals from invalid decreases."""
 
     def __init__(self, config_entry, description, coordinator):
         """Initialize zero-reading protection before the first coordinator value."""
-        self._filtered_zero = False
+        self._filtered_reading = False
         super().__init__(config_entry, description, coordinator)
 
     @property
@@ -1576,21 +1576,57 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
         """Identify counters for which a reset to zero is a normal daily event."""
         return getattr(self.entity_description, "is_daily_energy", False)
 
+    def _should_retain_energy_value(self, value) -> bool:
+        """Filter zeros and configured same-day decreases without hiding missing data."""
+        if value is None:
+            return False
+        if value == 0:
+            return not self._is_daily_energy or self._last_energy_value is not None
+        if (
+            not getattr(self.entity_description, "force_keep_maximum_within_day", False)
+            or self._last_energy_value is None
+            or self._last_energy_date != dt_util.now().date()
+        ):
+            return False
+        if self._conversion_factor is not None:
+            value *= self._conversion_factor
+        return value < self._last_energy_value
+
     def update_state_value(self):
-        """Keep zero lifetime readings out of the sensor and its stored counter."""
+        """Retain protected counters while preserving coordinator outage handling."""
         if getattr(self.coordinator, "data_is_stale", False):
             return
-        self._filtered_zero = (
-            not self._is_daily_energy and self._read_coordinator_value() == 0
-        )
-        if self._filtered_zero:
+        if self._daily_total_has_expired():
+            self._reset_daily_energy()
+        value = self._read_coordinator_value()
+        self._filtered_reading = self._should_retain_energy_value(value)
+        if self._filtered_reading:
             _LOGGER.debug(
-                "Ignoring zero lifetime energy reading for %s",
+                "Retaining energy total %s instead of %s for %s",
+                self._last_energy_value,
+                value,
                 self.entity_description.key,
             )
             self._native_value = self._last_energy_value
             return
         super().update_state_value()
+
+    def _reset_daily_energy(self) -> None:
+        """Start a new daily fallback without changing lifetime totals."""
+        self._last_energy_value = 0
+        self._last_energy_date = dt_util.now().date()
+        if self._native_value is not None:
+            self._native_value = 0
+            self._filtered_reading = True
+        _LOGGER.debug(
+            "Resetting daily energy fallback for %s", self.entity_description.key
+        )
+
+    @callback
+    def _async_refresh_daily_fallback(self, now) -> None:
+        """Reset the daily fallback at midnight and preserve offline availability."""
+        self._reset_daily_energy()
+        super()._async_refresh_daily_fallback(now)
 
     async def async_added_to_hass(self) -> None:
         """Restore a known lifetime total unless fresh data has already supplied it."""
@@ -1605,7 +1641,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
             and restored.native_value > 0
         ):
             self._last_energy_value = restored.native_value
-            if self._filtered_zero:
+            if self._filtered_reading:
                 self._native_value = restored.native_value
 
     @property
@@ -1619,8 +1655,8 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
     @property
     def assumed_state(self):
-        """Identify values retained instead of a zero lifetime reading."""
-        return super().assumed_state or self._filtered_zero
+        """Identify retained counters and midnight fallback values."""
+        return super().assumed_state or self._filtered_reading
 
     def _offline_fallback_value(self):
         """Never fabricate a zero lifetime counter when no prior total is known."""

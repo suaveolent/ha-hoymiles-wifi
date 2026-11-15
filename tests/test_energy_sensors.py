@@ -1,7 +1,7 @@
 """Protect energy counters against zero and spurious daily decreases."""
 
 from dataclasses import replace
-from datetime import timedelta
+from datetime import date, timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -38,6 +38,7 @@ from custom_components.hoymiles_wifi.coordinator import (
 )
 from custom_components.hoymiles_wifi.sensor import (
     HoymilesEnergySensorEntity,
+    HoymilesEnergySensorExtraStoredData,
     async_setup_entry,
 )
 from custom_components.hoymiles_wifi.sensor_descriptions import (
@@ -185,21 +186,20 @@ async def test_fresh_counter_takes_precedence_over_restore_data(energy_sensor):
     assert not sensor.assumed_state
 
 
-async def test_daily_counter_accepts_zero_and_is_not_restored(energy_sensor):
-    """Daily resets remain valid and daily counters retain their in-memory behavior."""
+async def test_daily_startup_zero_without_restore_stays_unavailable(energy_sensor):
+    """An initial zero must not reset statistics before the real daily total returns."""
     _, coordinator, create = energy_sensor
     coordinator.async_set_updated_data(response())
     sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
     with patch.object(
-        sensor, "async_get_last_extra_data", new_callable=AsyncMock
+        sensor, "async_get_last_extra_data", new=AsyncMock(return_value=None)
     ) as restore:
         sensor.platform = SimpleNamespace(platform_name=DOMAIN, config_entry=None)
         await sensor.add_to_platform_finish()
-    restore.assert_not_awaited()
-    assert sensor.native_value == 0
-    assert sensor.available
-    assert not sensor.assumed_state
-    assert sensor.extra_restore_state_data is None
+    restore.assert_awaited_once()
+    assert sensor.native_value is None
+    assert not sensor.available
+    assert sensor.extra_restore_state_data.native_value is None
 
 
 @pytest.mark.parametrize("hybrid", [False, True])
@@ -415,3 +415,145 @@ async def test_daily_midnight_does_not_fill_missing_reading(
     assert sensor.native_value is None
     assert sensor._last_energy_value == 0
     assert hass.states.get(sensor.entity_id).state == "unavailable"
+
+
+@pytest.mark.parametrize("offline_fallback", [False, True])
+@pytest.mark.parametrize("offline", [False, True])
+async def test_daily_energy_survives_restart_same_day(
+    hass, freezer, energy_sensor, offline_fallback, offline
+):
+    """Restore today's counter before publishing initial zero replies or offline estimates."""
+    await hass.config.async_set_time_zone("Europe/Vienna")
+    freezer.move_to("2026-11-15T22:00:00+00:00")
+    entry, coordinator, create = energy_sensor
+    hass.config_entries.async_update_entry(
+        entry, data={**entry.data, CONF_OFFLINE_FALLBACK: offline_fallback}
+    )
+    reading = response()
+    reading.pv_data[0].energy_daily = 1070
+    coordinator.async_set_updated_data(reading)
+    previous = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    stored = previous.extra_restore_state_data
+    assert stored.as_dict()["last_energy_date"] == "2026-11-15"
+
+    reading.pv_data[0].energy_daily = 0
+    coordinator.async_set_updated_data(reading)
+    coordinator.last_update_success = not offline
+    coordinator.data_is_stale = offline
+    restarted = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    assert not restarted.available
+    with patch.object(
+        restarted, "async_get_last_extra_data", new=AsyncMock(return_value=stored)
+    ):
+        restarted.platform = SimpleNamespace(platform_name=DOMAIN, config_entry=None)
+        await restarted.add_to_platform_finish()
+    assert restarted.available is (not offline or offline_fallback)
+    if restarted.available:
+        assert restarted.native_value == 1070
+        assert restarted.assumed_state
+    assert restarted.extra_restore_state_data.native_value == 1070
+
+    coordinator.data_is_stale = False
+    reading.pv_data[0].energy_daily = 0
+    coordinator.async_set_updated_data(reading)
+    assert restarted.native_value == 1070
+    assert restarted.available
+    assert restarted.assumed_state
+    reading.pv_data[0].energy_daily = 1071
+    coordinator.async_set_updated_data(reading)
+    assert restarted.native_value == 1071
+    assert not restarted.assumed_state
+
+
+@pytest.mark.parametrize(
+    ("stored_date", "expected"),
+    [
+        (date(2026, 11, 15), 1070),
+        (date(2026, 11, 14), 0),
+        (date(2026, 11, 16), None),
+        (None, None),
+    ],
+)
+async def test_daily_restore_respects_local_day(
+    hass, freezer, energy_sensor, stored_date, expected
+):
+    """Retain today's counter, roll older counters to zero, and reject undated totals."""
+    await hass.config.async_set_time_zone("Europe/Vienna")
+    freezer.move_to("2026-11-14T23:30:00+00:00")
+    _, coordinator, create = energy_sensor
+    coordinator.async_set_updated_data(response())
+    sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    stored = HoymilesEnergySensorExtraStoredData(1070, "Wh", stored_date)
+    with patch.object(
+        sensor, "async_get_last_extra_data", new=AsyncMock(return_value=stored)
+    ):
+        sensor.platform = SimpleNamespace(platform_name=DOMAIN, config_entry=None)
+        await sensor.add_to_platform_finish()
+    assert sensor.native_value == expected
+    assert sensor.available is (expected is not None)
+
+
+@pytest.mark.parametrize(
+    "data",
+    [
+        {
+            "native_value": 1070,
+            "native_unit_of_measurement": "kWh",
+            "last_energy_date": "2026-11-15",
+        },
+        {
+            "native_value": 1070,
+            "native_unit_of_measurement": "Wh",
+            "last_energy_date": "invalid",
+        },
+        {
+            "native_value": -1,
+            "native_unit_of_measurement": "Wh",
+            "last_energy_date": "2026-11-15",
+        },
+        {
+            "native_value": None,
+            "native_unit_of_measurement": "Wh",
+            "last_energy_date": "2026-11-15",
+        },
+        {"native_value": 1070},
+    ],
+)
+async def test_invalid_daily_restore_does_not_create_reset(
+    freezer, energy_sensor, data
+):
+    """Missing or invalid restore metadata leaves the daily counter unavailable."""
+    freezer.move_to("2026-11-15T12:00:00+00:00")
+    _, coordinator, create = energy_sensor
+    coordinator.async_set_updated_data(response())
+    sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    with patch.object(
+        sensor,
+        "async_get_last_extra_data",
+        new=AsyncMock(return_value=SimpleNamespace(as_dict=lambda: data)),
+    ):
+        sensor.platform = SimpleNamespace(platform_name=DOMAIN, config_entry=None)
+        await sensor.add_to_platform_finish()
+    assert sensor.native_value is None
+    assert not sensor.available
+
+
+async def test_unknown_daily_counter_is_not_zeroed_at_midnight(
+    hass, freezer, energy_sensor
+):
+    """A midnight callback cannot invent an energy baseline when none was ever known."""
+    await hass.config.async_set_time_zone("Europe/Vienna")
+    freezer.move_to("2026-11-15T22:59:59+00:00")
+    _, coordinator, create = energy_sensor
+    coordinator.async_set_updated_data(response())
+    sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    with patch.object(
+        sensor, "async_get_last_extra_data", new=AsyncMock(return_value=None)
+    ):
+        sensor.platform = SimpleNamespace(platform_name=DOMAIN, config_entry=None)
+        await sensor.add_to_platform_finish()
+    freezer.tick(timedelta(seconds=1))
+    async_fire_time_changed(hass, dt_util.utcnow())
+    await hass.async_block_till_done(wait_background_tasks=True)
+    assert not sensor.available
+    assert sensor.extra_restore_state_data.native_value is None

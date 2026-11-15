@@ -471,7 +471,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
 
 
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
-    """Restore lifetime counters and protect energy totals from invalid decreases."""
+    """Restore energy counters and protect totals from invalid decreases."""
 
     def __init__(self, config_entry, description, coordinator):
         """Initialize zero-reading protection before the first coordinator value."""
@@ -488,7 +488,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
         if value is None:
             return False
         if value == 0:
-            return not self._is_daily_energy or self._last_energy_value is not None
+            return True
         if (
             not getattr(self.entity_description, "force_keep_maximum_within_day", False)
             or self._last_energy_value is None
@@ -520,6 +520,8 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
 
     def _reset_daily_energy(self) -> None:
         """Start a new daily fallback without changing lifetime totals."""
+        if self._last_energy_value is None:
+            return
         self._last_energy_value = 0
         self._last_energy_date = dt_util.now().date()
         if self._native_value is not None:
@@ -536,26 +538,28 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
         super()._async_refresh_daily_fallback(now)
 
     async def async_added_to_hass(self) -> None:
-        """Restore a known lifetime total unless fresh data has already supplied it."""
+        """Restore known counters before a startup zero can become a false reset."""
         await super().async_added_to_hass()
-        if self._is_daily_energy or self._last_energy_value is not None:
+        if self._last_energy_value is not None:
             return
         restored = await self.async_get_last_sensor_data()
         if (
-            restored is not None
-            and restored.native_unit_of_measurement == self.native_unit_of_measurement
-            and isinstance(restored.native_value, (int, float))
-            and restored.native_value > 0
+            restored is None
+            or restored.native_unit_of_measurement != self.native_unit_of_measurement
+            or not isinstance(restored.native_value, (int, float))
+            or restored.native_value < 0
         ):
-            self._last_energy_value = restored.native_value
-            if self._filtered_reading:
-                self._native_value = restored.native_value
+            return
+        if restored.native_value == 0 and not self._is_daily_energy:
+            return
+        self._last_energy_value = restored.native_value
+        self._last_energy_date = dt_util.now().date()
+        if self._filtered_reading:
+            self._native_value = restored.native_value
 
     @property
     def extra_restore_state_data(self):
-        """Persist only reported lifetime totals, including while unavailable."""
-        if self._is_daily_energy:
-            return None
+        """Persist the last accepted counter even while the entity is unavailable."""
         return SensorExtraStoredData(
             self._last_energy_value, self.native_unit_of_measurement
         )
@@ -566,8 +570,8 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
         return super().assumed_state or self._filtered_reading
 
     def _offline_fallback_value(self):
-        """Never fabricate a zero lifetime counter when no prior total is known."""
-        if not self._is_daily_energy and self._last_energy_value is None:
+        """Never fabricate a counter reset when no prior total is known."""
+        if self._last_energy_value is None:
             return None
         return super()._offline_fallback_value()
 

@@ -172,8 +172,8 @@ async def test_known_energy_is_retained_instead_of_zero(offline_sensor):
     assert lifetime.assumed_state
 
 
-async def test_offline_startup_does_not_zero_unknown_lifetime_totals(offline_sensor):
-    """Estimate power and daily energy, but leave unknown lifetime totals unavailable."""
+async def test_offline_startup_does_not_zero_unknown_energy_totals(offline_sensor):
+    """Estimate power but never invent zero for unknown energy counters."""
     _, coordinator, _, _, make_sensor = offline_sensor
     power, daily, lifetime = (
         make_sensor(),
@@ -183,8 +183,8 @@ async def test_offline_startup_does_not_zero_unknown_lifetime_totals(offline_sen
     await coordinator.async_refresh()
     assert power.native_value == 0
     assert power.available
-    assert daily.native_value == 0
-    assert daily.available
+    assert daily.native_value is None
+    assert not daily.available
     assert daily.assumed_state
     assert lifetime.native_value is None
     assert not lifetime.available
@@ -217,8 +217,8 @@ async def test_daily_fallback_updates_at_local_midnight(hass, freezer, offline_s
     assert sensor._last_energy_value == 0
 
 
-async def test_new_sensor_does_not_restore_previous_energy(offline_sensor):
-    """A new runtime starts at zero, even if the previous runtime had a total."""
+async def test_new_sensor_waits_for_energy_restore_data(offline_sensor):
+    """A new runtime without restore data cannot publish a zero energy estimate."""
     _, coordinator, fetch, _, make_sensor = offline_sensor
     previous = make_sensor("daily")
     fetch.return_value = SimpleNamespace(reading=1234)
@@ -230,8 +230,8 @@ async def test_new_sensor_does_not_restore_previous_energy(offline_sensor):
     assert previous.native_value == 1234
     coordinator.data = None
     restarted = make_sensor("daily")
-    assert restarted.native_value == 0
-    assert restarted.available
+    assert restarted.native_value is None
+    assert not restarted.available
     assert restarted.assumed_state
 
 

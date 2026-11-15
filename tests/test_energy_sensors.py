@@ -1,7 +1,7 @@
 """Protect energy counters against zero and spurious daily decreases."""
 
 from dataclasses import replace
-from datetime import date, timedelta
+from datetime import timedelta
 from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 
@@ -38,7 +38,6 @@ from custom_components.hoymiles_wifi.coordinator import (
 )
 from custom_components.hoymiles_wifi.sensor import (
     HoymilesEnergySensorEntity,
-    HoymilesEnergySensorExtraStoredData,
     async_setup_entry,
 )
 from custom_components.hoymiles_wifi.sensor_descriptions import (
@@ -419,10 +418,10 @@ async def test_daily_midnight_does_not_fill_missing_reading(
 
 @pytest.mark.parametrize("offline_fallback", [False, True])
 @pytest.mark.parametrize("offline", [False, True])
-async def test_daily_energy_survives_restart_same_day(
+async def test_daily_energy_survives_restart(
     hass, freezer, energy_sensor, offline_fallback, offline
 ):
-    """Restore today's counter before publishing initial zero replies or offline estimates."""
+    """Restore the daily value before publishing initial zeros or offline estimates."""
     await hass.config.async_set_time_zone("Europe/Vienna")
     freezer.move_to("2026-11-15T22:00:00+00:00")
     entry, coordinator, create = energy_sensor
@@ -434,7 +433,10 @@ async def test_daily_energy_survives_restart_same_day(
     coordinator.async_set_updated_data(reading)
     previous = create(key="pv_data[0].energy_daily", is_daily_energy=True)
     stored = previous.extra_restore_state_data
-    assert stored.as_dict()["last_energy_date"] == "2026-11-15"
+    assert stored.as_dict() == {
+        "native_value": 1070,
+        "native_unit_of_measurement": "Wh",
+    }
 
     reading.pv_data[0].energy_daily = 0
     coordinator.async_set_updated_data(reading)
@@ -465,32 +467,21 @@ async def test_daily_energy_survives_restart_same_day(
     assert not restarted.assumed_state
 
 
-@pytest.mark.parametrize(
-    ("stored_date", "expected"),
-    [
-        (date(2026, 11, 15), 1070),
-        (date(2026, 11, 14), 0),
-        (date(2026, 11, 16), None),
-        (None, None),
-    ],
-)
-async def test_daily_restore_respects_local_day(
-    hass, freezer, energy_sensor, stored_date, expected
-):
-    """Retain today's counter, roll older counters to zero, and reject undated totals."""
-    await hass.config.async_set_time_zone("Europe/Vienna")
-    freezer.move_to("2026-11-14T23:30:00+00:00")
+@pytest.mark.parametrize("stored_value", [0, 1070])
+async def test_daily_restore_uses_standard_sensor_data(energy_sensor, stored_value):
+    """Restore daily energy using Home Assistant's native value and unit data."""
     _, coordinator, create = energy_sensor
     coordinator.async_set_updated_data(response())
     sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
-    stored = HoymilesEnergySensorExtraStoredData(1070, "Wh", stored_date)
+    stored = SensorExtraStoredData(stored_value, "Wh")
     with patch.object(
         sensor, "async_get_last_extra_data", new=AsyncMock(return_value=stored)
     ):
         sensor.platform = SimpleNamespace(platform_name=DOMAIN, config_entry=None)
         await sensor.add_to_platform_finish()
-    assert sensor.native_value == expected
-    assert sensor.available is (expected is not None)
+    assert sensor.native_value == stored_value
+    assert sensor.available
+    assert sensor.assumed_state
 
 
 @pytest.mark.parametrize(
@@ -499,22 +490,14 @@ async def test_daily_restore_respects_local_day(
         {
             "native_value": 1070,
             "native_unit_of_measurement": "kWh",
-            "last_energy_date": "2026-11-15",
-        },
-        {
-            "native_value": 1070,
-            "native_unit_of_measurement": "Wh",
-            "last_energy_date": "invalid",
         },
         {
             "native_value": -1,
             "native_unit_of_measurement": "Wh",
-            "last_energy_date": "2026-11-15",
         },
         {
             "native_value": None,
             "native_unit_of_measurement": "Wh",
-            "last_energy_date": "2026-11-15",
         },
         {"native_value": 1070},
     ],
@@ -522,7 +505,7 @@ async def test_daily_restore_respects_local_day(
 async def test_invalid_daily_restore_does_not_create_reset(
     freezer, energy_sensor, data
 ):
-    """Missing or invalid restore metadata leaves the daily counter unavailable."""
+    """Missing or invalid stored sensor values leave the daily counter unavailable."""
     freezer.move_to("2026-11-15T12:00:00+00:00")
     _, coordinator, create = energy_sensor
     coordinator.async_set_updated_data(response())

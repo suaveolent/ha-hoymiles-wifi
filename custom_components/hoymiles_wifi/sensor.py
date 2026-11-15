@@ -1,8 +1,6 @@
 """Support for Hoymiles sensors."""
 
 import dataclasses
-from dataclasses import dataclass
-from datetime import date
 import logging
 import re
 
@@ -472,24 +470,8 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
             self._last_energy_date = dt_util.now().date()
 
 
-@dataclass
-class HoymilesEnergySensorExtraStoredData(SensorExtraStoredData):
-    """Store a counter and its local day, including while the entity is unavailable."""
-
-    last_energy_date: date | None
-
-    def as_dict(self):
-        """Include the counter date in Home Assistant's sensor restore data."""
-        return {
-            **super().as_dict(),
-            "last_energy_date": self.last_energy_date.isoformat()
-            if self.last_energy_date is not None
-            else None,
-        }
-
-
 class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
-    """Restore lifetime counters and protect energy totals from invalid decreases."""
+    """Restore energy counters and protect totals from invalid decreases."""
 
     def __init__(self, config_entry, description, coordinator):
         """Initialize zero-reading protection before the first coordinator value."""
@@ -568,46 +550,18 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
             or restored.native_value < 0
         ):
             return
-        if self._is_daily_energy:
-            if (
-                restored.last_energy_date is None
-                or restored.last_energy_date > dt_util.now().date()
-            ):
-                return
-            self._last_energy_date = dt_util.now().date()
-            self._last_energy_value = (
-                restored.native_value
-                if restored.last_energy_date == self._last_energy_date
-                else 0
-            )
-        elif restored.native_value > 0:
-            self._last_energy_value = restored.native_value
+        if restored.native_value == 0 and not self._is_daily_energy:
+            return
+        self._last_energy_value = restored.native_value
+        self._last_energy_date = dt_util.now().date()
         if self._filtered_reading:
-            self._native_value = self._last_energy_value
-
-    async def async_get_last_sensor_data(self):
-        """Read native sensor restore data and the optional local counter date."""
-        stored = await self.async_get_last_extra_data()
-        if stored is None:
-            return None
-        data = stored.as_dict()
-        restored = SensorExtraStoredData.from_dict(data)
-        if restored is None:
-            return None
-        stored_date = data.get("last_energy_date")
-        return HoymilesEnergySensorExtraStoredData(
-            restored.native_value,
-            restored.native_unit_of_measurement,
-            dt_util.parse_date(stored_date) if isinstance(stored_date, str) else None,
-        )
+            self._native_value = restored.native_value
 
     @property
     def extra_restore_state_data(self):
-        """Persist accepted counters with their day instead of the displayed fallback."""
-        return HoymilesEnergySensorExtraStoredData(
-            self._last_energy_value,
-            self.native_unit_of_measurement,
-            self._last_energy_date,
+        """Persist the last accepted counter even while the entity is unavailable."""
+        return SensorExtraStoredData(
+            self._last_energy_value, self.native_unit_of_measurement
         )
 
     @property

@@ -352,7 +352,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     async def async_added_to_hass(self) -> None:
         """Schedule one local midnight callback for daily-energy sensors."""
         await super().async_added_to_hass()
-        if getattr(self.entity_description, "is_daily_energy", False):
+        if getattr(self.entity_description, "reset_at_midnight", False):
             self.async_on_remove(
                 async_track_time_change(
                     self.hass,
@@ -382,7 +382,7 @@ class HoymilesDataSensorEntity(HoymilesCoordinatorEntity, SensorEntity):
     def _daily_total_has_expired(self) -> bool:
         """Detect a retained daily counter from an earlier local calendar day."""
         return (
-            getattr(self.entity_description, "is_daily_energy", False)
+            getattr(self.entity_description, "reset_at_midnight", False)
             and self._last_energy_date is not None
             and self._last_energy_date < dt_util.now().date()
         )
@@ -479,9 +479,9 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
         super().__init__(config_entry, description, coordinator)
 
     @property
-    def _is_daily_energy(self) -> bool:
-        """Identify counters for which a reset to zero is a normal daily event."""
-        return getattr(self.entity_description, "is_daily_energy", False)
+    def _resets_at_midnight(self) -> bool:
+        """Identify counters configured to reset their cached value at midnight."""
+        return getattr(self.entity_description, "reset_at_midnight", False)
 
     def _should_retain_energy_value(self, value) -> bool:
         """Filter zeros and configured same-day decreases without hiding missing data."""
@@ -550,7 +550,7 @@ class HoymilesEnergySensorEntity(HoymilesDataSensorEntity, RestoreSensor):
             or restored.native_value < 0
         ):
             return
-        if restored.native_value == 0 and not self._is_daily_energy:
+        if restored.native_value == 0 and not self._resets_at_midnight:
             return
         self._last_energy_value = restored.native_value
         self._last_energy_date = dt_util.now().date()

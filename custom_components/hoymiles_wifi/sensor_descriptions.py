@@ -50,7 +50,7 @@ class HoymilesSensorEntityDescription(
     version_translation_function: str = None
     version_prefix: str = None
     requires_device_type: int = DeviceType.ALL_DEVICES
-    is_daily_energy: bool = False
+    reset_at_midnight: bool = False
     force_keep_maximum_within_day: bool = False
 
 
@@ -99,7 +99,7 @@ HOYMILES_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
     ),
     HoymilesSensorEntityDescription(
         key="dtu_daily_energy",
-        is_daily_energy=True,
+        reset_at_midnight=True,
         force_keep_maximum_within_day=True,
         translation_key="ac_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
@@ -327,7 +327,7 @@ HOYMILES_SENSORS: tuple[HoymilesSensorEntityDescription, ...] = (
     ),
     HoymilesSensorEntityDescription(
         key="pv_data[<pv_count>].energy_daily",
-        is_daily_energy=True,
+        reset_at_midnight=True,
         translation_key="port_dc_daily_energy",
         native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,

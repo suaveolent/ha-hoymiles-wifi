@@ -82,7 +82,7 @@ async def offline_sensor(hass, request):
                 state_class=SensorStateClass.TOTAL_INCREASING,
                 native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
                 conversion_factor=None,
-                is_daily_energy=kind == "daily",
+                reset_at_midnight=kind == "daily",
             )
         sensor_class = (
             HoymilesEnergySensorEntity

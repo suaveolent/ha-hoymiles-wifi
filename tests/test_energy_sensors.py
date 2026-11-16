@@ -189,7 +189,7 @@ async def test_daily_startup_zero_without_restore_stays_unavailable(energy_senso
     """An initial zero must not reset statistics before the real daily total returns."""
     _, coordinator, create = energy_sensor
     coordinator.async_set_updated_data(response())
-    sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    sensor = create(key="pv_data[0].energy_daily", reset_at_midnight=True)
     with patch.object(
         sensor, "async_get_last_extra_data", new=AsyncMock(return_value=None)
     ) as restore:
@@ -292,7 +292,7 @@ async def test_daily_energy_protects_zeros_and_configured_decreases(
     )
     sensor = create(
         key=key,
-        is_daily_energy=description.is_daily_energy,
+        reset_at_midnight=description.reset_at_midnight,
         force_keep_maximum_within_day=description.force_keep_maximum_within_day,
         conversion_factor=conversion_factor,
     )
@@ -342,7 +342,7 @@ async def test_daily_midnight_reset_without_offline_estimates(
     reading = response(847958)
     reading.pv_data[0].energy_daily = 1070
     coordinator.async_set_updated_data(reading)
-    daily = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    daily = create(key="pv_data[0].energy_daily", reset_at_midnight=True)
     lifetime = create()
     for sensor in (daily, lifetime):
         sensor.platform = SimpleNamespace(platform_name=DOMAIN, config_entry=None)
@@ -402,7 +402,7 @@ async def test_daily_midnight_does_not_fill_missing_reading(
     reading = response()
     reading.pv_data[0].energy_daily = 1070
     coordinator.async_set_updated_data(reading)
-    sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    sensor = create(key="pv_data[0].energy_daily", reset_at_midnight=True)
     sensor.platform = SimpleNamespace(platform_name=DOMAIN, config_entry=None)
     await sensor.add_to_platform_finish()
     coordinator.async_set_updated_data(RealDataNew_pb2.RealDataNewReqDTO())
@@ -431,7 +431,7 @@ async def test_daily_energy_survives_restart(
     reading = response()
     reading.pv_data[0].energy_daily = 1070
     coordinator.async_set_updated_data(reading)
-    previous = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    previous = create(key="pv_data[0].energy_daily", reset_at_midnight=True)
     stored = previous.extra_restore_state_data
     assert stored.as_dict() == {
         "native_value": 1070,
@@ -442,7 +442,7 @@ async def test_daily_energy_survives_restart(
     coordinator.async_set_updated_data(reading)
     coordinator.last_update_success = not offline
     coordinator.data_is_stale = offline
-    restarted = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    restarted = create(key="pv_data[0].energy_daily", reset_at_midnight=True)
     assert not restarted.available
     with patch.object(
         restarted, "async_get_last_extra_data", new=AsyncMock(return_value=stored)
@@ -472,7 +472,7 @@ async def test_daily_restore_uses_standard_sensor_data(energy_sensor, stored_val
     """Restore daily energy using Home Assistant's native value and unit data."""
     _, coordinator, create = energy_sensor
     coordinator.async_set_updated_data(response())
-    sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    sensor = create(key="pv_data[0].energy_daily", reset_at_midnight=True)
     stored = SensorExtraStoredData(stored_value, "Wh")
     with patch.object(
         sensor, "async_get_last_extra_data", new=AsyncMock(return_value=stored)
@@ -509,7 +509,7 @@ async def test_invalid_daily_restore_does_not_create_reset(
     freezer.move_to("2026-11-15T12:00:00+00:00")
     _, coordinator, create = energy_sensor
     coordinator.async_set_updated_data(response())
-    sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    sensor = create(key="pv_data[0].energy_daily", reset_at_midnight=True)
     with patch.object(
         sensor,
         "async_get_last_extra_data",
@@ -529,7 +529,7 @@ async def test_unknown_daily_counter_is_not_zeroed_at_midnight(
     freezer.move_to("2026-11-15T22:59:59+00:00")
     _, coordinator, create = energy_sensor
     coordinator.async_set_updated_data(response())
-    sensor = create(key="pv_data[0].energy_daily", is_daily_energy=True)
+    sensor = create(key="pv_data[0].energy_daily", reset_at_midnight=True)
     with patch.object(
         sensor, "async_get_last_extra_data", new=AsyncMock(return_value=None)
     ):

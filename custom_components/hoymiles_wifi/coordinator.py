@@ -31,6 +31,11 @@ from .const import (
 )
 from .util import async_check_and_update_enc_rand, get_dtu_type, is_encrypted_dtu
 
+try:
+    from homeassistant.helpers.update_coordinator import UpdateFailedUnreachable
+except ImportError:  # Home Assistant versions without UpdateFailedUnreachable
+    UpdateFailedUnreachable = UpdateFailed
+
 _LOGGER = logging.getLogger(__name__)
 LIVE_DATA_GRACE_SECONDS = 180
 
@@ -112,7 +117,7 @@ class HoymilesLiveDataUpdateCoordinator(HoymilesDataUpdateCoordinator):
                 LIVE_DATA_GRACE_SECONDS,
             )
             return self.data
-        raise UpdateFailed("Unable to retrieve live data from DTU")
+        raise UpdateFailedUnreachable("Unable to retrieve live data from DTU")
 
     async def _async_try_fetch_data(self):
         """Fetch a response, treating communication errors as no response."""
